@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-purple: #8B44F7;
+  --color-royal-violet: #522B80;
+  --color-deep-violet: #26143E;
+  --color-illuminated-gold: #E2B86E;
+  --color-antique-gold: #A88144;
+  --color-onyx-black: #0D0914;
+
+  /* Semantic Brand Aliases for theme customizability */
+  --color-brand-neon: var(--color-neon-purple);
+  --color-brand-violet: var(--color-royal-violet);
+  --color-brand-shadow: var(--color-deep-violet);
+  --color-brand-gold: var(--color-illuminated-gold);
+  --color-brand-bronze: var(--color-antique-gold);
+  --color-brand-bg: var(--color-onyx-black);
+}
+
+:root {
+  --bg-onyx: #0D0914;
+  --color-primary: #8B44F7;
+  --color-secondary: #E2B86E;
+}
+
+body {
+  background-color: #0D0914;
+  color: #F3F4F6;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Remove number input spinner arrows */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* Custom Select styling & option items */
+select {
+  background-color: #180d29;
+  color: #f3f4f6;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238B44F7' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25em 1.25em;
+  padding-right: 2.5rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+select:hover, select:focus {
+  background-color: #180d29 !important;
+  color: #ffffff !important;
+}
+
+select option {
+  background-color: #140b21 !important;
+  color: #f3f4f6 !important;
+  padding: 8px 12px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0914;
+}
+::-webkit-scrollbar-thumb {
+  background: #26143E;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #522B80;
+}
+
+/* Neon Glow utilities */
+.glow-purple {
+  box-shadow: 0 0 20px rgba(139, 68, 247, 0.35);
+}
+.glow-gold {
+  box-shadow: 0 0 20px rgba(226, 184, 110, 0.35);
+}
+.text-glow-purple {
+  text-shadow: 0 0 12px rgba(139, 68, 247, 0.6);
+}
+.text-glow-gold {
+  text-shadow: 0 0 12px rgba(226, 184, 110, 0.6);
+}
+.glass-panel {
+  background: rgba(38, 20, 62, 0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 68, 247, 0.2);
+}
