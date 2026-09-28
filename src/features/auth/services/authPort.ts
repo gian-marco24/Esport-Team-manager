@@ -6,4 +6,5 @@ export interface IAuthPort {
   logout(): Promise<void>;
   getCurrentUser(): Promise<User | null>;
   onAuthStateChanged(callback: (user: User | null) => void): () => void;
+  updateProfile(userId: string, data: { displayName?: string; gameTag?: string }): Promise<User>;
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy,
@@ -9,21 +9,64 @@ import {
   Calendar,
   TrendingUp,
   Plus,
+  Sparkles,
+  Gamepad2,
+  Crosshair,
+  ChevronRight,
 } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useUserStats } from '../hooks/useUserStats';
 import { useTeamStats } from '../hooks/useTeamStats';
+import { teamService } from '../../teams/services/teamService';
+import { matchService } from '../../scrims-tournaments/services/matchService';
+import { valorantApiService, type ValorantAgent } from '../../../services/valorantApiService';
+import { statsCalculationService } from '../services/statsCalculationService';
+import { URS_GAMARA_TEAM } from '../../teams/config/currentTeam.config';
+import type { TeamMember, Roster } from '../../teams/types';
+import type { Match } from '../../scrims-tournaments/types';
 import { Card, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
-import { URS_GAMARA_TEAM } from '../../teams/config/currentTeam.config';
 
 export const DashboardPage: React.FC = () => {
-  const { user, performanceHistory } = useUserStats();
+  const { user } = useUserStats();
   const { teamOverview, recentMatches } = useTeamStats();
 
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [rosters, setRosters] = useState<Roster[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [agents, setAgents] = useState<ValorantAgent[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [memberList, rosterList, matchList, agentList] = await Promise.all([
+          teamService.getMembers(URS_GAMARA_TEAM.id),
+          teamService.getRosters(URS_GAMARA_TEAM.id),
+          matchService.getMatches(),
+          valorantApiService.getAgents(),
+        ]);
+        setMembers(memberList);
+        setRosters(rosterList);
+        setMatches(matchList);
+        setAgents(agentList);
+      } catch (err) {
+        console.error('Error loading dashboard extra metrics:', err);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Top 5 players by average KDA
+  const topKdaPlayers = useMemo(() => {
+    if (members.length === 0) return [];
+    const calculated = statsCalculationService.calculatePlayerStats(matches, members, agents);
+    return calculated
+      .sort((a, b) => b.kdaRatio - a.kdaRatio || b.matchesPlayed - a.matchesPlayed)
+      .slice(0, 5);
+  }, [members, matches, agents]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn pb-8">
       {/* HEADER BANNER */}
       <div className="bg-gradient-to-r from-[#26143E] via-[#522B80]/80 to-[#26143E] border border-[#8B44F7]/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
         <div className="absolute right-4 bottom-0 opacity-10 pointer-events-none">
@@ -42,7 +85,7 @@ export const DashboardPage: React.FC = () => {
               Bienvenido, {user?.displayName || 'Integrante'}
             </h1>
             <p className="text-xs text-gray-300">
-              Posición: <strong className="text-white">{user?.position || 'Pendiente de asignación'}</strong>
+              Posición: <strong className="text-white">{user?.position || 'Miembro Oficial'}</strong>
             </p>
           </div>
 
@@ -69,7 +112,7 @@ export const DashboardPage: React.FC = () => {
             <p className="text-xs text-gray-400 font-medium">Partidas Jugadas</p>
             <p className="text-xl font-black text-white">{teamOverview.totalMatches}</p>
             <p className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-              <TrendingUp className="w-3 h-3" /> Datos reales de BD
+              <TrendingUp className="w-3 h-3" /> Partidas disputadas
             </p>
           </div>
         </Card>
@@ -79,7 +122,7 @@ export const DashboardPage: React.FC = () => {
             <Trophy className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs text-gray-400 font-medium">Victorias en BD</p>
+            <p className="text-xs text-gray-400 font-medium">Victorias</p>
             <p className="text-xl font-black text-white">{teamOverview.wins}</p>
             <p className="text-[10px] text-[#E2B86E] font-semibold mt-0.5">Partidas ganadas</p>
           </div>
@@ -90,7 +133,7 @@ export const DashboardPage: React.FC = () => {
             <Target className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs text-gray-400 font-medium">Derrotas en BD</p>
+            <p className="text-xs text-gray-400 font-medium">Derrotas</p>
             <p className="text-xl font-black text-white">{teamOverview.losses}</p>
             <p className="text-[10px] text-purple-300 font-semibold mt-0.5">Partidas perdidas</p>
           </div>
@@ -103,56 +146,132 @@ export const DashboardPage: React.FC = () => {
           <div>
             <p className="text-xs text-gray-400 font-medium">Winrate Global</p>
             <p className="text-xl font-black text-white">{teamOverview.winRate}%</p>
-            <p className="text-[10px] text-emerald-400 font-semibold mt-0.5">Basado en registros reales</p>
+            <p className="text-[10px] text-emerald-400 font-semibold mt-0.5">Efectividad del equipo</p>
           </div>
         </Card>
       </div>
 
-      {/* CHART & NEXT MATCH ROW */}
+      {/* TOP 5 KDA PLAYERS ROW (5 CARDS SIDE BY SIDE / STACKED ON MOBILE) */}
+      <Card glow="purple" className="space-y-4 p-5">
+        <CardHeader className="p-0 border-b border-[#26143E] pb-3 flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base">
+            <Crosshair className="w-5 h-5 text-[#8B44F7]" />
+            <span>Top Rendimiento KDA del Equipo</span>
+          </CardTitle>
+          <Link
+            to="/dashboard/stats"
+            className="text-xs text-[#E2B86E] hover:underline font-semibold flex items-center gap-1"
+          >
+            <span>Ver tabla completa</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </CardHeader>
+
+        {topKdaPlayers.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 pt-1">
+            {topKdaPlayers.map((p, idx) => {
+              const memberObj = members.find((m) => m.id === p.playerId);
+              const firstAssignment = memberObj?.rosterAssignments?.[0];
+              const assignedRoster = rosters.find((r) => r.id === firstAssignment?.rosterId);
+              const rosterName = assignedRoster?.name || 'Roster Principal';
+              const position = firstAssignment?.subrole || memberObj?.teamRole || 'Player';
+
+              return (
+                <div
+                  key={p.playerId || idx}
+                  className="p-3.5 bg-[#140b21] hover:bg-[#180d29] border border-[#522B80]/40 hover:border-[#8B44F7] rounded-xl flex flex-col justify-between space-y-3 transition-all group"
+                >
+                  {/* Top: Rank Badge & Avatar */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-[#26143E] border border-[#8B44F7]/50 flex items-center justify-center font-black text-xs text-[#E2B86E] overflow-hidden shrink-0">
+                        {p.avatarUrl ? (
+                          <img src={p.avatarUrl} alt={p.displayName} className="w-full h-full object-cover" />
+                        ) : (
+                          p.displayName.slice(0, 2).toUpperCase()
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-extrabold text-white text-xs truncate group-hover:text-[#E2B86E] transition-colors">
+                          {p.displayName}
+                        </p>
+                        <p className="text-[10px] text-gray-400 truncate">
+                          {p.gameTag || memberObj?.gameTag || 'URS'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`text-[10px] font-black px-1.5 py-0.5 rounded-md ${
+                        idx === 0
+                          ? 'bg-amber-950 text-[#E2B86E] border border-amber-500/40'
+                          : idx === 1
+                          ? 'bg-gray-800 text-gray-200 border border-gray-600'
+                          : idx === 2
+                          ? 'bg-amber-950/60 text-amber-400 border border-amber-800/40'
+                          : 'bg-[#26143E] text-gray-400'
+                      }`}
+                    >
+                      #{idx + 1}
+                    </span>
+                  </div>
+
+                  {/* Middle: KDA Big Metric */}
+                  <div className="p-2.5 bg-[#0D0914]/80 rounded-lg border border-[#26143E] text-center space-y-0.5">
+                    <p className="text-[10px] text-gray-400 uppercase font-semibold">Promedio KDA</p>
+                    <p className="text-lg font-black text-[#E2B86E]">{p.kdaRatio.toFixed(2)}</p>
+                    <p className="text-[10px] text-gray-300 font-mono font-medium">{p.formattedKda}</p>
+                  </div>
+
+                  {/* Bottom: Roster, Role & Main Agent */}
+                  <div className="space-y-1.5 text-[11px] pt-1 border-t border-[#26143E]">
+                    <div className="flex items-center justify-between text-gray-300">
+                      <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                        <Gamepad2 className="w-3 h-3 text-[#8B44F7]" /> Roster:
+                      </span>
+                      <span className="font-bold text-white truncate max-w-[90px]">{rosterName}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-gray-300">
+                      <span className="text-[10px] text-gray-400">Rol:</span>
+                      <span className="font-semibold text-purple-300 truncate max-w-[90px]">{position}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-0.5">
+                      <span className="text-[10px] text-gray-400">Agente Top:</span>
+                      <div className="flex items-center space-x-1 min-w-0">
+                        {p.mostPlayedAgentIcon && (
+                          <img
+                            src={p.mostPlayedAgentIcon}
+                            alt={p.mostPlayedAgent || 'Agente'}
+                            className="w-4 h-4 rounded-full bg-[#26143E] object-contain shrink-0 border border-[#8B44F7]/40"
+                          />
+                        )}
+                        <span className="font-bold text-[#E2B86E] text-[10px] truncate max-w-[70px]">
+                          {p.mostPlayedAgent || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="py-10 text-center bg-[#0D0914]/40 border border-dashed border-[#522B80]/40 rounded-xl space-y-2">
+            <Crosshair className="w-8 h-8 text-gray-500 mx-auto" />
+            <p className="text-xs text-gray-300 font-semibold">Sin estadísticas de jugadores cargadas aún</p>
+            <p className="text-[11px] text-gray-500 max-w-sm mx-auto">
+              A medida que registres partidos y escanees capturas con OCR, aquí figurarán los 5 mejores promedios KDA del equipo.
+            </p>
+          </div>
+        )}
+      </Card>
+
+      {/* NEXT MATCH ROW & QUICK ACTIONS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* KDA Performance Area Chart */}
-        <Card glow="purple" className="lg:col-span-2 space-y-4">
-          <CardHeader className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-[#8B44F7]" />
-              <span>Rendimiento KDA Reciente</span>
-            </CardTitle>
-            <Badge variant="purple">BD Real</Badge>
-          </CardHeader>
-
-          {performanceHistory.length > 0 ? (
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={performanceHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="kdaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8B44F7" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#8B44F7" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#26143E" />
-                  <XAxis dataKey="match" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#9CA3AF" tick={{ fontSize: 11 }} domain={[0, 4]} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#0D0914', borderColor: '#8B44F7', borderRadius: '8px', color: '#fff' }}
-                  />
-                  <Area type="monotone" dataKey="kda" stroke="#8B44F7" strokeWidth={3} fillOpacity={1} fill="url(#kdaGradient)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-64 flex flex-col items-center justify-center text-center p-6 space-y-2 border border-dashed border-[#522B80]/40 rounded-xl bg-[#0D0914]/40">
-              <TrendingUp className="w-10 h-10 text-gray-500 mb-1" />
-              <p className="text-xs text-gray-300 font-semibold">Sin datos gráficos suficientes</p>
-              <p className="text-[11px] text-gray-500 max-w-sm">
-                A medida que cargues scrims y partidos en la base de datos se generará el historial de rendimiento.
-              </p>
-            </div>
-          )}
-        </Card>
-
         {/* Next Match Card */}
-        <Card glow="gold" className="space-y-4 flex flex-col justify-between">
+        <Card glow="gold" className="lg:col-span-2 space-y-4 flex flex-col justify-between">
           <div>
             <CardHeader className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-[#E2B86E]">
@@ -163,12 +282,12 @@ export const DashboardPage: React.FC = () => {
             </CardHeader>
 
             {teamOverview.nextMatch ? (
-              <div className="space-y-3 text-center py-4 bg-[#0D0914]/60 rounded-xl border border-[#A88144]/30">
+              <div className="space-y-3 text-center py-6 bg-[#0D0914]/60 rounded-xl border border-[#A88144]/30">
                 <p className="text-xs text-gray-400 font-semibold uppercase">{teamOverview.nextMatch.tournament}</p>
-                <div className="flex items-center justify-center space-x-3">
-                  <span className="font-extrabold text-white text-base">{URS_GAMARA_TEAM.name}</span>
-                  <span className="text-xs text-[#E2B86E] font-bold">VS</span>
-                  <span className="font-extrabold text-white text-base">{teamOverview.nextMatch.opponent}</span>
+                <div className="flex items-center justify-center space-x-4">
+                  <span className="font-extrabold text-white text-lg">{URS_GAMARA_TEAM.name}</span>
+                  <span className="text-xs text-[#E2B86E] font-bold px-2 py-0.5 bg-[#26143E] rounded">VS</span>
+                  <span className="font-extrabold text-white text-lg">{teamOverview.nextMatch.opponent}</span>
                 </div>
                 <p className="text-xs text-[#E2B86E] font-medium">{teamOverview.nextMatch.date}</p>
               </div>
@@ -180,10 +299,36 @@ export const DashboardPage: React.FC = () => {
             )}
           </div>
 
-          <div className="space-y-2 pt-2">
+          <div className="pt-2 flex justify-end">
+            <Link to="/dashboard/schedule">
+              <Button variant="outline" size="sm" leftIcon={<Calendar className="w-4 h-4 text-[#E2B86E]" />}>
+                Ver Calendario Completo
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        {/* Action Center Card */}
+        <Card glow="purple" className="p-5 flex flex-col justify-between space-y-4">
+          <div className="space-y-2">
+            <CardTitle className="flex items-center gap-2 text-white text-sm">
+              <Sparkles className="w-4 h-4 text-[#8B44F7]" />
+              <span>Accesos Rápidos</span>
+            </CardTitle>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Carga nuevos resultados con escaneo OCR o revisa el rendimiento global de los integrantes.
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Link to="/dashboard/scrims/new">
               <Button variant="secondary" className="w-full text-xs" leftIcon={<Plus className="w-4 h-4" />}>
                 Cargar Nuevo Resultado
+              </Button>
+            </Link>
+            <Link to="/dashboard/stats">
+              <Button variant="outline" className="w-full text-xs" leftIcon={<Award className="w-4 h-4 text-[#E2B86E]" />}>
+                Estadísticas & Análisis
               </Button>
             </Link>
           </div>
@@ -195,9 +340,9 @@ export const DashboardPage: React.FC = () => {
         <CardHeader className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Award className="w-5 h-5 text-[#8B44F7]" />
-            <span>Historial Reciente de Scrims y Torneos en Base de Datos</span>
+            <span>Historial Reciente de Scrims y Torneos</span>
           </CardTitle>
-          <span className="text-xs text-gray-400">Total en BD: {recentMatches.length}</span>
+          <span className="text-xs text-gray-400">Total: {recentMatches.length}</span>
         </CardHeader>
 
         {recentMatches.length > 0 ? (
@@ -245,7 +390,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         ) : (
           <div className="p-8 text-center bg-[#0D0914]/40 border border-dashed border-[#522B80]/40 rounded-xl space-y-3">
-            <p className="text-xs text-gray-400">Aún no hay partidas o scrims registradas en la base de datos.</p>
+            <p className="text-xs text-gray-400">Aún no hay partidas o scrims registradas.</p>
             <Link to="/dashboard/scrims/new">
               <Button variant="secondary" size="sm" leftIcon={<Plus className="w-4 h-4" />}>
                 Cargar Primer Partido

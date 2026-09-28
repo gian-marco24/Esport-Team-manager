@@ -83,6 +83,7 @@ export class MockAuthAdapter implements IAuthPort {
         id: `mock-${Date.now()}`,
         email: credentials.email,
         displayName: isCeo ? 'Zeyn' : credentials.email.split('@')[0],
+        gameTag: isCeo ? '#CEO' : undefined,
         role: isCeo ? 'ceo' : 'player',
         teamRole: isCeo ? 'CEO' : 'Player',
         birthDate: isCeo ? '2007-05-24' : undefined,
@@ -102,6 +103,7 @@ export class MockAuthAdapter implements IAuthPort {
     if (isCeo) {
       user.role = 'ceo';
       user.teamRole = 'CEO';
+      if (!user.gameTag) user.gameTag = '#CEO';
     }
 
     this.setStoredSession(user);
@@ -147,6 +149,7 @@ export class MockAuthAdapter implements IAuthPort {
       id: userId,
       email: data.email,
       displayName: invitation.nick,
+      gameTag: data.gameTag,
       role: mappedRole,
       teamRole: isCeo ? 'CEO' : invitation.teamRole,
       birthDate: data.birthDate,
@@ -207,5 +210,68 @@ export class MockAuthAdapter implements IAuthPort {
     return () => {
       this.listeners = this.listeners.filter((l) => l !== callback);
     };
+  }
+
+  async updateProfile(userId: string, data: { displayName?: string; gameTag?: string }): Promise<User> {
+    await new Promise((res) => setTimeout(res, 250));
+    const session = this.getStoredSession();
+    const users = this.getStoredUsers();
+
+    let targetEmail = session?.email?.toLowerCase();
+    if (!targetEmail) {
+      for (const key of Object.keys(users)) {
+        if (users[key].id === userId) {
+          targetEmail = key;
+          break;
+        }
+      }
+    }
+
+    let user = targetEmail ? users[targetEmail] : null;
+    if (!user && session) {
+      user = session;
+    }
+
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    if (data.displayName !== undefined && data.displayName.trim() !== '') {
+      user.displayName = data.displayName.trim();
+    }
+    if (data.gameTag !== undefined) {
+      user.gameTag = data.gameTag.trim() || undefined;
+    }
+
+    if (targetEmail) {
+      users[targetEmail] = user;
+      this.saveUsers(users);
+    }
+    this.setStoredSession(user);
+
+    // Update in members list
+    const MEMBERS_KEY = 'urs_gamara_members_v2';
+    try {
+      const storedMembersData = localStorage.getItem(MEMBERS_KEY);
+      if (storedMembersData) {
+        const membersList: TeamMember[] = JSON.parse(storedMembersData);
+        const memberIdx = membersList.findIndex(
+          (m) => m.id === userId || (user?.email && m.email.toLowerCase() === user.email.toLowerCase())
+        );
+        if (memberIdx !== -1) {
+          if (data.displayName !== undefined && data.displayName.trim() !== '') {
+            membersList[memberIdx].displayName = data.displayName.trim();
+          }
+          if (data.gameTag !== undefined) {
+            membersList[memberIdx].gameTag = data.gameTag.trim() || undefined;
+          }
+          localStorage.setItem(MEMBERS_KEY, JSON.stringify(membersList));
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to update local member nick:', e);
+    }
+
+    return user;
   }
 }

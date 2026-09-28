@@ -5,7 +5,7 @@ import {
   onAuthStateChanged as firebaseOnAuthStateChanged,
   updateProfile,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../../../lib/firebase';
 import type { IAuthPort } from './authPort';
 import type { User, LoginFormData, RegisterFormData, UserRole } from '../types';
@@ -32,6 +32,7 @@ const processUserProfile = (uid: string, email: string, rawData?: any): User => 
     id: uid,
     email: rawData?.email || email,
     displayName: rawData?.displayName || (isCeoUser ? 'Zeyn' : email.split('@')[0]),
+    gameTag: rawData?.gameTag || (isCeoUser ? '#CEO' : undefined),
     role,
     teamRole,
     birthDate: rawData?.birthDate || (isCeoUser ? '2007-05-24' : undefined),
@@ -139,6 +140,7 @@ export class FirebaseAuthAdapter implements IAuthPort {
 
       const newUser: User = processUserProfile(firebaseUser.uid, data.email, {
         displayName: invitation.nick,
+        gameTag: data.gameTag,
         role: mappedRole,
         teamRole: invitation.teamRole,
         birthDate: data.birthDate,
@@ -229,5 +231,58 @@ export class FirebaseAuthAdapter implements IAuthPort {
         displayName: firebaseUser.displayName,
       }));
     });
+  }
+
+  async updateProfile(userId: string, data: { displayName?: string; gameTag?: string }): Promise<User> {
+    if (!isFirebaseConfigured || !auth) {
+      return this.fallbackAdapter.updateProfile(userId, data);
+    }
+
+    try {
+      if (auth.currentUser && data.displayName !== undefined && data.displayName.trim() !== '') {
+        await updateProfile(auth.currentUser, { displayName: data.displayName.trim() });
+      }
+
+      const updates: Record<string, any> = {};
+      if (data.displayName !== undefined && data.displayName.trim() !== '') {
+        updates.displayName = data.displayName.trim();
+      }
+      if (data.gameTag !== undefined) {
+        updates.gameTag = data.gameTag.trim() || null;
+      }
+
+      if (db && Object.keys(updates).length > 0) {
+        try {
+          const userDocRef = doc(db, 'users', userId);
+          await updateDoc(userDocRef, updates);
+        } catch (err) {
+          console.warn('Firestore updateDoc failed, falling back to setDoc merge:', err);
+          try {
+            const userDocRef = doc(db, 'users', userId);
+            await setDoc(userDocRef, updates, { merge: true });
+          } catch (e) {
+            console.warn('Firestore setDoc failed:', e);
+          }
+        }
+      }
+
+      // Also update local mock & members cache for seamless immediate sync
+      try {
+        await this.fallbackAdapter.updateProfile(userId, data);
+      } catch {
+        // ignore fallback errors
+      }
+
+      const updatedUser = await this.getCurrentUser();
+      if (updatedUser) return updatedUser;
+
+      return processUserProfile(userId, auth.currentUser?.email || '', {
+        displayName: data.displayName || auth.currentUser?.displayName,
+        gameTag: data.gameTag,
+      });
+    } catch (error: unknown) {
+      console.error('Error updating user profile in FirebaseAuthAdapter:', error);
+      throw new Error((error as Error).message || 'Error al actualizar el perfil', { cause: error });
+    }
   }
 }

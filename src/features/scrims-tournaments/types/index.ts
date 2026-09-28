@@ -15,10 +15,26 @@ export const VALORANT_MAP_ROTATION = [
 
 export type ValorantMap = (typeof VALORANT_MAP_ROTATION)[number];
 
+export interface MatchPlayerStats {
+  playerId?: string;
+  playerNick: string;
+  gameTag?: string;
+  agent?: string;
+  agentIcon?: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  firstKills?: number;
+  kdaRatio?: number;
+  hsPercentage?: number;
+  isGuest?: boolean;
+}
+
 export interface MatchMapResult {
   mapName: string;
   teamScore: number;
   opponentScore: number;
+  playerStats?: MatchPlayerStats[];
 }
 
 export interface MatchVod {
@@ -30,6 +46,8 @@ export interface MatchVod {
 
 export interface Match {
   id: string;
+  rosterId?: string;
+  game?: string;
   type: MatchType;
   tournamentName?: string;
   opponentName: string;
@@ -37,6 +55,7 @@ export interface Match {
   outcome: MatchResultOutcome;
   overallScore: string;
   maps: MatchMapResult[];
+  playerStats?: MatchPlayerStats[];
   vods?: MatchVod[];
   screenshotUrls?: string[];
   createdAt: string;
@@ -44,6 +63,8 @@ export interface Match {
 
 export const createMatchSchema = z
   .object({
+    rosterId: z.string().optional(),
+    game: z.string().optional(),
     type: z.enum(['scrim', 'tournament'] as const),
     tournamentName: z.string().optional(),
     opponentName: z.string().min(2, 'Ingresa el nombre del equipo rival'),
@@ -54,9 +75,45 @@ export const createMatchSchema = z
           mapName: z.string().min(1, 'Selecciona un mapa'),
           teamScore: z.number().min(0, 'Puntaje de URS Gamara debe ser 0 o superior'),
           opponentScore: z.number().min(0, 'Puntaje del rival debe ser 0 o superior'),
+          playerStats: z
+            .array(
+              z.object({
+                playerId: z.string().optional(),
+                playerNick: z.string(),
+                gameTag: z.string().optional(),
+                agent: z.string().optional(),
+                agentIcon: z.string().optional(),
+                kills: z.number(),
+                deaths: z.number(),
+                assists: z.number(),
+                firstKills: z.number().optional(),
+                kdaRatio: z.number().optional(),
+                hsPercentage: z.number().optional(),
+                isGuest: z.boolean().optional(),
+              })
+            )
+            .optional(),
         })
       )
       .min(1, 'Debes agregar al menos un mapa a la serie/partido'),
+    playerStats: z
+      .array(
+        z.object({
+          playerId: z.string().optional(),
+          playerNick: z.string(),
+          gameTag: z.string().optional(),
+          agent: z.string().optional(),
+          agentIcon: z.string().optional(),
+          kills: z.number(),
+          deaths: z.number(),
+          assists: z.number(),
+          firstKills: z.number().optional(),
+          kdaRatio: z.number().optional(),
+          hsPercentage: z.number().optional(),
+          isGuest: z.boolean().optional(),
+        })
+      )
+      .optional(),
     vods: z
       .array(
         z.object({

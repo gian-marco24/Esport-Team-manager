@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
 import { useLoginForm } from '../hooks/useLoginForm';
 import { Input } from '../../../components/ui/Input';
@@ -58,15 +57,6 @@ export const LoginForm: React.FC = () => {
       >
         Ingresar al Portal
       </Button>
-
-      <div className="text-center pt-2">
-        <p className="text-xs text-gray-400">
-          ¿Aún no tienes cuenta?{' '}
-          <Link to="/register" className="text-[#E2B86E] hover:text-[#8B44F7] font-semibold underline transition-colors">
-            Regístrate aquí
-          </Link>
-        </p>
-      </div>
     </form>
   );
 };

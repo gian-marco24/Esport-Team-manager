@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Calendar, Image as ImageIcon, Trash2, X, ChevronLeft, ChevronRight, Video, ExternalLink, Edit3, AlertTriangle } from 'lucide-react';
+import { Trophy, Calendar, Image as ImageIcon, Trash2, X, ChevronLeft, ChevronRight, Video, ExternalLink, Edit3, AlertTriangle, Sparkles } from 'lucide-react';
 import type { Match } from '../types';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
@@ -138,8 +138,26 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
           </div>
         )}
 
+        {/* Screenshot Carousel Button (Prioritized above VODs) */}
+        {screenshots.length > 0 && (
+          <div>
+            <button
+              onClick={() => {
+                setCurrentImageIndex(0);
+                setShowScreenshotModal(true);
+              }}
+              className="w-full flex items-center justify-center space-x-1.5 py-1.5 px-3 bg-[#26143E]/60 hover:bg-[#522B80]/60 border border-[#8B44F7]/40 rounded-lg text-xs text-[#8B44F7] hover:text-[#E2B86E] font-semibold transition-colors"
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>
+                Ver Captura del Resultado {screenshots.length > 1 ? `(${screenshots.length})` : ''}
+              </span>
+            </button>
+          </div>
+        )}
+
         {/* VODs Section (Single VOD or Multi-VOD List) */}
-        <div className="pt-1">
+        <div>
           {vods.length === 0 ? (
             <div className="relative group/tooltip inline-block w-full">
               <button
@@ -188,23 +206,16 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
           )}
         </div>
 
-        {/* Screenshot Carousel Button */}
-        {screenshots.length > 0 && (
-          <div>
-            <button
-              onClick={() => {
-                setCurrentImageIndex(0);
-                setShowScreenshotModal(true);
-              }}
-              className="w-full flex items-center justify-center space-x-1.5 py-1.5 px-3 bg-[#26143E]/60 hover:bg-[#522B80]/60 border border-[#8B44F7]/40 rounded-lg text-xs text-[#8B44F7] font-semibold transition-colors"
-            >
-              <ImageIcon className="w-3.5 h-3.5" />
-              <span>
-                Ver Captura del Resultado {screenshots.length > 1 ? `(${screenshots.length})` : ''}
-              </span>
-            </button>
-          </div>
-        )}
+        {/* View Match Stats & Map Analysis Button */}
+        <div className="pt-0.5">
+          <Link
+            to={`/dashboard/scrims/match/${match.id}/stats`}
+            className="w-full flex items-center justify-center space-x-1.5 py-2 px-3 bg-gradient-to-r from-[#522B80]/70 via-[#26143E] to-[#522B80]/70 hover:from-[#8B44F7] hover:to-[#522B80] border border-[#8B44F7]/50 hover:border-[#E2B86E] rounded-xl text-xs text-white hover:text-[#E2B86E] font-bold transition-all shadow-md group"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#E2B86E] group-hover:scale-110 transition-transform" />
+            <span>Ver Estadísticas y Rendimiento por Mapa</span>
+          </Link>
+        </div>
       </Card>
 
       {/* Screenshot Carousel Modal */}

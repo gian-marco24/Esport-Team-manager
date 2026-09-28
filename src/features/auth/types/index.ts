@@ -16,6 +16,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
+  gameTag?: string;
   role: UserRole;
   teamRole?: TeamRole;
   rosterAssignments?: RosterMemberAssignment[];
@@ -42,6 +43,7 @@ export type LoginFormData = z.infer<typeof loginSchema>;
 export const registerSchema = z.object({
   code: z.string().min(1, 'Código de invitación requerido'),
   email: z.string().email('Ingresa un correo electrónico válido'),
+  gameTag: z.string().min(1, 'Ingresa tu Tag del juego (ej: #LAN, #1234, #LAS)'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   confirmPassword: z.string().min(6, 'Confirma tu contraseña'),
   birthDate: z.string().min(1, 'Selecciona tu fecha de nacimiento'),

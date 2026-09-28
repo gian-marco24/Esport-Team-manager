@@ -42,6 +42,8 @@ export class FirebaseMatchAdapter implements IMatchPort {
 
     const newMatch: Match = {
       id: matchId,
+      rosterId: data.rosterId,
+      game: data.game,
       type: data.type,
       tournamentName: data.type === 'tournament' ? data.tournamentName : undefined,
       opponentName: data.opponentName,
@@ -49,6 +51,7 @@ export class FirebaseMatchAdapter implements IMatchPort {
       outcome,
       overallScore,
       maps: data.maps,
+      playerStats: data.playerStats || (data.maps && data.maps[0]?.playerStats ? data.maps[0].playerStats : []),
       vods: data.vods || [],
       screenshotUrls: data.screenshotUrls || [],
       createdAt: new Date().toISOString(),
@@ -65,6 +68,8 @@ export class FirebaseMatchAdapter implements IMatchPort {
 
     const updatedMatch: Match = {
       id,
+      rosterId: data.rosterId,
+      game: data.game,
       type: data.type,
       tournamentName: data.type === 'tournament' ? data.tournamentName : undefined,
       opponentName: data.opponentName,
@@ -72,6 +77,7 @@ export class FirebaseMatchAdapter implements IMatchPort {
       outcome,
       overallScore,
       maps: data.maps,
+      playerStats: data.playerStats || (data.maps && data.maps[0]?.playerStats ? data.maps[0].playerStats : []),
       vods: data.vods || [],
       screenshotUrls: data.screenshotUrls || [],
       createdAt: new Date().toISOString(),

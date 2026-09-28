@@ -84,6 +84,7 @@ export interface TeamMember {
   id: string;
   email: string;
   displayName: string; // Nickname
+  gameTag?: string; // e.g. #LAN, #1234
   teamRole: TeamRole;
   rosterAssignments: RosterMemberAssignment[];
   globalSubrole?: ManagerSubrole | StaffSubrole | string;

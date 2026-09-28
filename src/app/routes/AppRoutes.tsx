@@ -12,28 +12,16 @@ import { DashboardPage } from '../../features/stats-analytics/pages/DashboardPag
 import { ScrimsPage } from '../../features/scrims-tournaments/pages/ScrimsPage';
 import { NewMatchResultPage } from '../../features/scrims-tournaments/pages/NewMatchResultPage';
 import { EditMatchResultPage } from '../../features/scrims-tournaments/pages/EditMatchResultPage';
+import { MatchStatsDetailPage } from '../../features/scrims-tournaments/pages/MatchStatsDetailPage';
 import { VodsPage } from '../../features/resources-vods/pages/VodsPage';
 import { VodDetailPage } from '../../features/resources-vods/pages/VodDetailPage';
 import { SchedulePage } from '../../features/schedule/pages/SchedulePage';
-import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
 
+import { StatsAnalyticsPage } from '../../features/stats-analytics/pages/StatsAnalyticsPage';
 import { TeamPage } from '../../features/teams/pages/TeamPage';
 import { ProfilePage } from '../../features/profile/pages/ProfilePage';
+import { NotesPage } from '../../features/notes/pages/NotesPage';
 import { useDynamicTitle } from '../../utils/useDynamicTitle';
-
-const UnimplementedPlaceholder: React.FC<{ title: string; description: string }> = ({
-  title,
-  description,
-}) => (
-  <div className="p-8 max-w-2xl mx-auto text-center space-y-4">
-    <Card glow="purple" className="p-8 space-y-4">
-      <Badge variant="gold">{title}</Badge>
-      <h2 className="text-2xl font-black text-white">{title}</h2>
-      <p className="text-sm text-gray-400">{description}</p>
-    </Card>
-  </div>
-);
 
 export const AppRoutes: React.FC = () => {
   useDynamicTitle();
@@ -64,6 +52,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="scrims" element={<ScrimsPage />} />
         <Route path="scrims/new" element={<NewMatchResultPage />} />
         <Route path="scrims/edit/:id" element={<EditMatchResultPage />} />
+        <Route path="scrims/match/:id/stats" element={<MatchStatsDetailPage />} />
+        <Route path="scrims/:id/stats" element={<MatchStatsDetailPage />} />
         <Route path="vods" element={<VodsPage />} />
         <Route path="vods/:id" element={<VodDetailPage />} />
         
@@ -79,24 +69,14 @@ export const AppRoutes: React.FC = () => {
         {/* Plantilla & Roles (exclusivo CEO / Staff) */}
         <Route path="team" element={<TeamPage />} />
 
-        <Route
-          path="notes"
-          element={
-            <UnimplementedPlaceholder
-              title="Estrategias & Notas"
-              description="Repositorio táctico de ejecuciones, composiciones y libros de jugadas."
-            />
-          }
-        />
-        <Route
-          path="stats"
-          element={
-            <UnimplementedPlaceholder
-              title="Estadísticas & Análisis"
-              description="Métricas avanzadas de rendimiento por mapa, agente e integrante."
-            />
-          }
-        />
+        <Route path="notes" element={<NotesPage />} />
+        <Route path="notas" element={<NotesPage />} />
+        <Route path="playbooks" element={<NotesPage />} />
+        
+        {/* Estadísticas & Análisis */}
+        <Route path="stats" element={<StatsAnalyticsPage />} />
+        <Route path="estadisticas" element={<StatsAnalyticsPage />} />
+        <Route path="analytics" element={<StatsAnalyticsPage />} />
 
         {/* Catch-all dentro de dashboard */}
         <Route path="*" element={<DashboardPage />} />

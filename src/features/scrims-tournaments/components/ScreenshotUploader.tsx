@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Upload, Link as LinkIcon, X, Loader2 } from 'lucide-react';
+import { Upload, Link as LinkIcon, X, Loader2, Sparkles, Scan } from 'lucide-react';
 import { Input } from '../../../components/ui/Input';
 
 interface ScreenshotUploaderProps {
   screenshotUrls: string[];
   isUploading?: boolean;
   maxAllowed?: number;
+  isValorant?: boolean;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveScreenshot: (index: number) => void;
   onAddDirectUrl: (url: string) => void;
+  onScanScreenshot?: (index: number) => void;
   error?: string;
 }
 
@@ -16,9 +18,11 @@ export const ScreenshotUploader: React.FC<ScreenshotUploaderProps> = ({
   screenshotUrls = [],
   isUploading = false,
   maxAllowed = 5,
+  isValorant = true,
   onFileChange,
   onRemoveScreenshot,
   onAddDirectUrl,
+  onScanScreenshot,
   error,
 }) => {
   const [tab, setTab] = useState<'file' | 'url'>('file');
@@ -36,9 +40,18 @@ export const ScreenshotUploader: React.FC<ScreenshotUploaderProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
-          Capturas del Resultado ({screenshotUrls.length}/{maxAllowed})
-        </label>
+        <div className="flex items-center space-x-2">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+            Capturas del Resultado ({screenshotUrls.length}/{maxAllowed})
+          </label>
+          {isValorant && (
+            <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-[#8B44F7]/20 border border-[#8B44F7]/50 rounded-full text-[10px] font-bold text-[#E2B86E]">
+              <Sparkles className="w-3 h-3" />
+              <span>OCR IA Habilitado</span>
+            </span>
+          )}
+        </div>
+
         <div className="flex space-x-2 text-xs">
           <button
             type="button"
@@ -71,17 +84,34 @@ export const ScreenshotUploader: React.FC<ScreenshotUploaderProps> = ({
           {screenshotUrls.map((url, idx) => (
             <div
               key={idx}
-              className="relative rounded-xl overflow-hidden border border-[#8B44F7]/40 bg-[#0D0914] h-32 flex justify-center items-center group shadow-md"
+              className="relative rounded-xl overflow-hidden border border-[#8B44F7]/40 bg-[#0D0914] h-36 flex justify-center items-center group shadow-md"
             >
               <img src={url} alt={`Captura ${idx + 1}`} className="object-cover w-full h-full" />
+              
+              {/* Delete button */}
               <button
                 type="button"
                 onClick={() => onRemoveScreenshot(idx)}
-                className="absolute top-1.5 right-1.5 p-1 bg-red-950/80 border border-red-500 text-red-300 rounded-full hover:bg-red-900 transition-colors shadow-lg"
+                className="absolute top-1.5 right-1.5 p-1 bg-red-950/80 border border-red-500 text-red-300 rounded-full hover:bg-red-900 transition-colors shadow-lg z-10"
                 title="Quitar captura"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
+
+              {/* Scan OCR button (if Valorant) */}
+              {isValorant && onScanScreenshot && (
+                <button
+                  type="button"
+                  onClick={() => onScanScreenshot(idx)}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center space-y-1 transition-opacity text-white font-bold text-xs backdrop-blur-xs"
+                >
+                  <Scan className="w-6 h-6 text-[#E2B86E] animate-pulse" />
+                  <span className="text-[#E2B86E] bg-[#26143E]/90 px-2 py-1 rounded-md border border-[#8B44F7]/60 text-[11px]">
+                    Procesar con OCR
+                  </span>
+                </button>
+              )}
+
               <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 bg-black/70 text-[10px] text-[#E2B86E] font-bold rounded">
                 Captura #{idx + 1}
               </span>
@@ -96,7 +126,7 @@ export const ScreenshotUploader: React.FC<ScreenshotUploaderProps> = ({
           {isUploading ? (
             <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[#8B44F7] rounded-xl bg-[#180d29]/80 space-y-2">
               <Loader2 className="w-6 h-6 text-[#E2B86E] animate-spin" />
-              <p className="text-xs font-bold text-white">Subiendo captura a Cloudinary...</p>
+              <p className="text-xs font-bold text-white">Subiendo y preparando captura...</p>
             </div>
           ) : tab === 'file' ? (
             <label className="flex flex-col items-center justify-center p-5 border-2 border-dashed border-[#522B80]/60 hover:border-[#8B44F7] rounded-xl bg-[#180d29]/60 cursor-pointer transition-colors group">
@@ -106,7 +136,9 @@ export const ScreenshotUploader: React.FC<ScreenshotUploaderProps> = ({
               <p className="text-xs font-semibold text-gray-200">
                 Haz clic para agregar captura {screenshotUrls.length + 1} de {maxAllowed}
               </p>
-              <p className="text-[10px] text-gray-400 mt-0.5">PNG, JPG, WEBP (vía Cloudinary)</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">
+                {isValorant ? 'Al subir una captura de Valorant se abrirá el lector automático de KDA y rondas' : 'PNG, JPG, WEBP (vía Cloudinary)'}
+              </p>
               <input type="file" accept="image/*" onChange={onFileChange} className="hidden" />
             </label>
           ) : (

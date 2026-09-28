@@ -21,6 +21,7 @@ export const useRegisterForm = (invitationCode: string) => {
     defaultValues: {
       code: invitationCode,
       email: '',
+      gameTag: '',
       password: '',
       confirmPassword: '',
       birthDate: '',

@@ -115,6 +115,7 @@ export class FirebaseTeamAdapter implements ITeamPort {
               id: d.id,
               email: data.email || '',
               displayName: data.displayName || data.nick || (isCeo ? 'Zeyn' : 'Integrante'),
+              gameTag: data.gameTag || (isCeo ? '#CEO' : undefined),
               teamRole,
               rosterAssignments: data.rosterAssignments || [],
               globalSubrole: data.globalSubrole || (isCeo ? 'CEO / Propietario' : data.position),
@@ -218,6 +219,48 @@ export class FirebaseTeamAdapter implements ITeamPort {
     const idx = members.findIndex((m) => m.id === memberId);
     if (idx !== -1) {
       members[idx].globalSubrole = subrole;
+      this.saveLocalMembers(members);
+    }
+  }
+
+  async updateMemberNick(
+    memberId: string,
+    newNick: string,
+    newGameTag?: string
+  ): Promise<void> {
+    const trimmedNick = newNick.trim();
+    const trimmedTag = newGameTag !== undefined ? (newGameTag.trim() || null) : undefined;
+
+    if (db) {
+      try {
+        const docRef = doc(db, 'users', memberId);
+        const updates: Record<string, any> = { displayName: trimmedNick };
+        if (trimmedTag !== undefined) {
+          updates.gameTag = trimmedTag;
+        }
+        await updateDoc(docRef, updates);
+      } catch (err) {
+        console.warn('Firestore update nick error, fallback to setDoc merge:', err);
+        try {
+          const docRef = doc(db, 'users', memberId);
+          const updates: Record<string, any> = { displayName: trimmedNick };
+          if (trimmedTag !== undefined) {
+            updates.gameTag = trimmedTag;
+          }
+          await setDoc(docRef, updates, { merge: true });
+        } catch (e) {
+          console.warn('Firestore setDoc merge error:', e);
+        }
+      }
+    }
+
+    const members = this.getLocalMembers();
+    const idx = members.findIndex((m) => m.id === memberId);
+    if (idx !== -1) {
+      members[idx].displayName = trimmedNick;
+      if (trimmedTag !== undefined) {
+        members[idx].gameTag = trimmedTag || undefined;
+      }
       this.saveLocalMembers(members);
     }
   }

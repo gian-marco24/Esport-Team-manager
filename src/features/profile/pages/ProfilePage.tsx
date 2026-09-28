@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   User as UserIcon,
   Shield,
-  Trophy,
   Target,
   Flame,
   Award,
@@ -16,6 +15,9 @@ import {
   Activity,
   CheckCircle2,
   Layers,
+  Edit3,
+  CheckCircle,
+  X,
 } from 'lucide-react';
 import { useAuthContext } from '../../../app/providers/AuthProvider';
 import { URS_GAMARA_TEAM } from '../../teams/config/currentTeam.config';
@@ -25,27 +27,82 @@ import type { Roster, TeamMember, TeamRole } from '../../teams/types';
 import type { Match } from '../../scrims-tournaments/types';
 import { Card, CardHeader, CardTitle } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
+import { Button } from '../../../components/ui/Button';
 import { LoadingSpinner } from '../../../components/feedback/LoadingSpinner';
+import { EditNicknameModal } from '../components/EditNicknameModal';
+import { valorantApiService, type ValorantAgent, type ValorantMapData } from '../../../services/valorantApiService';
+
+interface UserAgentStat {
+  agentName: string;
+  agentIcon?: string;
+  timesPlayed: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  kdaRatio: number;
+}
+
+interface UserMapStat {
+  mapName: string;
+  splashUrl?: string;
+  displayIcon?: string;
+  timesPlayed: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  kdaRatio: number;
+}
+
+interface UserMatchParticipation {
+  matchId: string;
+  date: string;
+  opponentName: string;
+  type: string;
+  overallScore: string;
+  outcome: 'win' | 'loss' | 'draw';
+  mapName: string;
+  agent?: string;
+  agentIcon?: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  firstKills: number;
+  kdaRatio: number;
+}
 
 export const ProfilePage: React.FC = () => {
-  const { user } = useAuthContext();
+  const { user, updateUser } = useAuthContext();
   const [loading, setLoading] = useState(true);
   const [allRosters, setAllRosters] = useState<Roster[]>([]);
   const [memberData, setMemberData] = useState<TeamMember | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [agents, setAgents] = useState<ValorantAgent[]>([]);
+  const [mapsData, setMapsData] = useState<ValorantMapData[]>([]);
+  const [isEditNickModalOpen, setIsEditNickModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfileData = async () => {
       setLoading(true);
       try {
-        const [rosters, members, matchesData] = await Promise.all([
+        const [rosters, members, matchesData, agentList, mapList] = await Promise.all([
           teamService.getRosters(URS_GAMARA_TEAM.id),
           teamService.getMembers(URS_GAMARA_TEAM.id),
           matchService.getMatches(),
+          valorantApiService.getAgents(),
+          valorantApiService.getMaps(),
         ]);
 
         setAllRosters(rosters);
         setMatches(matchesData);
+        setAgents(agentList);
+        setMapsData(mapList);
 
         if (user) {
           const found = members.find(
@@ -80,9 +137,6 @@ export const ProfilePage: React.FC = () => {
       : user?.role === 'manager'
       ? 'Manager'
       : 'Staff');
-
-  const isPlayer = activeRole.toLowerCase() === 'player';
-  const isCoach = activeRole.toLowerCase() === 'coach';
 
   // Roster assignments
   const userAssignments =
@@ -146,22 +200,236 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // Coach roster match stats calculation
-  const totalMatchesCount = matches.length;
-  const winsCount = matches.filter((m) => m.outcome === 'win').length;
-  const lossesCount = matches.filter((m) => m.outcome === 'loss').length;
-  const drawsCount = matches.filter((m) => m.outcome === 'draw').length;
-  const winRate =
-    totalMatchesCount > 0
-      ? Math.round((winsCount / totalMatchesCount) * 100)
-      : 0;
+  // Deep user statistics calculation across all matches
+  const detailedUserStats = useMemo(() => {
+    const userNick = (user?.displayName || memberData?.displayName || '').trim().toLowerCase();
+    const userTag = (user?.gameTag || memberData?.gameTag || '').trim().toLowerCase();
+    const userId = user?.id || memberData?.id;
+
+    let totalMatches = 0;
+    let wins = 0;
+    let losses = 0;
+    let draws = 0;
+    let totalKills = 0;
+    let totalDeaths = 0;
+    let totalAssists = 0;
+    let totalFirstKills = 0;
+
+    const agentMap: Record<string, { times: number; wins: number; losses: number; kills: number; deaths: number; assists: number }> = {};
+    const mapPerformanceMap: Record<string, { times: number; wins: number; losses: number; kills: number; deaths: number; assists: number }> = {};
+    const participationList: UserMatchParticipation[] = [];
+
+    matches.forEach((m) => {
+      const matchMaps = m.maps && m.maps.length > 0 ? m.maps : [];
+
+      matchMaps.forEach((map) => {
+        const isMapWon = map.teamScore > map.opponentScore;
+        const isMapLost = map.teamScore < map.opponentScore;
+        const pStats = map.playerStats || m.playerStats || [];
+
+        const targetP = pStats.find((p) => {
+          if (p.isGuest || p.playerNick.toLowerCase().startsWith('invitado')) return false;
+          const pNick = p.playerNick.trim().toLowerCase();
+          const pTag = (p.gameTag || '').trim().toLowerCase();
+          const pId = p.playerId;
+
+          return (
+            (userId && pId === userId) ||
+            pNick === userNick ||
+            (userTag && pTag.includes(userTag))
+          );
+        });
+
+        if (targetP) {
+          totalMatches++;
+          if (isMapWon) wins++;
+          else if (isMapLost) losses++;
+          else draws++;
+
+          totalKills += targetP.kills || 0;
+          totalDeaths += targetP.deaths || 0;
+          totalAssists += targetP.assists || 0;
+          totalFirstKills += targetP.firstKills || 0;
+
+          const pKdaRatio =
+            targetP.kdaRatio ??
+            (targetP.deaths > 0
+              ? Number(((targetP.kills + targetP.assists) / targetP.deaths).toFixed(2))
+              : targetP.kills + targetP.assists);
+
+          // Agent accumulation
+          const agentKey = targetP.agent || 'Agente';
+          if (!agentMap[agentKey]) {
+            agentMap[agentKey] = { times: 0, wins: 0, losses: 0, kills: 0, deaths: 0, assists: 0 };
+          }
+          agentMap[agentKey].times++;
+          if (isMapWon) agentMap[agentKey].wins++;
+          else if (isMapLost) agentMap[agentKey].losses++;
+          agentMap[agentKey].kills += targetP.kills || 0;
+          agentMap[agentKey].deaths += targetP.deaths || 0;
+          agentMap[agentKey].assists += targetP.assists || 0;
+
+          // Map accumulation
+          const mapKey = map.mapName.trim() || 'Mapa';
+          if (!mapPerformanceMap[mapKey]) {
+            mapPerformanceMap[mapKey] = { times: 0, wins: 0, losses: 0, kills: 0, deaths: 0, assists: 0 };
+          }
+          mapPerformanceMap[mapKey].times++;
+          if (isMapWon) mapPerformanceMap[mapKey].wins++;
+          else if (isMapLost) mapPerformanceMap[mapKey].losses++;
+          mapPerformanceMap[mapKey].kills += targetP.kills || 0;
+          mapPerformanceMap[mapKey].deaths += targetP.deaths || 0;
+          mapPerformanceMap[mapKey].assists += targetP.assists || 0;
+
+          // Icon matching
+          let agentIcon = targetP.agentIcon;
+          if (!agentIcon && targetP.agent) {
+            const foundAgent = agents.find(
+              (a) => a.displayName.toLowerCase() === targetP.agent!.toLowerCase()
+            );
+            agentIcon = foundAgent?.displayIcon;
+          }
+
+          participationList.push({
+            matchId: m.id,
+            date: m.date,
+            opponentName: m.opponentName,
+            type: m.type,
+            overallScore: `${map.teamScore} - ${map.opponentScore}`,
+            outcome: isMapWon ? 'win' : isMapLost ? 'loss' : 'draw',
+            mapName: map.mapName,
+            agent: targetP.agent,
+            agentIcon,
+            kills: targetP.kills,
+            deaths: targetP.deaths,
+            assists: targetP.assists,
+            firstKills: targetP.firstKills || 0,
+            kdaRatio: pKdaRatio,
+          });
+        }
+      });
+    });
+
+    const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
+    const avgKills = totalMatches > 0 ? Math.round((totalKills / totalMatches) * 10) / 10 : 0;
+    const avgDeaths = totalMatches > 0 ? Math.round((totalDeaths / totalMatches) * 10) / 10 : 0;
+    const avgAssists = totalMatches > 0 ? Math.round((totalAssists / totalMatches) * 10) / 10 : 0;
+    const avgFirstKills = totalMatches > 0 ? Math.round((totalFirstKills / totalMatches) * 10) / 10 : 0;
+    const kdaRatio =
+      totalDeaths > 0
+        ? Math.round(((totalKills + totalAssists) / totalDeaths) * 100) / 100
+        : totalKills + totalAssists;
+
+    // Convert agent map to sorted array
+    const agentList: UserAgentStat[] = Object.entries(agentMap).map(([agentName, data]) => {
+      const foundAgent = agents.find((a) => a.displayName.toLowerCase() === agentName.toLowerCase());
+      const aWinRate = data.times > 0 ? Math.round((data.wins / data.times) * 100) : 0;
+      const aKda =
+        data.deaths > 0
+          ? Math.round(((data.kills + data.assists) / data.deaths) * 100) / 100
+          : data.kills + data.assists;
+
+      return {
+        agentName,
+        agentIcon: foundAgent?.displayIcon,
+        timesPlayed: data.times,
+        wins: data.wins,
+        losses: data.losses,
+        winRate: aWinRate,
+        kills: data.kills,
+        deaths: data.deaths,
+        assists: data.assists,
+        kdaRatio: aKda,
+      };
+    }).sort((a, b) => b.timesPlayed - a.timesPlayed || b.winRate - a.winRate);
+
+    // Convert map stats to sorted array
+    const mapList: UserMapStat[] = Object.entries(mapPerformanceMap).map(([mapName, data]) => {
+      const mapMeta = mapsData.find((m) => m.displayName.toLowerCase() === mapName.toLowerCase());
+      const mWinRate = data.times > 0 ? Math.round((data.wins / data.times) * 100) : 0;
+      const mKda =
+        data.deaths > 0
+          ? Math.round(((data.kills + data.assists) / data.deaths) * 100) / 100
+          : data.kills + data.assists;
+
+      return {
+        mapName,
+        splashUrl: mapMeta?.splash,
+        displayIcon: mapMeta?.displayIcon || mapMeta?.listViewIcon,
+        timesPlayed: data.times,
+        wins: data.wins,
+        losses: data.losses,
+        winRate: mWinRate,
+        kills: data.kills,
+        deaths: data.deaths,
+        assists: data.assists,
+        kdaRatio: mKda,
+      };
+    }).sort((a, b) => b.timesPlayed - a.timesPlayed || b.winRate - a.winRate);
+
+    return {
+      totalMatches,
+      wins,
+      losses,
+      draws,
+      winRate,
+      totalKills,
+      totalDeaths,
+      totalAssists,
+      totalFirstKills,
+      avgKills,
+      avgDeaths,
+      avgAssists,
+      avgFirstKills,
+      kdaRatio,
+      formattedKda: `${avgKills} / ${avgDeaths} / ${avgAssists}`,
+      agentList,
+      mapList,
+      participationList: participationList.reverse(),
+    };
+  }, [matches, user, memberData, agents, mapsData]);
+
+  const handleSaveNickname = async (newNick: string, newGameTag?: string) => {
+    await updateUser({ displayName: newNick, gameTag: newGameTag });
+    setMemberData((prev) =>
+      prev
+        ? { ...prev, displayName: newNick, gameTag: newGameTag }
+        : {
+            id: user?.id || '',
+            email: user?.email || '',
+            displayName: newNick,
+            gameTag: newGameTag,
+            teamRole: activeRole,
+            rosterAssignments: userAssignments,
+            createdAt: user?.createdAt || new Date().toISOString(),
+          }
+    );
+    setSuccessMessage('¡Nickname actualizado con éxito!');
+    setTimeout(() => setSuccessMessage(null), 4000);
+  };
 
   if (loading) {
     return <LoadingSpinner label="Cargando perfil del usuario..." />;
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto animate-fade-in pb-8">
+    <div className="space-y-6 max-w-6xl mx-auto animate-fadeIn pb-12">
+      {/* Success Notification Alert */}
+      {successMessage && (
+        <div className="p-3.5 bg-emerald-950/80 border border-emerald-500/50 rounded-xl flex items-center justify-between text-emerald-300 text-xs shadow-lg shadow-emerald-950/50 animate-fadeIn">
+          <div className="flex items-center space-x-2.5">
+            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="font-semibold">{successMessage}</span>
+          </div>
+          <button
+            onClick={() => setSuccessMessage(null)}
+            className="text-emerald-400 hover:text-white p-1 rounded transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* 1. HEADER HERO BANNER */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#1c0c32] via-[#26143E] to-[#140b21] border border-[#522B80]/60 rounded-2xl p-6 shadow-xl">
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-6 opacity-10 pointer-events-none">
@@ -188,9 +456,23 @@ export const ProfilePage: React.FC = () => {
                 <h1 className="text-2xl sm:text-3xl font-black text-white tracking-wide">
                   {user?.displayName || 'Integrante'}
                 </h1>
+                {(memberData?.gameTag || user?.gameTag) && (
+                  <span className="text-base font-extrabold text-[#E2B86E] bg-[#26143E] px-2.5 py-0.5 rounded-lg border border-[#8B44F7]/40">
+                    {memberData?.gameTag || user?.gameTag}
+                  </span>
+                )}
                 <Badge variant={getRoleBadgeVariant(activeRole)} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
                   {activeRole}
                 </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditNickModalOpen(true)}
+                  leftIcon={<Edit3 className="w-3.5 h-3.5 text-[#E2B86E]" />}
+                  className="bg-[#26143E]/80 hover:bg-[#522B80]/80 border border-[#8B44F7]/40 text-xs text-white px-2.5 py-1 ml-1"
+                >
+                  Cambiar Nick
+                </Button>
               </div>
 
               <p className="text-xs text-gray-300 flex items-center gap-1.5">
@@ -237,7 +519,7 @@ export const ProfilePage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. MAIN DETAILS GRID (DATOS CARGADOS & ROSTERS) */}
+      {/* 2. MAIN DETAILS GRID (DATOS & ROSTERS) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* DATOS CARGADOS */}
         <div className="lg:col-span-5 space-y-4">
@@ -247,13 +529,36 @@ export const ProfilePage: React.FC = () => {
                 <UserIcon className="w-4 h-4 text-[#8B44F7]" />
                 <span>Datos del Perfil</span>
               </CardTitle>
-              <Badge variant="purple" className="text-[9px]">ID Verificado</Badge>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setIsEditNickModalOpen(true)}
+                  className="text-xs text-[#E2B86E] hover:text-[#f3cd8e] flex items-center gap-1 font-semibold transition-colors"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Editar Nick</span>
+                </button>
+                <Badge variant="purple" className="text-[9px]">ID Verificado</Badge>
+              </div>
             </CardHeader>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs flex-1">
-              <div className="p-3 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1">
-                <span className="text-[10px] text-gray-400 uppercase font-semibold block">Nickname</span>
-                <p className="font-bold text-white text-sm truncate">{user?.displayName}</p>
+              <div className="p-3 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1 relative group">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-gray-400 uppercase font-semibold block">Nickname & Tag</span>
+                  <button
+                    onClick={() => setIsEditNickModalOpen(true)}
+                    className="text-gray-400 hover:text-[#E2B86E] transition-colors p-0.5"
+                    title="Editar Nickname"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="font-bold text-white text-sm truncate">
+                  {user?.displayName}{' '}
+                  {(memberData?.gameTag || user?.gameTag) && (
+                    <span className="text-[#E2B86E] text-xs font-mono">{memberData?.gameTag || user?.gameTag}</span>
+                  )}
+                </p>
               </div>
 
               <div className="p-3 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1">
@@ -287,7 +592,7 @@ export const ProfilePage: React.FC = () => {
               <div className="p-3 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1 sm:col-span-2">
                 <span className="text-[10px] text-gray-400 uppercase font-semibold block">Función / Posición en Equipo</span>
                 <p className="font-semibold text-white truncate">
-                  {memberData?.globalSubrole || user?.globalSubrole || user?.position || 'Sin subrol asignado'}
+                  {memberData?.globalSubrole || user?.globalSubrole || user?.position || 'Miembro Oficial'}
                 </p>
               </div>
             </div>
@@ -300,7 +605,7 @@ export const ProfilePage: React.FC = () => {
             <CardHeader className="p-0 border-b border-[#26143E] pb-3 flex items-center justify-between">
               <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
                 <Layers className="w-4 h-4 text-[#E2B86E]" />
-                <span>Rosters & Roles en el Equipo</span>
+                <span>Rosters & Alineaciones en el Equipo</span>
               </CardTitle>
               <span className="text-[10px] text-gray-400 font-medium">
                 {assignedRostersWithRoles.length} {assignedRostersWithRoles.length === 1 ? 'Roster' : 'Rosters'}
@@ -353,21 +658,10 @@ export const ProfilePage: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-[#26143E] flex items-center justify-center mx-auto text-gray-400">
                     <Gamepad2 className="w-5 h-5" />
                   </div>
-                  {isPlayer || isCoach ? (
-                    <>
-                      <p className="text-xs font-bold text-white">Sin asignación a roster activo</p>
-                      <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
-                        Actualmente no figuras en ningún roster de juego. La administración o coach te asignará al equipo competitivo correspondiente.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-xs font-bold text-white">Rol Organizacional / Administrativo</p>
-                      <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
-                        Como miembro de {activeRole}, gestionas las operaciones y estructura general de URS Gamara.
-                      </p>
-                    </>
-                  )}
+                  <p className="text-xs font-bold text-white">Plantilla General del Club</p>
+                  <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
+                    Formas parte de la organización URS Gamara con acceso a las actividades y seguimiento competitivo.
+                  </p>
                 </div>
               )}
 
@@ -381,180 +675,280 @@ export const ProfilePage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. CONDITIONAL STATS SECTION (ONLY FOR PLAYER OR COACH) */}
-      {isPlayer && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-black text-white tracking-wide flex items-center gap-2">
+      {/* 3. DETAILED STATS SECTION (GLOBAL KPIS) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between border-b border-[#26143E] pb-3">
+          <div className="space-y-0.5">
+            <h2 className="text-base sm:text-lg font-black text-white tracking-wide flex items-center gap-2">
               <Activity className="w-5 h-5 text-[#8B44F7]" />
-              <span>Estadísticas Individuales del Jugador</span>
+              <span>Estadísticas Detalladas de Rendimiento</span>
             </h2>
-            <Badge variant="purple" className="text-[9px]">Rendimiento Personal</Badge>
+            <p className="text-xs text-gray-400">
+              Métricas individuales acumuladas de todos los partidos, scrims y torneos en los que has participado.
+            </p>
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {/* KDA Card */}
-            <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-              <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
-                <Crosshair className="w-4 h-4" />
-              </div>
-              <p className="text-[10px] text-gray-400 uppercase font-semibold">KDA Ratio</p>
-              <p className="text-xl font-black text-white">{user?.stats?.kda || '0.00'}</p>
-              <p className="text-[9px] text-[#8B44F7] font-medium">Promedio</p>
-            </Card>
-
-            {/* Winrate Card */}
-            <Card glow="gold" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-              <div className="w-8 h-8 rounded-lg bg-[#A88144]/30 flex items-center justify-center text-[#E2B86E] mx-auto mb-1.5">
-                <Flame className="w-4 h-4" />
-              </div>
-              <p className="text-[10px] text-gray-400 uppercase font-semibold">Winrate</p>
-              <p className="text-xl font-black text-[#E2B86E]">{user?.stats?.winrate ?? 0}%</p>
-              <p className="text-[9px] text-emerald-400 font-medium">Efectividad</p>
-            </Card>
-
-            {/* Matches Played */}
-            <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-              <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
-                <Swords className="w-4 h-4" />
-              </div>
-              <p className="text-[10px] text-gray-400 uppercase font-semibold">Partidas</p>
-              <p className="text-xl font-black text-white">{user?.stats?.matchesPlayed ?? 0}</p>
-              <p className="text-[9px] text-gray-400 font-medium">Disputadas</p>
-            </Card>
-
-            {/* Headshot % */}
-            <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-              <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
-                <Target className="w-4 h-4" />
-              </div>
-              <p className="text-[10px] text-gray-400 uppercase font-semibold">Headshot %</p>
-              <p className="text-xl font-black text-white">{user?.stats?.hsPercentage ?? 0}%</p>
-              <p className="text-[9px] text-purple-300 font-medium">Precisión</p>
-            </Card>
-
-            {/* MVPs */}
-            <Card glow="gold" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-              <div className="w-8 h-8 rounded-lg bg-[#A88144]/30 flex items-center justify-center text-[#E2B86E] mx-auto mb-1.5">
-                <Trophy className="w-4 h-4" />
-              </div>
-              <p className="text-[10px] text-gray-400 uppercase font-semibold">MVPs</p>
-              <p className="text-xl font-black text-[#E2B86E]">{user?.stats?.mvpCount ?? 0}</p>
-              <p className="text-[9px] text-[#E2B86E] font-medium">Reconocimientos</p>
-            </Card>
-
-            {/* Main Agent / Hero */}
-            <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-              <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
-                <Award className="w-4 h-4" />
-              </div>
-              <p className="text-[10px] text-gray-400 uppercase font-semibold">Agente / Rol</p>
-              <p className="text-sm font-black text-white truncate px-1">
-                {user?.stats?.mainAgentOrHero || 'Por definir'}
-              </p>
-              <p className="text-[9px] text-gray-400 font-medium">Principal</p>
-            </Card>
-          </div>
+          <Badge variant="purple" className="text-[9px] font-bold uppercase">
+            {detailedUserStats.totalMatches} {detailedUserStats.totalMatches === 1 ? 'partida' : 'partidas'}
+          </Badge>
         </div>
-      )}
 
-      {isCoach && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-black text-white tracking-wide flex items-center gap-2">
-              <Activity className="w-5 h-5 text-[#E2B86E]" />
-              <span>Estadísticas de Rosters a Cargo</span>
-            </h2>
-            <Badge variant="gold" className="text-[9px]">Rendimiento Táctico</Badge>
-          </div>
+        {/* Top KPI Cards Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* KDA Card */}
+          <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
+            <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
+              <Crosshair className="w-4 h-4" />
+            </div>
+            <p className="text-[10px] text-gray-400 uppercase font-semibold">KDA Ratio</p>
+            <p className="text-xl font-black text-white">{detailedUserStats.kdaRatio.toFixed(2)}</p>
+            <p className="text-[9px] text-[#8B44F7] font-medium">{detailedUserStats.formattedKda}</p>
+          </Card>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card glow="gold" className="p-4 space-y-2 bg-[#180d29]/90">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400 font-medium">Partidas del Equipo</span>
-                <Swords className="w-4 h-4 text-[#E2B86E]" />
-              </div>
-              <p className="text-2xl font-black text-white">{totalMatchesCount}</p>
-              <p className="text-[10px] text-gray-400">Total registradas en el portal</p>
-            </Card>
+          {/* K/D/A Average Card */}
+          <Card glow="gold" className="p-4 text-center space-y-1 bg-[#180d29]/90">
+            <div className="w-8 h-8 rounded-lg bg-[#A88144]/30 flex items-center justify-center text-[#E2B86E] mx-auto mb-1.5">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <p className="text-[10px] text-gray-400 uppercase font-semibold">K / D / A Prom.</p>
+            <p className="text-sm font-black text-[#E2B86E] font-mono">{detailedUserStats.formattedKda}</p>
+            <p className="text-[9px] text-[#E2B86E] font-medium">Bajas / Muertes / Asist.</p>
+          </Card>
 
-            <Card glow="purple" className="p-4 space-y-2 bg-[#180d29]/90">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400 font-medium">Victorias / Derrotas</span>
-                <Trophy className="w-4 h-4 text-[#8B44F7]" />
-              </div>
-              <p className="text-2xl font-black text-white">
-                <span className="text-emerald-400">{winsCount}W</span>
-                <span className="text-gray-500 text-lg mx-1.5">-</span>
-                <span className="text-red-400">{lossesCount}L</span>
-              </p>
-              <p className="text-[10px] text-gray-400">
-                {drawsCount > 0 ? `${drawsCount} empates registrados` : 'Historial competitivo'}
-              </p>
-            </Card>
+          {/* Winrate Card */}
+          <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
+            <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
+              <Flame className="w-4 h-4" />
+            </div>
+            <p className="text-[10px] text-gray-400 uppercase font-semibold">Winrate</p>
+            <p className="text-xl font-black text-white">{detailedUserStats.winRate}%</p>
+            <p className="text-[9px] text-emerald-400 font-medium">
+              {detailedUserStats.wins}W - {detailedUserStats.losses}L
+            </p>
+          </Card>
 
-            <Card glow="gold" className="p-4 space-y-2 bg-[#180d29]/90">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400 font-medium">Winrate Global</span>
-                <Flame className="w-4 h-4 text-[#E2B86E]" />
-              </div>
-              <p className="text-2xl font-black text-[#E2B86E]">{winRate}%</p>
-              <div className="w-full bg-[#26143E] h-1.5 rounded-full overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-[#8B44F7] to-[#E2B86E] h-full rounded-full transition-all duration-500"
-                  style={{ width: `${winRate}%` }}
-                />
-              </div>
-            </Card>
+          {/* Matches Played */}
+          <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
+            <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
+              <Swords className="w-4 h-4" />
+            </div>
+            <p className="text-[10px] text-gray-400 uppercase font-semibold">Partidas</p>
+            <p className="text-xl font-black text-white">{detailedUserStats.totalMatches}</p>
+            <p className="text-[9px] text-gray-400 font-medium">Disputadas</p>
+          </Card>
 
-            <Card glow="purple" className="p-4 space-y-2 bg-[#180d29]/90">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400 font-medium">Rosters Asignados</span>
-                <Layers className="w-4 h-4 text-[#8B44F7]" />
-              </div>
-              <p className="text-2xl font-black text-white">
-                {assignedRostersWithRoles.length || 1}
-              </p>
-              <p className="text-[10px] text-gray-400">
-                {assignedRostersWithRoles.length > 0
-                  ? assignedRostersWithRoles.map((a) => a.roster?.game || 'Esport').join(', ')
-                  : 'URS Gamara General'}
-              </p>
-            </Card>
-          </div>
+          {/* First Bloods / FK */}
+          <Card glow="gold" className="p-4 text-center space-y-1 bg-[#180d29]/90">
+            <div className="w-8 h-8 rounded-lg bg-[#A88144]/30 flex items-center justify-center text-[#E2B86E] mx-auto mb-1.5">
+              <Target className="w-4 h-4" />
+            </div>
+            <p className="text-[10px] text-gray-400 uppercase font-semibold">1st Kills (FK)</p>
+            <p className="text-xl font-black text-[#E2B86E]">{detailedUserStats.totalFirstKills}</p>
+            <p className="text-[9px] text-gray-400 font-medium">
+              {detailedUserStats.avgFirstKills} por partida
+            </p>
+          </Card>
+
+          {/* Total Kills */}
+          <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
+            <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
+              <Award className="w-4 h-4" />
+            </div>
+            <p className="text-[10px] text-gray-400 uppercase font-semibold">Bajas Totales</p>
+            <p className="text-xl font-black text-white">{detailedUserStats.totalKills}</p>
+            <p className="text-[9px] text-purple-300 font-medium">{detailedUserStats.totalDeaths} muertes</p>
+          </Card>
         </div>
-      )}
 
-      {/* 4. MODULAR EXTENSIBLE SECTION (SLOTS READY FOR FUTURE EXPANSIONS) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-        {/* Próximos compromisos / Estado */}
-        <Card glow="purple" className="p-4 space-y-3 bg-[#140b21]/70 border border-[#26143E]">
-          <div className="flex items-center justify-between border-b border-[#26143E] pb-2.5">
-            <h3 className="text-xs font-bold text-white flex items-center gap-2">
-              <Calendar className="w-3.5 h-3.5 text-[#8B44F7]" />
-              <span>Compromisos & Calendario</span>
-            </h3>
-            <Badge variant="purple" className="text-[9px]">Sincronizado</Badge>
-          </div>
-          <p className="text-xs text-gray-400 leading-relaxed">
-            Tus horarios de entrenamientos, scrims oficiales y sesiones de VOD Review asignados aparecerán sincronizados con el calendario del equipo.
-          </p>
-        </Card>
+        {/* 4. AGENTS & MAPS BREAKDOWN (SIDE BY SIDE) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          {/* Most Played Agents */}
+          <Card glow="purple" className="p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-[#26143E] pb-2.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-[#8B44F7]" />
+                <span>Agentes Más Jugados ({detailedUserStats.agentList.length})</span>
+              </h3>
+            </div>
 
-        {/* Cuentas vinculadas & Logros */}
-        <Card glow="gold" className="p-4 space-y-3 bg-[#140b21]/70 border border-[#26143E]">
-          <div className="flex items-center justify-between border-b border-[#26143E] pb-2.5">
-            <h3 className="text-xs font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#E2B86E]" />
-              <span>Identidad & Cuentas Vinculadas</span>
-            </h3>
-            <Badge variant="gold" className="text-[9px]">Próximamente</Badge>
-          </div>
-          <p className="text-xs text-gray-400 leading-relaxed">
-            Podrás vincular tus IDs oficiales de Riot Games, Steam y Discord para mostrar tu rango competitivo y logros dentro del club.
-          </p>
-        </Card>
+            {detailedUserStats.agentList.length > 0 ? (
+              <div className="space-y-2">
+                {detailedUserStats.agentList.map((ag, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 bg-[#180d29]/80 border border-[#522B80]/40 rounded-xl flex items-center justify-between hover:border-[#8B44F7] transition-colors"
+                  >
+                    <div className="flex items-center space-x-3 min-w-0">
+                      {ag.agentIcon ? (
+                        <img
+                          src={ag.agentIcon}
+                          alt={ag.agentName}
+                          className="w-9 h-9 rounded-xl bg-[#26143E] p-1 border border-[#8B44F7]/40 object-contain shrink-0"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-xl bg-[#26143E] flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">
+                          {ag.agentName.slice(0, 2)}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-bold text-white text-xs truncate">{ag.agentName}</p>
+                        <p className="text-[10px] text-gray-400">
+                          {ag.timesPlayed} {ag.timesPlayed === 1 ? 'partida' : 'partidas'} • {ag.wins}W - {ag.losses}L
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0 space-y-0.5">
+                      <p className="text-xs font-black text-[#E2B86E]">{ag.kdaRatio.toFixed(2)} KDA</p>
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                        {ag.winRate}% WR
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 italic text-center py-6">
+                Aún no hay registros de agentes en partidos para este usuario.
+              </p>
+            )}
+          </Card>
+
+          {/* Performance by Map */}
+          <Card glow="gold" className="p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-[#26143E] pb-2.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-[#E2B86E]" />
+                <span>Rendimiento por Mapa ({detailedUserStats.mapList.length})</span>
+              </h3>
+            </div>
+
+            {detailedUserStats.mapList.length > 0 ? (
+              <div className="space-y-2">
+                {detailedUserStats.mapList.map((mapItem, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 bg-[#180d29]/80 border border-[#522B80]/40 rounded-xl flex items-center justify-between hover:border-[#E2B86E]/60 transition-colors relative overflow-hidden"
+                  >
+                    <div className="flex items-center space-x-3 min-w-0 z-10">
+                      {mapItem.displayIcon ? (
+                        <img
+                          src={mapItem.displayIcon}
+                          alt={mapItem.mapName}
+                          className="w-9 h-9 rounded-xl bg-[#26143E] p-1 border border-[#E2B86E]/40 object-contain shrink-0"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-xl bg-[#26143E] flex items-center justify-center text-xs font-bold text-[#E2B86E] shrink-0">
+                          <MapPin className="w-4 h-4" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-bold text-white text-xs truncate">{mapItem.mapName}</p>
+                        <p className="text-[10px] text-gray-400">
+                          {mapItem.timesPlayed} {mapItem.timesPlayed === 1 ? 'partida' : 'partidas'} • {mapItem.wins}W - {mapItem.losses}L
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0 space-y-0.5 z-10">
+                      <p className="text-xs font-black text-white">{mapItem.kdaRatio.toFixed(2)} KDA</p>
+                      <span className="text-[10px] font-bold text-[#E2B86E] bg-[#26143E] px-1.5 py-0.2 rounded border border-[#E2B86E]/30">
+                        {mapItem.winRate}% WR
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 italic text-center py-6">
+                Aún no hay mapas registrados con participación de este usuario.
+              </p>
+            )}
+          </Card>
+        </div>
+
+        {/* 5. RECENT MATCHES PARTICIPATION TABLE */}
+        {detailedUserStats.participationList.length > 0 && (
+          <Card glow="purple" className="p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-[#26143E] pb-2.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-1.5">
+                <Swords className="w-4 h-4 text-[#8B44F7]" />
+                <span>Últimas Partidas Disputadas ({detailedUserStats.participationList.length})</span>
+              </h3>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-[#26143E] bg-[#140b21]">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#180d29] text-gray-400 uppercase text-[10px] font-bold border-b border-[#26143E]">
+                    <th className="py-2.5 px-3">Fecha & Rival</th>
+                    <th className="py-2.5 px-3">Mapa</th>
+                    <th className="py-2.5 px-3">Agente</th>
+                    <th className="py-2.5 px-3 text-center">Score Partido</th>
+                    <th className="py-2.5 px-3 text-center">K / D / A</th>
+                    <th className="py-2.5 px-3 text-center">KDA / FK</th>
+                    <th className="py-2.5 px-3 text-center">Resultado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#26143E]/60 text-gray-300">
+                  {detailedUserStats.participationList.slice(0, 10).map((item, idx) => (
+                    <tr key={idx} className="hover:bg-[#1f1035]/60 transition-colors">
+                      <td className="py-2.5 px-3">
+                        <p className="font-bold text-white">{item.opponentName}</p>
+                        <p className="text-[10px] text-gray-400">{item.date} • {item.type === 'tournament' ? 'Torneo' : 'Scrim'}</p>
+                      </td>
+                      <td className="py-2.5 px-3 font-semibold text-gray-200">{item.mapName}</td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center space-x-1.5">
+                          {item.agentIcon && (
+                            <img
+                              src={item.agentIcon}
+                              alt={item.agent || 'Agente'}
+                              className="w-5 h-5 rounded-md bg-[#26143E] object-contain p-0.5 border border-[#8B44F7]/40 shrink-0"
+                            />
+                          )}
+                          <span className="font-bold text-xs text-white">{item.agent || 'N/A'}</span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-extrabold text-[#E2B86E]">{item.overallScore}</td>
+                      <td className="py-2.5 px-3 text-center font-mono font-bold text-white">
+                        {item.kills} / {item.deaths} / {item.assists}
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <span className="font-bold text-white">{item.kdaRatio.toFixed(2)}</span>
+                        {item.firstKills > 0 && (
+                          <span className="text-amber-400 font-bold ml-1 text-[10px]">({item.firstKills} FK)</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <span
+                          className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
+                            item.outcome === 'win'
+                              ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/40'
+                              : item.outcome === 'loss'
+                              ? 'bg-red-950 text-red-400 border border-red-500/40'
+                              : 'bg-amber-950 text-amber-400 border border-amber-500/40'
+                          }`}
+                        >
+                          {item.outcome === 'win' ? 'Victoria' : item.outcome === 'loss' ? 'Derrota' : 'Empate'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
       </div>
+
+      {/* 6. EDIT NICKNAME MODAL */}
+      <EditNicknameModal
+        isOpen={isEditNickModalOpen}
+        onClose={() => setIsEditNickModalOpen(false)}
+        currentNick={user?.displayName || memberData?.displayName || ''}
+        currentGameTag={memberData?.gameTag || user?.gameTag}
+        onSave={handleSaveNickname}
+      />
     </div>
   );
 };

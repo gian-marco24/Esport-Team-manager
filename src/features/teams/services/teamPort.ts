@@ -21,6 +21,11 @@ export interface ITeamPort {
     memberId: string,
     subrole?: ManagerSubrole | StaffSubrole | string
   ): Promise<void>;
+  updateMemberNick(
+    memberId: string,
+    newNick: string,
+    newGameTag?: string
+  ): Promise<void>;
   removeMemberFromTeam(memberId: string): Promise<void>;
 
   getRosters(teamId: string): Promise<Roster[]>;

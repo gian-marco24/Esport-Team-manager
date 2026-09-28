@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Lock, Calendar, Globe, AlertCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Calendar, Globe, AlertCircle, ArrowRight, Hash } from 'lucide-react';
 import { useRegisterForm } from '../hooks/useRegisterForm';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
@@ -22,14 +22,25 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ invitation }) => {
         </div>
       )}
 
-      <Input
-        label="Correo Electrónico"
-        type="email"
-        placeholder="jugador@ursgamara.gg"
-        leftIcon={<Mail className="w-4 h-4" />}
-        error={errors.email?.message}
-        {...register('email')}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <Input
+          label="Correo Electrónico"
+          type="email"
+          placeholder="jugador@ursgamara.gg"
+          leftIcon={<Mail className="w-4 h-4" />}
+          error={errors.email?.message}
+          {...register('email')}
+        />
+
+        <Input
+          label="Tag del Juego (Riot Tag / Gamertag)"
+          type="text"
+          placeholder="ej: #LAN o #1234"
+          leftIcon={<Hash className="w-4 h-4 text-[#E2B86E]" />}
+          error={errors.gameTag?.message}
+          {...register('gameTag')}
+        />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <Input

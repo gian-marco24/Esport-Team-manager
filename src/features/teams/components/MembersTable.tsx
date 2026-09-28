@@ -109,7 +109,7 @@ export const MembersTable: React.FC<MembersTableProps> = ({
             <tr>
               <th className="py-3 px-4">Integrante</th>
               <th className="py-3 px-4">Rol en el Equipo</th>
-              <th className="py-3 px-4">Roster(s) / Subrol Asignado</th>
+              <th className="py-3 px-4">Roster(s) Asignados</th>
               <th className="py-3 px-4">Residencia & Nacimiento</th>
               {isCeo && <th className="py-3 px-4 text-right">Acciones</th>}
             </tr>
@@ -133,6 +133,11 @@ export const MembersTable: React.FC<MembersTableProps> = ({
                       <div>
                         <div className="font-bold text-white text-xs flex items-center space-x-1.5">
                           <span>{member.displayName}</span>
+                          {member.gameTag && (
+                            <span className="text-[10px] text-[#E2B86E] font-mono bg-[#26143E] px-1.5 py-0.5 rounded border border-[#8B44F7]/30">
+                              {member.gameTag}
+                            </span>
+                          )}
                           {member.teamRole === 'CEO' && (
                             <span title="CEO del equipo">
                               <Crown className="w-3.5 h-3.5 text-amber-400" />
@@ -186,7 +191,7 @@ export const MembersTable: React.FC<MembersTableProps> = ({
                       )
                     ) : member.globalSubrole ? (
                       <span className="inline-flex items-center space-x-1 px-2 py-1 bg-[#26143E] border border-[#8B44F7]/30 rounded-md text-[11px] text-purple-200">
-                        <span className="text-gray-300">Subrol:</span>
+                        <span className="text-gray-300">Función:</span>
                         <strong className="text-[#E2B86E]">{member.globalSubrole}</strong>
                       </span>
                     ) : (
@@ -216,26 +221,24 @@ export const MembersTable: React.FC<MembersTableProps> = ({
                   {isCeo && (
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        {member.teamRole !== 'CEO' && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onOpenAssignModal(member)}
-                              leftIcon={<Edit3 className="w-3.5 h-3.5 text-[#E2B86E]" />}
-                              title="Gestionar Roster y Subrol"
-                            >
-                              <span className="hidden sm:inline">Roster / Subrol</span>
-                            </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onOpenAssignModal(member)}
+                          leftIcon={<Edit3 className="w-3.5 h-3.5 text-[#E2B86E]" />}
+                          title="Gestionar Roster"
+                        >
+                          <span className="hidden sm:inline">Roster</span>
+                        </Button>
 
-                            <button
-                              onClick={() => onRemoveMember(member.id, member.displayName)}
-                              className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded-lg transition-colors"
-                              title="Eliminar integrante"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </>
+                        {member.teamRole !== 'CEO' && (
+                          <button
+                            onClick={() => onRemoveMember(member.id, member.displayName)}
+                            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded-lg transition-colors"
+                            title="Eliminar integrante"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         )}
                       </div>
                     </td>

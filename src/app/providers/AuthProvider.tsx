@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User } from '../../features/auth/types';
 import { authService } from '../../features/auth/services/authService';
-
+import { teamService } from '../../features/teams/services/teamService';
 import { migrateLocalStorageToFirestore } from '../../services/migrationService';
 
 interface AuthContextType {
@@ -9,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   setUser: (user: User | null) => void;
+  updateUser: (data: { displayName?: string; gameTag?: string }) => Promise<User>;
   logout: () => Promise<void>;
 }
 
@@ -28,6 +29,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
+  const updateUser = async (data: { displayName?: string; gameTag?: string }): Promise<User> => {
+    if (!user) throw new Error('No hay usuario autenticado');
+    const updatedUser = await authService.updateProfile(user.id, data);
+    if (data.displayName) {
+      try {
+        await teamService.updateMemberNick(user.id, data.displayName, data.gameTag);
+      } catch (err) {
+        console.warn('teamService updateMemberNick error:', err);
+      }
+    }
+    setUser(updatedUser);
+    return updatedUser;
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -45,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: Boolean(user),
         isLoading,
         setUser,
+        updateUser,
         logout,
       }}
     >

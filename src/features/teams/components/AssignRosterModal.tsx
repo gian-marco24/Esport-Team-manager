@@ -90,13 +90,13 @@ export const AssignRosterModal: React.FC<AssignRosterModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      if (role === 'Player' || role === 'Coach') {
+      if (role === 'Player' || role === 'Coach' || role === 'CEO') {
         // Validation Checks
         for (const assignment of assignments) {
           const targetRoster = rosters.find((r) => r.id === assignment.rosterId);
           if (!targetRoster) continue;
 
-          // Check Head Coach Uniqueness per roster
+          // Check Head Coach Uniqueness per roster (only if not already the head coach)
           if (assignment.subrole === 'Head coach') {
             const existingHeadCoach = allMembers.find(
               (m) =>
@@ -112,44 +112,12 @@ export const AssignRosterModal: React.FC<AssignRosterModalProps> = ({
               );
             }
           }
-
-          // Check Total Coaches Limit per roster (max 3)
-          if (!assignment.subrole.startsWith('Player')) {
-            const currentCoachesCount = allMembers.filter(
-              (m) =>
-                m.id !== member.id &&
-                m.rosterAssignments?.some(
-                  (a) => a.rosterId === assignment.rosterId && !a.subrole.startsWith('Player')
-                )
-            ).length;
-
-            if (currentCoachesCount >= targetRoster.maxCoaches) {
-              throw new Error(
-                `El roster "${targetRoster.name}" ya alcanzó el límite máximo de ${targetRoster.maxCoaches} coaches/analistas.`
-              );
-            }
-          }
-
-          // Check Substitutes limit (max 3)
-          if (assignment.subrole === 'Player suplente') {
-            const currentSubsCount = allMembers.filter(
-              (m) =>
-                m.id !== member.id &&
-                m.rosterAssignments?.some(
-                  (a) => a.rosterId === assignment.rosterId && a.subrole === 'Player suplente'
-                )
-            ).length;
-
-            if (currentSubsCount >= targetRoster.maxSubstitutes) {
-              throw new Error(
-                `El roster "${targetRoster.name}" ya alcanzó el máximo de 3 suplentes.`
-              );
-            }
-          }
         }
 
         await teamService.updateMemberRosterAssignments(member.id, assignments);
-      } else if (role === 'Manager' || role === 'Staff') {
+      }
+      
+      if (role === 'Manager' || role === 'Staff' || role === 'CEO') {
         await teamService.updateMemberGlobalSubrole(member.id, globalSubrole);
       }
 
@@ -193,30 +161,35 @@ export const AssignRosterModal: React.FC<AssignRosterModalProps> = ({
             </div>
           )}
 
-          {/* Player or Coach Roster Assignment Form */}
-          {(role === 'Player' || role === 'Coach') && (
+          {/* Player, Coach or CEO Roster Assignment Form */}
+          {(role === 'Player' || role === 'Coach' || role === 'CEO') && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">
-                  Asignación de Roster & Subrol
-                </span>
+                <div>
+                  <span className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
+                    Asignación a Roster(s)
+                  </span>
+                  {role === 'CEO' && (
+                    <span className="text-[11px] text-gray-400">
+                      Como CEO puedes asignarte a una escuadra específica (como Coach, Player, etc.) manteniendo tu acceso total.
+                    </span>
+                  )}
+                </div>
 
-                {(role === 'Coach' || assignments.length === 0) && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleAddAssignment}
-                    leftIcon={<Plus className="w-3.5 h-3.5" />}
-                  >
-                    Asignar a Roster
-                  </Button>
-                )}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleAddAssignment}
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                >
+                  Asignar a Roster
+                </Button>
               </div>
 
               {assignments.length === 0 ? (
                 <div className="p-4 bg-[#180d29]/60 border border-dashed border-[#522B80] rounded-xl text-center text-xs text-gray-400">
-                  Sin escuadra asignada. Haz clic en "Asignar a Roster" arriba.
+                  Sin escuadra asignada. Haz clic en "Asignar a Roster" arriba para vincular a un roster competitivo.
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -239,26 +212,50 @@ export const AssignRosterModal: React.FC<AssignRosterModalProps> = ({
                         </Select>
 
                         <Select
-                          label="Subrol en Roster"
+                          label="Posición en Roster"
                           value={asg.subrole}
                           onChange={(e) =>
                             handleUpdateAssignmentSubrole(
                               index,
-                              e.target.value as PlayerSubrole | CoachSubrole
+                              e.target.value as any
                             )
                           }
                         >
-                          {role === 'Player'
-                            ? PLAYER_SUBROLES.map((sr) => (
-                                <option key={sr} value={sr} className="bg-[#140b21] text-white">
-                                  {sr}
-                                </option>
-                              ))
-                            : COACH_SUBROLES.map((sr) => (
-                                <option key={sr} value={sr} className="bg-[#140b21] text-white">
-                                  {sr} {sr === 'Head coach' ? '(Único por Roster)' : ''}
-                                </option>
-                              ))}
+                          {role === 'Player' &&
+                            PLAYER_SUBROLES.map((sr) => (
+                              <option key={sr} value={sr} className="bg-[#140b21] text-white">
+                                {sr}
+                              </option>
+                            ))}
+                          {role === 'Coach' &&
+                            COACH_SUBROLES.map((sr) => (
+                              <option key={sr} value={sr} className="bg-[#140b21] text-white">
+                                {sr} {sr === 'Head coach' ? '(Único por Roster)' : ''}
+                              </option>
+                            ))}
+                          {role === 'CEO' && (
+                            <>
+                              <optgroup label="Cuerpo Técnico / Coaches">
+                                {COACH_SUBROLES.map((sr) => (
+                                  <option key={sr} value={sr} className="bg-[#140b21] text-white">
+                                    {sr}
+                                  </option>
+                                ))}
+                              </optgroup>
+                              <optgroup label="Jugadores">
+                                {PLAYER_SUBROLES.map((sr) => (
+                                  <option key={sr} value={sr} className="bg-[#140b21] text-white">
+                                    {sr}
+                                  </option>
+                                ))}
+                              </optgroup>
+                              <optgroup label="Staff & Gestión">
+                                <option value="Head coach" className="bg-[#140b21] text-white">Coach / Entrenador</option>
+                                <option value="Manager deportivo" className="bg-[#140b21] text-white">Manager deportivo</option>
+                                <option value="Staff" className="bg-[#140b21] text-white">Staff de Roster</option>
+                              </optgroup>
+                            </>
+                          )}
                         </Select>
                       </div>
 
@@ -282,11 +279,11 @@ export const AssignRosterModal: React.FC<AssignRosterModalProps> = ({
           {/* Manager Global Subrole Form */}
           {role === 'Manager' && (
             <Select
-              label="Subrol Interno (Manager)"
+              label="Función en Equipo (Manager)"
               value={globalSubrole}
               onChange={(e) => setGlobalSubrole(e.target.value)}
             >
-              <option value="">Sin subrol específico</option>
+              <option value="">Sin función específica</option>
               {MANAGER_SUBROLES.map((sr) => (
                 <option key={sr} value={sr} className="bg-[#140b21] text-white">
                   {sr}
@@ -298,11 +295,11 @@ export const AssignRosterModal: React.FC<AssignRosterModalProps> = ({
           {/* Staff Global Subrole Form */}
           {role === 'Staff' && (
             <Select
-              label="Subrol Interno (Staff)"
+              label="Función en Equipo (Staff)"
               value={globalSubrole}
               onChange={(e) => setGlobalSubrole(e.target.value)}
             >
-              <option value="">Sin subrol específico</option>
+              <option value="">Sin función específica</option>
               {STAFF_SUBROLES.map((sr) => (
                 <option key={sr} value={sr} className="bg-[#140b21] text-white">
                   {sr}
@@ -314,16 +311,21 @@ export const AssignRosterModal: React.FC<AssignRosterModalProps> = ({
           {/* Creador de contenido info */}
           {role === 'Creador de contenido' && (
             <p className="text-xs text-gray-400 bg-[#180d29] p-3 rounded-xl border border-[#522B80]/40">
-              Los Creadores de contenido forman parte de la plantilla general del equipo sin pertenecer a un roster competitivo específico ni requerir un subrol interno.
+              Los Creadores de contenido forman parte de la plantilla general del equipo sin pertenecer a un roster competitivo específico.
             </p>
           )}
 
-          {/* CEO info */}
+          {/* CEO info and title */}
           {role === 'CEO' && (
-            <p className="text-xs text-[#E2B86E] bg-amber-950/40 p-3 rounded-xl border border-amber-500/30 flex items-center space-x-2">
-              <Crown className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>El CEO posee control total del equipo y administra las plantillas y los accesos.</span>
-            </p>
+            <div className="p-3 bg-amber-950/30 rounded-xl border border-amber-500/30 space-y-2">
+              <div className="flex items-center space-x-2 text-xs text-[#E2B86E] font-semibold">
+                <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>Privilegios de CEO & Fundador</span>
+              </div>
+              <p className="text-[11px] text-gray-300">
+                El CEO mantiene acceso administrativo total en todos los módulos aunque esté asignado a una escuadra.
+              </p>
+            </div>
           )}
 
           {/* Submit buttons */}

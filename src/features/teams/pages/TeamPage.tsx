@@ -107,7 +107,7 @@ export const TeamPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-black text-white tracking-wide">Plantilla y Roles</h1>
           <p className="text-xs text-gray-300">
-            Administra los integrantes del equipo, crea rosters competitivos y asigna subroles tácticos.
+            Administra los integrantes del equipo, crea rosters competitivos y gestiona sus alineaciones.
           </p>
         </div>
 

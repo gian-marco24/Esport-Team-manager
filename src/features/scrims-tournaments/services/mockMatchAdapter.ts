@@ -41,6 +41,8 @@ export class MockMatchAdapter implements IMatchPort {
 
     const newMatch: Match = {
       id: `match-${Date.now()}`,
+      rosterId: data.rosterId,
+      game: data.game,
       type: data.type,
       tournamentName: data.type === 'tournament' ? data.tournamentName : undefined,
       opponentName: data.opponentName,
@@ -48,6 +50,7 @@ export class MockMatchAdapter implements IMatchPort {
       outcome,
       overallScore,
       maps: data.maps,
+      playerStats: data.playerStats || (data.maps && data.maps[0]?.playerStats ? data.maps[0].playerStats : []),
       vods: data.vods || [],
       screenshotUrls: data.screenshotUrls || [],
       createdAt: new Date().toISOString(),
@@ -71,6 +74,8 @@ export class MockMatchAdapter implements IMatchPort {
 
     const updatedMatch: Match = {
       ...matches[existingIndex],
+      rosterId: data.rosterId,
+      game: data.game,
       type: data.type,
       tournamentName: data.type === 'tournament' ? data.tournamentName : undefined,
       opponentName: data.opponentName,
@@ -78,6 +83,7 @@ export class MockMatchAdapter implements IMatchPort {
       outcome,
       overallScore,
       maps: data.maps,
+      playerStats: data.playerStats || (data.maps && data.maps[0]?.playerStats ? data.maps[0].playerStats : []),
       vods: data.vods || [],
       screenshotUrls: data.screenshotUrls || [],
     };
