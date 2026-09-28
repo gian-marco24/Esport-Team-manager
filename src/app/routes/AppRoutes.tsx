@@ -18,6 +18,10 @@ import { SchedulePage } from '../../features/schedule/pages/SchedulePage';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 
+import { TeamPage } from '../../features/teams/pages/TeamPage';
+import { ProfilePage } from '../../features/profile/pages/ProfilePage';
+import { useDynamicTitle } from '../../utils/useDynamicTitle';
+
 const UnimplementedPlaceholder: React.FC<{ title: string; description: string }> = ({
   title,
   description,
@@ -32,6 +36,8 @@ const UnimplementedPlaceholder: React.FC<{ title: string; description: string }>
 );
 
 export const AppRoutes: React.FC = () => {
+  useDynamicTitle();
+
   return (
     <Routes>
       {/* Public Landing Route */}
@@ -66,16 +72,13 @@ export const AppRoutes: React.FC = () => {
         <Route path="calendar" element={<SchedulePage />} />
         <Route path="calendario" element={<SchedulePage />} />
 
-        {/* Placeholders para secciones restantes */}
-        <Route
-          path="team"
-          element={
-            <UnimplementedPlaceholder
-              title="Plantilla & Roles"
-              description="Gestión de jugadores, cuerpo técnico y roles activos en el equipo."
-            />
-          }
-        />
+        {/* Perfil del Usuario Autenticado */}
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="perfil" element={<ProfilePage />} />
+
+        {/* Plantilla & Roles (exclusivo CEO / Staff) */}
+        <Route path="team" element={<TeamPage />} />
+
         <Route
           path="notes"
           element={

@@ -1,30 +1,26 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { User as UserIcon, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Calendar, Globe, AlertCircle, ArrowRight } from 'lucide-react';
 import { useRegisterForm } from '../hooks/useRegisterForm';
 import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
 import { Button } from '../../../components/ui/Button';
+import { AMERICAN_COUNTRIES, type Invitation } from '../../teams/types';
 
-export const RegisterForm: React.FC = () => {
-  const { register, handleSubmit, errors, isSubmitting, authError } = useRegisterForm();
+interface RegisterFormProps {
+  invitation: Invitation;
+}
+
+export const RegisterForm: React.FC<RegisterFormProps> = ({ invitation }) => {
+  const { register, handleSubmit, errors, isSubmitting, authError } = useRegisterForm(invitation.code);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {authError && (
         <div className="p-3 bg-red-950/60 border border-red-500/50 rounded-lg flex items-start space-x-2 text-red-300 text-xs">
           <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
           <span>{authError}</span>
         </div>
       )}
-
-      <Input
-        label="Nombre / Nickname"
-        type="text"
-        placeholder="ej. GamaraPlayer"
-        leftIcon={<UserIcon className="w-4 h-4" />}
-        error={errors.displayName?.message}
-        {...register('displayName')}
-      />
 
       <Input
         label="Correo Electrónico"
@@ -35,42 +31,59 @@ export const RegisterForm: React.FC = () => {
         {...register('email')}
       />
 
-      <Input
-        label="Contraseña"
-        type="password"
-        placeholder="••••••••"
-        leftIcon={<Lock className="w-4 h-4" />}
-        error={errors.password?.message}
-        {...register('password')}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <Input
+          label="Contraseña"
+          type="password"
+          placeholder="••••••••"
+          leftIcon={<Lock className="w-4 h-4" />}
+          error={errors.password?.message}
+          {...register('password')}
+        />
 
-      <Input
-        label="Confirmar Contraseña"
-        type="password"
-        placeholder="••••••••"
-        leftIcon={<Lock className="w-4 h-4" />}
-        error={errors.confirmPassword?.message}
-        {...register('confirmPassword')}
-      />
+        <Input
+          label="Confirmar Contraseña"
+          type="password"
+          placeholder="••••••••"
+          leftIcon={<Lock className="w-4 h-4" />}
+          error={errors.confirmPassword?.message}
+          {...register('confirmPassword')}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <Input
+          label="Fecha de Nacimiento"
+          type="date"
+          leftIcon={<Calendar className="w-4 h-4" />}
+          error={errors.birthDate?.message}
+          {...register('birthDate')}
+        />
+
+        <Select
+          label="País (América)"
+          leftIcon={<Globe className="w-4 h-4" />}
+          error={errors.country?.message}
+          {...register('country')}
+        >
+          <option value="">Selecciona tu país...</option>
+          {AMERICAN_COUNTRIES.map((country) => (
+            <option key={country} value={country} className="bg-[#140b21] text-white">
+              {country}
+            </option>
+          ))}
+        </Select>
+      </div>
 
       <Button
         type="submit"
         variant="secondary"
-        className="w-full mt-3 py-3"
+        className="w-full mt-5 py-3 text-sm font-bold shadow-lg shadow-[#8B44F7]/25 text-[#1c0c32]"
         isLoading={isSubmitting}
-        rightIcon={<ArrowRight className="w-4 h-4" />}
+        rightIcon={<ArrowRight className="w-4 h-4 text-[#1c0c32]" />}
       >
-        Crear Perfil URS Gamara
+        Completar Registro e Ingresar
       </Button>
-
-      <div className="text-center pt-2">
-        <p className="text-xs text-gray-400">
-          ¿Ya formas parte del equipo?{' '}
-          <Link to="/login" className="text-[#8B44F7] hover:text-[#E2B86E] font-semibold underline transition-colors">
-            Inicia sesión aquí
-          </Link>
-        </p>
-      </div>
     </form>
   );
 };

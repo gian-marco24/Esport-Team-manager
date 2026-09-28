@@ -1,34 +1,22 @@
 import type { IAuthPort } from './authPort';
-import type { User, LoginFormData, RegisterFormData } from '../types';
+import type { User, LoginFormData, RegisterFormData, UserRole } from '../types';
 import { URS_GAMARA_TEAM } from '../../teams/config/currentTeam.config';
+import { teamService } from '../../teams/services/teamService';
+import type { TeamMember } from '../../teams/types';
 
 const MOCK_STORAGE_KEY = 'urs_gamara_mock_users';
 const MOCK_SESSION_KEY = 'urs_gamara_mock_session';
 
 const defaultStats = {
-  kda: '2.45',
-  winrate: 68.5,
-  matchesPlayed: 42,
-  hsPercentage: 48,
-  mvpCount: 14,
-  mainAgentOrHero: 'Jett / Duelista',
+  kda: '0.00',
+  winrate: 0,
+  matchesPlayed: 0,
+  hsPercentage: 0,
+  mvpCount: 0,
+  mainAgentOrHero: 'Por definir',
 };
 
-const defaultUsers: Record<string, User> = {
-  'demo@ursgamara.gg': {
-    id: 'user-demo-1',
-    email: 'demo@ursgamara.gg',
-    displayName: 'GamaraPro',
-    role: 'player',
-    avatarUrl: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150',
-    teamId: URS_GAMARA_TEAM.id,
-    teamName: URS_GAMARA_TEAM.name,
-    position: 'Entry Fragger',
-    bio: 'Jugador titular de URS Gamara. Enfocado en duelistas y control de sitio.',
-    stats: defaultStats,
-    createdAt: new Date().toISOString(),
-  },
-};
+const defaultUsers: Record<string, User> = {};
 
 export class MockAuthAdapter implements IAuthPort {
   private listeners: Array<(user: User | null) => void> = [];
@@ -53,7 +41,13 @@ export class MockAuthAdapter implements IAuthPort {
   private getStoredSession(): User | null {
     try {
       const data = localStorage.getItem(MOCK_SESSION_KEY);
-      return data ? JSON.parse(data) : null;
+      if (!data) return null;
+      const user: User = JSON.parse(data);
+      if (user.email?.toLowerCase() === 'gianm2405@gmail.com') {
+        user.role = 'ceo';
+        user.teamRole = 'CEO';
+      }
+      return user;
     } catch {
       return null;
     }
@@ -62,6 +56,10 @@ export class MockAuthAdapter implements IAuthPort {
   private setStoredSession(user: User | null) {
     try {
       if (user) {
+        if (user.email?.toLowerCase() === 'gianm2405@gmail.com') {
+          user.role = 'ceo';
+          user.teamRole = 'CEO';
+        }
         localStorage.setItem(MOCK_SESSION_KEY, JSON.stringify(user));
       } else {
         localStorage.removeItem(MOCK_SESSION_KEY);
@@ -74,25 +72,36 @@ export class MockAuthAdapter implements IAuthPort {
 
   async login(credentials: LoginFormData): Promise<User> {
     await new Promise((res) => setTimeout(res, 500));
+    const emailLower = credentials.email.toLowerCase();
     const users = this.getStoredUsers();
-    const user = users[credentials.email.toLowerCase()];
+    let user = users[emailLower];
+
+    const isCeo = emailLower === 'gianm2405@gmail.com';
 
     if (!user) {
       const newUser: User = {
         id: `mock-${Date.now()}`,
         email: credentials.email,
-        displayName: credentials.email.split('@')[0],
-        role: 'player',
+        displayName: isCeo ? 'Zeyn' : credentials.email.split('@')[0],
+        role: isCeo ? 'ceo' : 'player',
+        teamRole: isCeo ? 'CEO' : 'Player',
+        birthDate: isCeo ? '2007-05-24' : undefined,
+        country: isCeo ? 'Venezuela' : undefined,
         teamId: URS_GAMARA_TEAM.id,
         teamName: URS_GAMARA_TEAM.name,
-        position: 'Flex',
+        position: isCeo ? 'CEO / Propietario' : 'Flex',
         stats: defaultStats,
         createdAt: new Date().toISOString(),
       };
-      users[credentials.email.toLowerCase()] = newUser;
+      users[emailLower] = newUser;
       this.saveUsers(users);
       this.setStoredSession(newUser);
       return newUser;
+    }
+
+    if (isCeo) {
+      user.role = 'ceo';
+      user.teamRole = 'CEO';
     }
 
     this.setStoredSession(user);
@@ -101,29 +110,83 @@ export class MockAuthAdapter implements IAuthPort {
 
   async register(data: RegisterFormData): Promise<User> {
     await new Promise((res) => setTimeout(res, 600));
+
+    // Validate Invitation Code
+    const invitation = await teamService.getInvitationByCode(data.code);
+    if (!invitation) {
+      throw new Error('El código de invitación es inválido.');
+    }
+    if (invitation.used) {
+      throw new Error('Este código de invitación ya fue utilizado.');
+    }
+    const isExpired = new Date() > new Date(invitation.expiresAt);
+    if (isExpired) {
+      throw new Error('El código de invitación ha expirado (duración máxima 30 minutos). Solicita uno nuevo al CEO.');
+    }
+
     const users = this.getStoredUsers();
 
     if (users[data.email.toLowerCase()]) {
       throw new Error('El correo electrónico ya está registrado.');
     }
 
+    const isCeo = data.email.toLowerCase() === 'gianm2405@gmail.com' || invitation.teamRole === 'CEO';
+
+    const mappedRole: UserRole = isCeo
+      ? 'ceo'
+      : invitation.teamRole === 'Player'
+      ? 'player'
+      : invitation.teamRole === 'Coach'
+      ? 'coach'
+      : invitation.teamRole === 'Manager'
+      ? 'manager'
+      : 'staff';
+
+    const userId = `usr-${Date.now()}`;
     const newUser: User = {
-      id: `usr-${Date.now()}`,
+      id: userId,
       email: data.email,
-      displayName: data.displayName,
-      role: 'player',
+      displayName: invitation.nick,
+      role: mappedRole,
+      teamRole: isCeo ? 'CEO' : invitation.teamRole,
+      birthDate: data.birthDate,
+      country: data.country,
+      rosterAssignments: [],
       teamId: URS_GAMARA_TEAM.id,
       teamName: URS_GAMARA_TEAM.name,
-      position: 'Pendiente de asignación',
-      stats: {
-        ...defaultStats,
-        mainAgentOrHero: 'Por definir',
-      },
+      position: `${isCeo ? 'CEO' : invitation.teamRole} del equipo`,
+      stats: defaultStats,
       createdAt: new Date().toISOString(),
     };
 
     users[data.email.toLowerCase()] = newUser;
     this.saveUsers(users);
+
+    // Consume invitation
+    await teamService.consumeInvitation(data.code);
+
+    // Add to members database list
+    const newMember: TeamMember = {
+      id: userId,
+      email: data.email,
+      displayName: invitation.nick,
+      teamRole: isCeo ? 'CEO' : invitation.teamRole,
+      rosterAssignments: [],
+      birthDate: data.birthDate,
+      country: data.country,
+      createdAt: new Date().toISOString(),
+    };
+
+    const MEMBERS_KEY = 'urs_gamara_members_v2';
+    try {
+      const storedMembersData = localStorage.getItem(MEMBERS_KEY);
+      const membersList: TeamMember[] = storedMembersData ? JSON.parse(storedMembersData) : [];
+      membersList.push(newMember);
+      localStorage.setItem(MEMBERS_KEY, JSON.stringify(membersList));
+    } catch {
+      // ignore
+    }
+
     this.setStoredSession(newUser);
     return newUser;
   }

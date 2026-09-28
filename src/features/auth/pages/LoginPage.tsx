@@ -1,8 +1,25 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuthContext } from '../../../app/providers/AuthProvider';
 import { LoginForm } from '../components/LoginForm';
 import { Shield } from 'lucide-react';
+import { LoadingSpinner } from '../../../components/feedback/LoadingSpinner';
 
 export const LoginPage: React.FC = () => {
+  const { isAuthenticated, isLoading } = useAuthContext();
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-1">

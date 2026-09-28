@@ -33,6 +33,7 @@ export const URS_GAMARA_TEAM: TeamBranding = {
     antiqueGold: '#A88144',
     onyxBlack: '#0D0914',
   },
+  logoUrl: '/logo.png',
   game: 'VALORANT / League of Legends',
   establishedYear: 2024,
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import { Shield, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { URS_GAMARA_TEAM } from '../features/teams/config/currentTeam.config';
 
 export const AuthLayout: React.FC = () => {
@@ -13,8 +13,8 @@ export const AuthLayout: React.FC = () => {
       {/* Brand logo header */}
       <div className="mb-6 text-center z-10">
         <Link to="/" className="inline-flex items-center space-x-3 group">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B44F7] via-[#522B80] to-[#26143E] border border-[#E2B86E]/40 flex items-center justify-center shadow-lg shadow-[#8B44F7]/30 group-hover:scale-105 transition-transform duration-300">
-            <Shield className="w-7 h-7 text-[#E2B86E]" />
+          <div className="w-12 h-12 rounded-xl bg-[#522B80]/40 border border-[#E2B86E]/40 flex items-center justify-center shadow-lg shadow-[#8B44F7]/30 p-1 group-hover:scale-105 transition-transform duration-300">
+            <img src="/logo.png" alt={URS_GAMARA_TEAM.name} className="w-full h-full object-contain" />
           </div>
           <div className="text-left">
             <h1 className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-[#E2B86E] to-[#8B44F7]">
@@ -28,7 +28,7 @@ export const AuthLayout: React.FC = () => {
       </div>
 
       {/* Form card container */}
-      <div className="w-full max-w-md bg-[#26143E]/50 border border-[#8B44F7]/30 backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/80 z-10">
+      <div className="w-full max-w-xl bg-[#26143E]/50 border border-[#8B44F7]/30 backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/80 z-10">
         <Outlet />
       </div>
 
