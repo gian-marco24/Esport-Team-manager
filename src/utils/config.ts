@@ -1,20 +1,12 @@
-const {
-  VITE_BACKEND_API,
-  VITE_FIREBASE_API_KEY,
-  VITE_FIREBASE_AUTH_DOMAIN,
-  VITE_FIREBASE_PROJECT_ID,
-  VITE_FIREBASE_STORAGE_BUCKET,
-  VITE_FIREBASE_MESSAGING_SENDER_ID,
-  VITE_FIREBASE_APP_ID,
-} = import.meta.env;
+const env = import.meta.env;
 
-export const backendApi = VITE_BACKEND_API ?? '';
+export const backendApi = (env.VITE_BACKEND_API || env.BACKEND_API || '') as string;
 
 export const firebaseConfig = {
-  apiKey: VITE_FIREBASE_API_KEY ?? '',
-  authDomain: VITE_FIREBASE_AUTH_DOMAIN ?? '',
-  projectId: VITE_FIREBASE_PROJECT_ID ?? '',
-  storageBucket: VITE_FIREBASE_STORAGE_BUCKET ?? '',
-  messagingSenderId: VITE_FIREBASE_MESSAGING_SENDER_ID ?? '',
-  appId: VITE_FIREBASE_APP_ID ?? '',
+  apiKey: (env.VITE_FIREBASE_API_KEY || env.FIREBASE_API_KEY || '') as string,
+  authDomain: (env.VITE_FIREBASE_AUTH_DOMAIN || env.FIREBASE_AUTH_DOMAIN || '') as string,
+  projectId: (env.VITE_FIREBASE_PROJECT_ID || env.FIREBASE_PROJECT_ID || '') as string,
+  storageBucket: (env.VITE_FIREBASE_STORAGE_BUCKET || env.FIREBASE_STORAGE_BUCKET || '') as string,
+  messagingSenderId: (env.VITE_FIREBASE_MESSAGING_SENDER_ID || env.FIREBASE_MESSAGING_SENDER_ID || '') as string,
+  appId: (env.VITE_FIREBASE_APP_ID || env.FIREBASE_APP_ID || '') as string,
 };

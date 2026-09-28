@@ -1,6 +1,8 @@
 import axios from 'axios';
+import { backendApi } from '@/utils/config';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_API || 'http://localhost:5000';
+const BACKEND_URL = backendApi || import.meta.env.VITE_BACKEND_API || import.meta.env.BACKEND_API || 'http://localhost:5000';
+
 
 export interface UploadImageResponse {
   success: boolean;
