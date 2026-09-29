@@ -21,6 +21,7 @@ import { StatsAnalyticsPage } from '../../features/stats-analytics/pages/StatsAn
 import { TeamPage } from '../../features/teams/pages/TeamPage';
 import { ProfilePage } from '../../features/profile/pages/ProfilePage';
 import { NotesPage } from '../../features/notes/pages/NotesPage';
+import { RoutinesPage } from '../../features/routines/pages/RoutinesPage';
 import { useDynamicTitle } from '../../utils/useDynamicTitle';
 
 export const AppRoutes: React.FC = () => {
@@ -61,6 +62,11 @@ export const AppRoutes: React.FC = () => {
         <Route path="schedule" element={<SchedulePage />} />
         <Route path="calendar" element={<SchedulePage />} />
         <Route path="calendario" element={<SchedulePage />} />
+
+        {/* Check-in de Rutina */}
+        <Route path="routines" element={<RoutinesPage />} />
+        <Route path="rutina" element={<RoutinesPage />} />
+        <Route path="rutinas" element={<RoutinesPage />} />
 
         {/* Perfil del Usuario Autenticado */}
         <Route path="profile" element={<ProfilePage />} />

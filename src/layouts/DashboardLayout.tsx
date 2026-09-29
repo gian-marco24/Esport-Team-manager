@@ -13,6 +13,7 @@ import {
   X,
   ChevronRight,
   User as UserIcon,
+  Dumbbell,
 } from 'lucide-react';
 import { useAuthContext } from '../app/providers/AuthProvider';
 import { URS_GAMARA_TEAM } from '../features/teams/config/currentTeam.config';
@@ -25,6 +26,9 @@ export const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const roleStr = (user?.role || '').toLowerCase();
+  const teamRoleStr = (user?.teamRole || '').toLowerCase();
+
   const isCeoOrStaff = Boolean(
     user &&
     (user.role === 'ceo' ||
@@ -33,12 +37,29 @@ export const DashboardLayout: React.FC = () => {
      user.teamRole === 'Staff')
   );
 
+  const canAccessRoutines = Boolean(
+    user &&
+    (roleStr === 'ceo' ||
+     roleStr === 'coach' ||
+     roleStr === 'player' ||
+     roleStr === 'manager' ||
+     roleStr === 'staff' ||
+     teamRoleStr === 'ceo' ||
+     teamRoleStr === 'coach' ||
+     teamRoleStr === 'player' ||
+     teamRoleStr === 'titular' ||
+     teamRoleStr === 'suplente' ||
+     teamRoleStr === 'manager' ||
+     teamRoleStr === 'staff')
+  );
+
   const navItems = [
     { label: 'Visión General', path: '/dashboard', icon: LayoutDashboard },
     ...(isCeoOrStaff ? [{ label: 'Plantilla & Roles', path: '/dashboard/team', icon: Users }] : []),
     { label: 'Scrims & Torneos', path: '/dashboard/scrims', icon: Swords },
     { label: 'VODs & Estudio', path: '/dashboard/vods', icon: Video },
     { label: 'Calendario & Entrenos', path: '/dashboard/schedule', icon: Calendar },
+    ...(canAccessRoutines ? [{ label: 'Check-in Rutina', path: '/dashboard/routines', icon: Dumbbell }] : []),
     { label: 'Estrategias & Notas', path: '/dashboard/notes', icon: FileText },
     { label: 'Estadísticas & Análisis', path: '/dashboard/stats', icon: BarChart3 },
   ];
