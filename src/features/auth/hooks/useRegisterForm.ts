@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { registerSchema, type RegisterFormData } from '../types';
+import { createRegisterSchema, type RegisterFormData } from '../types';
+import type { TeamRole } from '../../teams/types';
 import { authService } from '../services/authService';
 import { useAuthContext } from '../../../app/providers/AuthProvider';
 import { customZodResolver } from '../../../utils/zodResolver';
 
-export const useRegisterForm = (invitationCode: string) => {
+export const useRegisterForm = (invitationCode: string, teamRole?: TeamRole) => {
   const [authError, setAuthError] = useState<string | null>(null);
   const { setUser } = useAuthContext();
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ export const useRegisterForm = (invitationCode: string) => {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
-    resolver: customZodResolver(registerSchema),
+    resolver: customZodResolver(createRegisterSchema(teamRole)),
     defaultValues: {
       code: invitationCode,
       email: '',

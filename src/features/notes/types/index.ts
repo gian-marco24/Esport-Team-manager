@@ -26,6 +26,25 @@ export const DEFAULT_TACTICAL_TAGS: TacticalTag[] = [
   { id: 'default', label: 'Default', color: 'gray' },
 ];
 
+export interface TacticalTask {
+  id: string;
+  channelId: string;
+  messageId?: string;
+  title: string; // Requisito / Objetivo
+  description?: string;
+  materials?: string; // Links de VODs, recursos
+  deadline?: string; // Fecha límite, ej. "2/10 o antes"
+  status: 'pending' | 'in_progress' | 'completed';
+  priority?: 'high' | 'medium' | 'low';
+  assignedToId?: string;
+  assignedToName?: string;
+  authorId: string;
+  authorName: string;
+  annotations?: string; // Análisis extenso / VOD review
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TacticalMessage {
   id: string;
   channelId: string;
@@ -37,6 +56,9 @@ export interface TacticalMessage {
   images?: string[];
   tags?: string[];
   isPinned?: boolean;
+  isTask?: boolean;
+  taskId?: string;
+  taskData?: Partial<TacticalTask>;
   reactions?: Record<string, string[]>; // emoji -> list of userIds
   createdAt: string;
 }

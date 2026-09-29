@@ -151,7 +151,7 @@ export const MembersTable: React.FC<MembersTableProps> = ({
 
                   {/* Team Role */}
                   <td className="py-3.5 px-4">
-                    {isCeo && member.teamRole !== 'CEO' ? (
+                    {isCeo ? (
                       <select
                         value={member.teamRole}
                         onChange={(e) => onUpdateRole(member.id, e.target.value as TeamRole)}

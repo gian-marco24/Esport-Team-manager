@@ -17,6 +17,7 @@ import type { TacticalMessage, PersonalNote, WeeklyObjective } from '../types';
 import type { INotesPort } from './notesPort';
 
 const LOCAL_NOTES_PREFIX = 'urs_notes_messages_';
+const LOCAL_TASKS_PREFIX = 'urs_notes_tasks_';
 const LOCAL_PERSONAL_NOTES = 'urs_personal_notes_';
 const LOCAL_OBJECTIVES = 'urs_weekly_objectives_';
 
@@ -36,6 +37,23 @@ export class FirebaseNotesAdapter implements INotesPort {
       localStorage.setItem(`${LOCAL_NOTES_PREFIX}${channelId}`, JSON.stringify(messages));
     } catch (e) {
       console.warn('Failed to save local channel messages:', e);
+    }
+  }
+
+  private getLocalChannelTasks(channelId: string): TacticalTask[] {
+    try {
+      const data = localStorage.getItem(`${LOCAL_TASKS_PREFIX}${channelId}`);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private saveLocalChannelTasks(channelId: string, tasks: TacticalTask[]): void {
+    try {
+      localStorage.setItem(`${LOCAL_TASKS_PREFIX}${channelId}`, JSON.stringify(tasks));
+    } catch (e) {
+      console.warn('Failed to save local channel tasks:', e);
     }
   }
 
@@ -121,7 +139,8 @@ export class FirebaseNotesAdapter implements INotesPort {
     content: string,
     author: User,
     images: string[] = [],
-    tags: string[] = []
+    tags: string[] = [],
+    taskData?: Partial<TacticalTask>
   ): Promise<TacticalMessage> {
     const msgId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
     
@@ -148,7 +167,10 @@ export class FirebaseNotesAdapter implements INotesPort {
       content: content.trim(),
       images,
       tags,
-      isPinned: false,
+      isPinned: Boolean(taskData),
+      isTask: Boolean(taskData),
+      taskId: taskData?.id,
+      taskData: taskData,
       reactions: {},
       createdAt: new Date().toISOString(),
     };
@@ -166,6 +188,162 @@ export class FirebaseNotesAdapter implements INotesPort {
     this.saveLocalChannelMessages(channelId, msgs);
 
     return newMsg;
+  }
+
+  // --- Channel Tasks Implementation ---
+
+  subscribeToChannelTasks(
+    channelId: string,
+    callback: (tasks: TacticalTask[]) => void
+  ): () => void {
+    const localTasks = this.getLocalChannelTasks(channelId);
+    if (localTasks.length > 0) {
+      callback(localTasks);
+    }
+
+    if (!db) {
+      return () => {};
+    }
+
+    try {
+      const q = query(
+        collection(db, 'note_channels', channelId, 'tasks'),
+        orderBy('createdAt', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const tasks = snapshot.docs.map((d) => d.data() as TacticalTask);
+          this.saveLocalChannelTasks(channelId, tasks);
+          callback(tasks);
+        },
+        (err) => {
+          console.warn(`Firestore onSnapshot tasks for channel ${channelId} error:`, err);
+          callback(this.getLocalChannelTasks(channelId));
+        }
+      );
+
+      return unsubscribe;
+    } catch (err) {
+      console.warn('subscribeToChannelTasks error:', err);
+      return () => {};
+    }
+  }
+
+  async getChannelTasks(channelId: string): Promise<TacticalTask[]> {
+    if (db) {
+      try {
+        const q = query(
+          collection(db, 'note_channels', channelId, 'tasks'),
+          orderBy('createdAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const tasks = snapshot.docs.map((d) => d.data() as TacticalTask);
+          this.saveLocalChannelTasks(channelId, tasks);
+          return tasks;
+        }
+      } catch (err) {
+        console.warn('Firestore getChannelTasks error:', err);
+      }
+    }
+    return this.getLocalChannelTasks(channelId);
+  }
+
+  async createTask(
+    channelId: string,
+    taskData: Partial<TacticalTask>,
+    author: User,
+    publishToChat: boolean = true
+  ): Promise<TacticalTask> {
+    const taskId = taskData.id || `task-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    const now = new Date().toISOString();
+
+    const task: TacticalTask = {
+      id: taskId,
+      channelId,
+      messageId: taskData.messageId,
+      title: taskData.title || 'Nueva Tarea Asignada',
+      description: taskData.description || '',
+      materials: taskData.materials || '',
+      deadline: taskData.deadline || '',
+      status: taskData.status || 'pending',
+      priority: taskData.priority || 'medium',
+      assignedToId: taskData.assignedToId,
+      assignedToName: taskData.assignedToName,
+      authorId: author.id,
+      authorName: author.displayName || 'Staff',
+      annotations: taskData.annotations || '',
+      createdAt: taskData.createdAt || now,
+      updatedAt: now,
+    };
+
+    if (db) {
+      try {
+        await setDoc(doc(db, 'note_channels', channelId, 'tasks', taskId), task);
+      } catch (err) {
+        console.warn('Firestore createTask error:', err);
+      }
+    }
+
+    const tasks = this.getLocalChannelTasks(channelId);
+    tasks.unshift(task);
+    this.saveLocalChannelTasks(channelId, tasks);
+
+    // If requested to also publish as a pinned message in the chat
+    if (publishToChat) {
+      const chatContent = [
+        `📌 **TAREA: ${task.title}**`,
+        task.deadline ? `> **FECHA DE ENTREGA: ${task.deadline}**` : '',
+        task.materials ? `${task.materials}` : '',
+        task.description ? `\n${task.description}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      await this.sendMessage(channelId, chatContent, author, [], ['Tarea'], task);
+    }
+
+    return task;
+  }
+
+  async updateTask(
+    channelId: string,
+    taskId: string,
+    updates: Partial<TacticalTask>
+  ): Promise<void> {
+    const now = new Date().toISOString();
+    const cleanUpdates = { ...updates, updatedAt: now };
+
+    if (db) {
+      try {
+        await updateDoc(doc(db, 'note_channels', channelId, 'tasks', taskId), cleanUpdates);
+      } catch (err) {
+        console.warn('Firestore updateTask error:', err);
+      }
+    }
+
+    const tasks = this.getLocalChannelTasks(channelId);
+    const idx = tasks.findIndex((t) => t.id === taskId);
+    if (idx !== -1) {
+      tasks[idx] = { ...tasks[idx], ...cleanUpdates };
+      this.saveLocalChannelTasks(channelId, tasks);
+    }
+  }
+
+  async deleteTask(channelId: string, taskId: string): Promise<void> {
+    if (db) {
+      try {
+        await deleteDoc(doc(db, 'note_channels', channelId, 'tasks', taskId));
+      } catch (err) {
+        console.warn('Firestore deleteTask error:', err);
+      }
+    }
+
+    const tasks = this.getLocalChannelTasks(channelId);
+    const filtered = tasks.filter((t) => t.id !== taskId);
+    this.saveLocalChannelTasks(channelId, filtered);
   }
 
   async deleteMessage(channelId: string, messageId: string): Promise<void> {

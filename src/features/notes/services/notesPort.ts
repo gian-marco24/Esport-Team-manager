@@ -1,5 +1,5 @@
 import type { User } from '../../auth/types';
-import type { TacticalMessage, PersonalNote, WeeklyObjective } from '../types';
+import type { TacticalMessage, TacticalTask, PersonalNote, WeeklyObjective } from '../types';
 
 export interface INotesPort {
   // Tactical Channel Real-time Messages
@@ -14,7 +14,8 @@ export interface INotesPort {
     content: string,
     author: User,
     images?: string[],
-    tags?: string[]
+    tags?: string[],
+    taskData?: Partial<TacticalTask>
   ): Promise<TacticalMessage>;
 
   deleteMessage(channelId: string, messageId: string): Promise<void>;
@@ -22,6 +23,29 @@ export interface INotesPort {
   togglePinMessage(channelId: string, messageId: string, isPinned: boolean): Promise<void>;
 
   toggleReaction(channelId: string, messageId: string, emoji: string, userId: string): Promise<void>;
+
+  // Channel Tasks
+  subscribeToChannelTasks(
+    channelId: string,
+    callback: (tasks: TacticalTask[]) => void
+  ): () => void;
+
+  getChannelTasks(channelId: string): Promise<TacticalTask[]>;
+
+  createTask(
+    channelId: string,
+    taskData: Partial<TacticalTask>,
+    author: User,
+    publishToChat?: boolean
+  ): Promise<TacticalTask>;
+
+  updateTask(
+    channelId: string,
+    taskId: string,
+    updates: Partial<TacticalTask>
+  ): Promise<void>;
+
+  deleteTask(channelId: string, taskId: string): Promise<void>;
 
   // Personal Notes
   getPersonalNotes(userId: string): Promise<PersonalNote[]>;

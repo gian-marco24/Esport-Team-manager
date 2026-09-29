@@ -40,17 +40,36 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
-export const registerSchema = z.object({
-  code: z.string().min(1, 'Código de invitación requerido'),
-  email: z.string().email('Ingresa un correo electrónico válido'),
-  gameTag: z.string().min(1, 'Ingresa tu Tag del juego (ej: #LAN, #1234, #LAS)'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  confirmPassword: z.string().min(6, 'Confirma tu contraseña'),
-  birthDate: z.string().min(1, 'Selecciona tu fecha de nacimiento'),
-  country: z.string().min(1, 'Selecciona tu país de residencia'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Las contraseñas no coinciden',
-  path: ['confirmPassword'],
-});
+export const createRegisterSchema = (teamRole?: TeamRole) => {
+  const isTagRequired = teamRole === 'Player' || teamRole === 'Coach';
+  return z
+    .object({
+      code: z.string().min(1, 'Código de invitación requerido'),
+      email: z.string().email('Ingresa un correo electrónico válido'),
+      gameTag: z.string().optional(),
+      password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+      confirmPassword: z.string().min(6, 'Confirma tu contraseña'),
+      birthDate: z.string().min(1, 'Selecciona tu fecha de nacimiento'),
+      country: z.string().min(1, 'Selecciona tu país de residencia'),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: 'Las contraseñas no coinciden',
+      path: ['confirmPassword'],
+    })
+    .refine(
+      (data) => {
+        if (isTagRequired) {
+          return Boolean(data.gameTag && data.gameTag.trim().length > 0);
+        }
+        return true;
+      },
+      {
+        message: 'Ingresa tu Tag del juego (obligatorio para Jugadores y Coaches, ej: #LAN, #1234)',
+        path: ['gameTag'],
+      }
+    );
+};
 
-export type RegisterFormData = z.infer<typeof registerSchema>;
+export const registerSchema = createRegisterSchema();
+
+export type RegisterFormData = z.infer<ReturnType<typeof createRegisterSchema>>;

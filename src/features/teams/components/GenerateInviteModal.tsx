@@ -14,6 +14,7 @@ interface GenerateInviteModalProps {
 }
 
 const ROLES: TeamRole[] = [
+  'CEO',
   'Player',
   'Coach',
   'Manager',

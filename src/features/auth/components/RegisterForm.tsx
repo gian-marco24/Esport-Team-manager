@@ -11,7 +11,11 @@ interface RegisterFormProps {
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ invitation }) => {
-  const { register, handleSubmit, errors, isSubmitting, authError } = useRegisterForm(invitation.code);
+  const isTagRequired = invitation.teamRole === 'Player' || invitation.teamRole === 'Coach';
+  const { register, handleSubmit, errors, isSubmitting, authError } = useRegisterForm(
+    invitation.code,
+    invitation.teamRole
+  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -26,16 +30,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ invitation }) => {
         <Input
           label="Correo Electrónico"
           type="email"
-          placeholder="jugador@ursgamara.gg"
+          placeholder="usuario@ursgamara.gg"
           leftIcon={<Mail className="w-4 h-4" />}
           error={errors.email?.message}
           {...register('email')}
         />
 
         <Input
-          label="Tag del Juego (Riot Tag / Gamertag)"
+          label={isTagRequired ? 'Tag del Juego (Riot Tag / Gamertag) *' : 'Tag del Juego (Opcional)'}
           type="text"
-          placeholder="ej: #LAN o #1234"
+          placeholder={isTagRequired ? 'ej: #LAN o #1234 (Obligatorio)' : 'ej: #LAN o #1234 (Opcional)'}
           leftIcon={<Hash className="w-4 h-4 text-[#E2B86E]" />}
           error={errors.gameTag?.message}
           {...register('gameTag')}
