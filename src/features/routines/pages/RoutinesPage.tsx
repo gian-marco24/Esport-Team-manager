@@ -153,17 +153,6 @@ export const RoutinesPage: React.FC = () => {
     return routines[0] || null;
   }, [routines, monthCheckIn.routineId]);
 
-  // Handle Carousel navigation
-  const handlePrevRoutine = () => {
-    if (routines.length <= 1) return;
-    setActiveRoutineIndex((prev) => (prev > 0 ? prev - 1 : routines.length - 1));
-  };
-
-  const handleNextRoutine = () => {
-    if (routines.length <= 1) return;
-    setActiveRoutineIndex((prev) => (prev < routines.length - 1 ? prev + 1 : 0));
-  };
-
   // Carousel current routine
   const currentCarouselRoutine = routines[activeRoutineIndex] || routines[0] || null;
 
@@ -332,11 +321,11 @@ export const RoutinesPage: React.FC = () => {
 
         <RoutineCarouselHeader
           routines={routines}
-          activeRoutineIndex={activeRoutineIndex}
-          onPrev={handlePrevRoutine}
-          onNext={handleNextRoutine}
-          onEditRoutine={canManageRoutines ? handleOpenEditModal : undefined}
-          onDeleteRoutine={canManageRoutines ? handleDeleteRoutine : undefined}
+          currentIndex={activeRoutineIndex}
+          onSelectIndex={setActiveRoutineIndex}
+          onOpenCreateModal={handleOpenCreateModal}
+          onOpenEditModal={handleOpenEditModal}
+          onDeleteRoutine={handleDeleteRoutine}
           canManage={canManageRoutines}
         />
       </div>

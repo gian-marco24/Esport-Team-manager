@@ -49,12 +49,25 @@ export const RoutineCarouselHeader: React.FC<RoutineCarouselHeaderProps> = ({
 
   if (!currentRoutine) {
     return (
-      <div className="bg-[#140b21] border border-[#26143E] rounded-3xl p-6 text-center space-y-3">
-        <Dumbbell className="w-8 h-8 text-gray-500 mx-auto" />
-        <h4 className="text-sm font-bold text-white">No hay rutinas creadas</h4>
+      <div className="bg-[#140b21] border border-[#522B80]/50 rounded-3xl p-8 text-center space-y-4 shadow-xl">
+        <div className="w-12 h-12 rounded-2xl bg-[#522B80]/30 border border-[#8B44F7]/40 flex items-center justify-center text-[#E2B86E] mx-auto shadow-md">
+          <Dumbbell className="w-6 h-6 text-[#E2B86E]" />
+        </div>
+        <div className="space-y-1">
+          <h4 className="text-base font-bold text-white">No hay rutinas creadas</h4>
+          <p className="text-xs text-gray-400 max-w-sm mx-auto">
+            Aún no se ha registrado ninguna rutina de entrenamiento para el equipo.
+          </p>
+        </div>
         {canManage && (
-          <Button variant="secondary" size="sm" onClick={onOpenCreateModal}>
-            + Crear Primera Rutina
+          <Button
+            variant="gold"
+            size="sm"
+            onClick={onOpenCreateModal}
+            leftIcon={<Plus className="w-4 h-4" />}
+            className="shadow-lg shadow-[#E2B86E]/20"
+          >
+            Crear Primera Rutina
           </Button>
         )}
       </div>
