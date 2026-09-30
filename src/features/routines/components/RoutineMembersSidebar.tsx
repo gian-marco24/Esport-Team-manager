@@ -8,7 +8,6 @@ import {
   UserCheck,
   UserCog,
   Video,
-  User,
 } from 'lucide-react';
 import type { TeamMember } from '../../teams/types';
 import { useAuthContext } from '../../../app/providers/AuthProvider';
@@ -59,17 +58,17 @@ export const RoutineMembersSidebar: React.FC<RoutineMembersSidebarProps> = ({
     const mapped: RankedMember[] = otherMembers.map((m) => {
       const isCeo =
         m.teamRole === 'CEO' ||
-        m.role === 'ceo' ||
+        (m as any).role === 'ceo' ||
         m.globalSubrole?.toLowerCase().includes('ceo');
 
       const isCoach =
         m.teamRole === 'Coach' ||
-        m.role === 'coach' ||
+        (m as any).role === 'coach' ||
         m.globalSubrole?.toLowerCase().includes('coach');
 
       const isManager =
         m.teamRole === 'Manager' ||
-        m.role === 'manager' ||
+        (m as any).role === 'manager' ||
         m.globalSubrole?.toLowerCase().includes('manager');
 
       const isCreator =
@@ -78,7 +77,7 @@ export const RoutineMembersSidebar: React.FC<RoutineMembersSidebarProps> = ({
 
       const isStaff =
         m.teamRole === 'Staff' ||
-        m.role === 'staff' ||
+        (m as any).role === 'staff' ||
         m.globalSubrole?.toLowerCase().includes('staff');
 
       const subrole = m.rosterAssignments?.[0]?.subrole || m.globalSubrole || '';
@@ -89,7 +88,7 @@ export const RoutineMembersSidebar: React.FC<RoutineMembersSidebarProps> = ({
 
       let rank = 7;
       let categoryLabel = 'Otros Integrantes';
-      let roleBadgeText = m.teamRole || 'Miembro';
+      let roleBadgeText: string = m.teamRole || 'Miembro';
       let roleVariant: RankedMember['roleVariant'] = 'dark';
 
       if (isCeo) {

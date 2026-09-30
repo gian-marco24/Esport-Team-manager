@@ -4,11 +4,9 @@ import {
   Shield,
   Video,
   Crown,
-  UserCheck,
   ChevronRight,
   Gamepad2,
   MessageSquare,
-  FileText,
   Sparkles,
 } from 'lucide-react';
 import { useAuthContext } from '../../../app/providers/AuthProvider';

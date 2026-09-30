@@ -16,12 +16,10 @@ import {
   Strikethrough,
   Quote,
   Code,
-  Calendar,
   ChevronRight,
   Plus,
   FileEdit,
   Clock,
-  CheckCircle2,
 } from 'lucide-react';
 import { DEFAULT_TACTICAL_TAGS, type TacticalMessage, type TacticalTask } from '../types';
 import { useNoteChannel } from '../hooks/useNoteChannel';
@@ -81,7 +79,6 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
 
   const {
     tasks,
-    isLoading: isTasksLoading,
     createTask,
     updateTask,
     deleteTask,

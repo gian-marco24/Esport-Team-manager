@@ -4,10 +4,7 @@ import {
   getDocs,
   getDoc,
   setDoc,
-  updateDoc,
   deleteDoc,
-  query,
-  where,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import type { IRoutinesPort } from './routinesPort';
@@ -77,7 +74,7 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
 
   // --- Routines CRUD ---
 
-  async getRoutines(teamId: string): Promise<Routine[]> {
+  async getRoutines(_teamId: string = 'urs-gamara'): Promise<Routine[]> {
     if (db) {
       try {
         const q = collection(db, 'routines');
@@ -100,7 +97,7 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
 
     const routine: Routine = {
       id: routineId,
-      teamId,
+      teamId: routineData.teamId || teamId || 'urs-gamara',
       title: routineData.title || 'Nueva Rutina',
       description: routineData.description || '',
       videoUrl: routineData.videoUrl || '',
@@ -134,7 +131,16 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
     return routine;
   }
 
-  async deleteRoutine(teamId: string, routineId: string): Promise<void> {
+  async createRoutine(routineData: Partial<Routine>, teamId: string = 'urs-gamara'): Promise<Routine> {
+    return this.saveRoutine(teamId, routineData);
+  }
+
+  async updateRoutine(routineId: string, routineData: Partial<Routine>, teamId: string = 'urs-gamara'): Promise<Routine> {
+    return this.saveRoutine(teamId, { ...routineData, id: routineId });
+  }
+
+  async deleteRoutine(routineIdOrTeamId: string, maybeRoutineId?: string): Promise<void> {
+    const routineId = maybeRoutineId || routineIdOrTeamId;
     if (db) {
       try {
         await deleteDoc(doc(db, 'routines', routineId));
@@ -150,7 +156,7 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
 
   // --- Assignments ---
 
-  async getUserAssignedRoutine(userId: string): Promise<string | null> {
+  async getUserAssignedRoutine(userId: string, _yearMonth?: string): Promise<string | null> {
     if (db) {
       try {
         const snap = await getDoc(doc(db, 'user_assigned_routines', userId));
@@ -185,6 +191,10 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
     const map = this.getLocalAssignments();
     map[userId] = routineId;
     this.saveLocalAssignments(map);
+  }
+
+  async assignRoutineToUser(userId: string, routineId: string, _yearMonth?: string): Promise<void> {
+    return this.setUserAssignedRoutine(userId, routineId);
   }
 
   // --- Month Check-Ins ---

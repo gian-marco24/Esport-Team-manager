@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   X,
-  CheckCircle2,
   Clock,
   Calendar,
   Link as LinkIcon,
   FileText,
   Save,
   Check,
-  ExternalLink,
-  Tag,
   Sparkles,
-  AlertCircle,
   Copy,
   CheckCheck,
   Eye,

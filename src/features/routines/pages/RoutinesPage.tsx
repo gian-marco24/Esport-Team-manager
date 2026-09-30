@@ -33,13 +33,14 @@ export const RoutinesPage: React.FC = () => {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('self');
   const [monthCheckIn, setMonthCheckIn] = useState<UserRoutineMonthCheckIn>({
+    id: `self_${defaultYm}`,
     userId: '',
     yearMonth: defaultYm,
     routineId: '',
     checkIns: {},
     updatedAt: new Date().toISOString(),
   });
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [_isLoading, setIsLoading] = useState<boolean>(true);
   const [isGridLoading, setIsGridLoading] = useState<boolean>(false);
 
   // Modal state
@@ -163,24 +164,25 @@ export const RoutinesPage: React.FC = () => {
 
     // Optimistic local state update
     setMonthCheckIn((prev) => {
-      const currentDays = prev.checkIns[exerciseId] || [];
-      const newDays = currentDays.includes(day)
-        ? currentDays.filter((d) => d !== day)
-        : [...currentDays, day];
+      const currentDaysMap = prev.checkIns[exerciseId] || {};
+      const newDaysMap = {
+        ...currentDaysMap,
+        [day]: !currentDaysMap[day],
+      };
 
       return {
         ...prev,
         routineId: routineIdToUse,
         checkIns: {
           ...prev.checkIns,
-          [exerciseId]: newDays,
+          [exerciseId]: newDaysMap,
         },
         updatedAt: new Date().toISOString(),
       };
     });
 
     try {
-      await routinesService.toggleCheckIn(effectiveUserId, currentYearMonth, exerciseId, day, routineIdToUse);
+      await routinesService.toggleCheckIn(effectiveUserId, currentYearMonth, routineIdToUse, exerciseId, day);
     } catch (err) {
       console.error('Failed to save check-in state:', err);
       // Re-sync on failure
@@ -213,7 +215,7 @@ export const RoutinesPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveRoutine = async (routineData: Omit<Routine, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSaveRoutine = async (routineData: Partial<Routine>) => {
     try {
       if (editingRoutine) {
         const updated = await routinesService.updateRoutine(editingRoutine.id, routineData);

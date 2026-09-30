@@ -8,7 +8,6 @@ import {
   Clock,
   ExternalLink,
   Dumbbell,
-  Sparkles,
   Layers,
 } from 'lucide-react';
 import type { Routine } from '../types';

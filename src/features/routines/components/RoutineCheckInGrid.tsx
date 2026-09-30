@@ -3,13 +3,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
-  Calendar,
-  Sparkles,
   CheckCircle2,
   Dumbbell,
-  Clock,
-  Layers,
-  ArrowRight,
 } from 'lucide-react';
 import type { Routine, UserRoutineMonthCheckIn } from '../types';
 import type { TeamMember } from '../../teams/types';
@@ -108,16 +103,7 @@ export const RoutineCheckInGrid: React.FC<RoutineCheckInGridProps> = ({
   const completionPercentage =
     totalPossibleChecks > 0 ? Math.round((totalChecked / totalPossibleChecks) * 100) : 0;
 
-  // Today check-ins
-  const todayPossible = activeRoutine?.exercises.length || 0;
-  let todayChecked = 0;
-  if (isCurrentRealMonth && activeRoutine) {
-    activeRoutine.exercises.forEach((ex) => {
-      if (monthCheckIn.checkIns[ex.id]?.[currentRealDay]) {
-        todayChecked += 1;
-      }
-    });
-  }
+
 
   return (
     <div className="bg-[#140b21] border border-[#26143E] rounded-3xl p-4 sm:p-5 shadow-2xl space-y-4 flex flex-col">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Power, Video as VideoIcon, ExternalLink } from 'lucide-react';
+import { Play, Power, Video as VideoIcon } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 
 interface RoutineVideoPlayerProps {

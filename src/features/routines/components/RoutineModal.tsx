@@ -8,7 +8,6 @@ import {
   Link as LinkIcon,
   Video,
   Clock,
-  Sparkles,
   Layers,
 } from 'lucide-react';
 import type { Routine, RoutineExercise } from '../types';

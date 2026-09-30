@@ -1,14 +1,17 @@
-import type { Routine, UserRoutineMonthCheckIn, UserAssignedRoutine } from '../types';
+import type { Routine, UserRoutineMonthCheckIn } from '../types';
 
 export interface IRoutinesPort {
   // Routines CRUD
-  getRoutines(teamId: string): Promise<Routine[]>;
+  getRoutines(teamId?: string): Promise<Routine[]>;
   saveRoutine(teamId: string, routineData: Partial<Routine>): Promise<Routine>;
-  deleteRoutine(teamId: string, routineId: string): Promise<void>;
+  createRoutine(routineData: Partial<Routine>, teamId?: string): Promise<Routine>;
+  updateRoutine(routineId: string, routineData: Partial<Routine>, teamId?: string): Promise<Routine>;
+  deleteRoutine(routineId: string, teamId?: string): Promise<void>;
 
   // User Routine Assignment
-  getUserAssignedRoutine(userId: string): Promise<string | null>;
+  getUserAssignedRoutine(userId: string, yearMonth?: string): Promise<string | null>;
   setUserAssignedRoutine(userId: string, routineId: string, assignedBy?: string): Promise<void>;
+  assignRoutineToUser(userId: string, routineId: string, yearMonth?: string): Promise<void>;
 
   // Check-ins
   getUserMonthCheckIn(userId: string, yearMonth: string, currentAssignedRoutineId?: string): Promise<UserRoutineMonthCheckIn>;

@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import type { User } from '../../auth/types';
-import type { TacticalMessage, PersonalNote, WeeklyObjective } from '../types';
+import type { TacticalMessage, TacticalTask, PersonalNote, WeeklyObjective } from '../types';
 import type { INotesPort } from './notesPort';
 
 const LOCAL_NOTES_PREFIX = 'urs_notes_messages_';
