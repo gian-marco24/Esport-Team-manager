@@ -209,7 +209,7 @@ export const StatsAnalyticsPage: React.FC = () => {
             <Swords className="w-7 h-7" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs uppercase font-bold text-gray-400">Total Partidos</p>
+            <p className="text-xs uppercase font-bold text-gray-400">Total Mapas</p>
             <p className="text-2xl sm:text-3xl font-black text-white">{generalStats.totalMatches}</p>
             <div className="flex items-center space-x-2 text-xs sm:text-sm font-bold mt-1">
               <span className="text-emerald-400">{generalStats.totalWins}W</span>
@@ -297,7 +297,7 @@ export const StatsAnalyticsPage: React.FC = () => {
                 Rendimiento por Mapa & Mejores Mapas
               </h2>
               <p className="text-xs text-gray-400">
-                Partidas jugadas, récord de victorias, rondas y K/D promedio del equipo en cada mapa disputado.
+                Mapas jugados, récord de victorias, rondas y K/D promedio del equipo en cada mapa disputado.
               </p>
             </div>
           </div>
@@ -355,7 +355,7 @@ export const StatsAnalyticsPage: React.FC = () => {
 
                     <div className="absolute bottom-2.5 left-3.5 flex items-center space-x-2">
                       <span className="px-2.5 py-1 bg-black/70 rounded-lg text-xs text-gray-300 font-semibold border border-white/10">
-                        {m.timesPlayed} {m.timesPlayed === 1 ? 'partida' : 'partidas'}
+                        {m.timesPlayed} {m.timesPlayed === 1 ? 'mapa' : 'mapas'}
                       </span>
                     </div>
                   </div>
@@ -443,7 +443,7 @@ export const StatsAnalyticsPage: React.FC = () => {
                   <th className="py-4 px-4 select-none">Agente Principal</th>
                   <th className="py-4 px-4 text-center cursor-pointer hover:text-white select-none" onClick={() => handleSort('matchesPlayed')}>
                     <div className="flex items-center justify-center space-x-1.5">
-                      <span>Partidas</span>
+                      <span>Mapas</span>
                       <ArrowUpDown className="w-3.5 h-3.5" />
                     </div>
                   </th>

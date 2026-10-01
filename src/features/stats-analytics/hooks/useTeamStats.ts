@@ -21,15 +21,30 @@ export const useTeamStats = () => {
     load();
   }, []);
 
-  const totalMatches = matches.length;
-  const wins = matches.filter((m) => m.outcome === 'win').length;
-  const losses = matches.filter((m) => m.outcome === 'loss').length;
-  const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
+  let totalMaps = 0;
+  let wins = 0;
+  let losses = 0;
+
+  matches.forEach((m) => {
+    if (m.maps && m.maps.length > 0) {
+      m.maps.forEach((map) => {
+        totalMaps++;
+        if (map.teamScore > map.opponentScore) wins++;
+        else if (map.teamScore < map.opponentScore) losses++;
+      });
+    } else {
+      totalMaps++;
+      if (m.outcome === 'win') wins++;
+      else if (m.outcome === 'loss') losses++;
+    }
+  });
+
+  const winRate = totalMaps > 0 ? Math.round((wins / totalMaps) * 100) : 0;
 
   const teamOverview = {
     teamName: URS_GAMARA_TEAM.name,
     tag: URS_GAMARA_TEAM.tag,
-    totalMatches,
+    totalMatches: totalMaps,
     wins,
     losses,
     winRate,

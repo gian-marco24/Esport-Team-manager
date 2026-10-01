@@ -329,7 +329,7 @@ export const statsCalculationService = {
   },
 
   /**
-   * Calculate General Team KPI metrics
+   * Calculate General Team KPI metrics (per individual map played)
    */
   calculateGeneralStats(matches: Match[]): GeneralTeamStats {
     let scrimsCount = 0;
@@ -346,29 +346,45 @@ export const statsCalculationService = {
     let opponentRoundsWon = 0;
 
     matches.forEach((m) => {
+      const matchMaps = m.maps && m.maps.length > 0 ? m.maps : [];
       const isScrim = m.type === 'scrim';
-      if (isScrim) {
-        scrimsCount++;
-        if (m.outcome === 'win') scrimsWins++;
-        else if (m.outcome === 'loss') scrimsLosses++;
-        else scrimsDraws++;
-      } else {
-        tournamentsCount++;
-        if (m.outcome === 'win') tournamentsWins++;
-        else if (m.outcome === 'loss') tournamentsLosses++;
-        else tournamentsDraws++;
-      }
 
-      // Calculate rounds from maps
-      if (m.maps && m.maps.length > 0) {
-        m.maps.forEach((map) => {
+      if (matchMaps.length > 0) {
+        matchMaps.forEach((map) => {
+          const isMapWon = map.teamScore > map.opponentScore;
+          const isMapLost = map.teamScore < map.opponentScore;
+
+          if (isScrim) {
+            scrimsCount++;
+            if (isMapWon) scrimsWins++;
+            else if (isMapLost) scrimsLosses++;
+            else scrimsDraws++;
+          } else {
+            tournamentsCount++;
+            if (isMapWon) tournamentsWins++;
+            else if (isMapLost) tournamentsLosses++;
+            else tournamentsDraws++;
+          }
+
           teamRoundsWon += Number(map.teamScore || 0);
           opponentRoundsWon += Number(map.opponentScore || 0);
         });
+      } else {
+        if (isScrim) {
+          scrimsCount++;
+          if (m.outcome === 'win') scrimsWins++;
+          else if (m.outcome === 'loss') scrimsLosses++;
+          else scrimsDraws++;
+        } else {
+          tournamentsCount++;
+          if (m.outcome === 'win') tournamentsWins++;
+          else if (m.outcome === 'loss') tournamentsLosses++;
+          else tournamentsDraws++;
+        }
       }
     });
 
-    const totalMatches = matches.length;
+    const totalMatches = scrimsCount + tournamentsCount;
     const totalWins = scrimsWins + tournamentsWins;
     const totalLosses = scrimsLosses + tournamentsLosses;
     const totalDraws = scrimsDraws + tournamentsDraws;
@@ -485,12 +501,18 @@ export const statsCalculationService = {
       const kdRatio = e.totalDeaths > 0 ? (e.totalKills / e.totalDeaths).toFixed(2) : e.totalKills.toFixed(2);
       const teamAvgKda = `${kdRatio} K/D`;
 
-      // Find best MVP player on this map
+      // Find best MVP player on this map (Highest kills; if tied, highest KDA)
       let bestPlayerNick: string | undefined;
-      let maxScore = -1;
+      let maxKills = -1;
+      let maxKda = -1;
       Object.entries(e.playerScores).forEach(([nick, stats]) => {
-        if (stats.score > maxScore) {
-          maxScore = stats.score;
+        const kda = stats.deaths > 0 ? (stats.kills + stats.assists) / stats.deaths : stats.kills + stats.assists;
+        if (stats.kills > maxKills) {
+          maxKills = stats.kills;
+          maxKda = kda;
+          bestPlayerNick = nick;
+        } else if (stats.kills === maxKills && kda > maxKda) {
+          maxKda = kda;
           bestPlayerNick = nick;
         }
       });
@@ -522,7 +544,7 @@ export const statsCalculationService = {
   },
 
   /**
-   * Calculate detailed individual Player statistics table
+   * Calculate detailed individual Player statistics table (per individual map played)
    * NOTE: Guest players (isGuest: true or unmatched) are strictly excluded from roster tables!
    */
   calculatePlayerStats(
@@ -583,77 +605,99 @@ export const statsCalculationService = {
       }
     });
 
-    // Process all matches and maps
+    // Process all matches and individual maps
     matches.forEach((m) => {
-      const matchWon = m.outcome === 'win';
-      const matchLost = m.outcome === 'loss';
+      const matchMaps = m.maps && m.maps.length > 0 ? m.maps : [];
 
-      // Gather player stats from map results or match
-      const pStatsList: { mapName?: string; mapWon?: boolean; stats: MatchPlayerStats }[] = [];
-      if (m.maps && m.maps.length > 0) {
-        m.maps.forEach((map) => {
+      if (matchMaps.length > 0) {
+        matchMaps.forEach((map) => {
           const isMapWon = map.teamScore > map.opponentScore;
-          if (map.playerStats) {
-            map.playerStats.forEach((ps) => {
-              pStatsList.push({ mapName: map.mapName, mapWon: isMapWon, stats: ps });
-            });
+          const isMapLost = map.teamScore < map.opponentScore;
+          const pStats = map.playerStats || [];
+
+          pStats.forEach((stats) => {
+            // Exclude guest players
+            if (stats.isGuest || stats.playerNick.toLowerCase().startsWith('invitado')) {
+              return;
+            }
+
+            // Find corresponding member
+            let memberId: string | undefined;
+            if (stats.playerId && playerMap[stats.playerId]) {
+              memberId = stats.playerId;
+            } else {
+              memberId =
+                memberLookup.get(stats.playerNick.toLowerCase()) ||
+                (stats.gameTag ? memberLookup.get(stats.gameTag.toLowerCase()) : undefined);
+            }
+
+            if (!memberId || !playerMap[memberId]) {
+              // Player is not a member of this roster -> Ignore
+              return;
+            }
+
+            const p = playerMap[memberId];
+            p.matchesPlayed++;
+            if (isMapWon) p.wins++;
+            else if (isMapLost) p.losses++;
+
+            p.totalKills += stats.kills || 0;
+            p.totalDeaths += stats.deaths || 0;
+            p.totalAssists += stats.assists || 0;
+            p.totalFirstKills += stats.firstKills || 0;
+
+            if (stats.agent) {
+              p.agentCounts[stats.agent] = (p.agentCounts[stats.agent] || 0) + 1;
+            }
+
+            const mapName = map.mapName.trim();
+            if (mapName) {
+              if (!p.mapStats[mapName]) p.mapStats[mapName] = { wins: 0, total: 0, kdaSum: 0 };
+              p.mapStats[mapName].total++;
+              if (isMapWon) p.mapStats[mapName].wins++;
+              const matchKda =
+                stats.deaths > 0 ? (stats.kills + stats.assists) / stats.deaths : stats.kills + stats.assists;
+              p.mapStats[mapName].kdaSum += matchKda;
+            }
+          });
+        });
+      } else if (m.playerStats && m.playerStats.length > 0) {
+        const isMatchWon = m.outcome === 'win';
+        const isMatchLost = m.outcome === 'loss';
+
+        m.playerStats.forEach((stats) => {
+          if (stats.isGuest || stats.playerNick.toLowerCase().startsWith('invitado')) {
+            return;
+          }
+
+          let memberId: string | undefined;
+          if (stats.playerId && playerMap[stats.playerId]) {
+            memberId = stats.playerId;
+          } else {
+            memberId =
+              memberLookup.get(stats.playerNick.toLowerCase()) ||
+              (stats.gameTag ? memberLookup.get(stats.gameTag.toLowerCase()) : undefined);
+          }
+
+          if (!memberId || !playerMap[memberId]) {
+            return;
+          }
+
+          const p = playerMap[memberId];
+          p.matchesPlayed++;
+          if (isMatchWon) p.wins++;
+          else if (isMatchLost) p.losses++;
+
+          p.totalKills += stats.kills || 0;
+          p.totalDeaths += stats.deaths || 0;
+          p.totalAssists += stats.assists || 0;
+          p.totalFirstKills += stats.firstKills || 0;
+
+          if (stats.agent) {
+            p.agentCounts[stats.agent] = (p.agentCounts[stats.agent] || 0) + 1;
           }
         });
       }
-      if (pStatsList.length === 0 && m.playerStats) {
-        m.playerStats.forEach((ps) => {
-          pStatsList.push({ mapName: m.maps?.[0]?.mapName, mapWon: matchWon, stats: ps });
-        });
-      }
-
-      // Track unique players per match for matchesPlayed / winrate
-      const matchPlayersSeen = new Set<string>();
-
-      pStatsList.forEach(({ mapName, mapWon, stats }) => {
-        // Exclude guest players
-        if (stats.isGuest || stats.playerNick.toLowerCase().startsWith('invitado')) {
-          return;
-        }
-
-        // Find corresponding member
-        let memberId: string | undefined;
-        if (stats.playerId && playerMap[stats.playerId]) {
-          memberId = stats.playerId;
-        } else {
-          memberId = memberLookup.get(stats.playerNick.toLowerCase()) ||
-            (stats.gameTag ? memberLookup.get(stats.gameTag.toLowerCase()) : undefined);
-        }
-
-        if (!memberId || !playerMap[memberId]) {
-          // Player is not a member of this roster -> Ignore
-          return;
-        }
-
-        const p = playerMap[memberId];
-        p.totalKills += stats.kills || 0;
-        p.totalDeaths += stats.deaths || 0;
-        p.totalAssists += stats.assists || 0;
-        p.totalFirstKills += stats.firstKills || 0;
-
-        if (stats.agent) {
-          p.agentCounts[stats.agent] = (p.agentCounts[stats.agent] || 0) + 1;
-        }
-
-        if (mapName) {
-          if (!p.mapStats[mapName]) p.mapStats[mapName] = { wins: 0, total: 0, kdaSum: 0 };
-          p.mapStats[mapName].total++;
-          if (mapWon) p.mapStats[mapName].wins++;
-          const matchKda = stats.deaths > 0 ? (stats.kills + stats.assists) / stats.deaths : (stats.kills + stats.assists);
-          p.mapStats[mapName].kdaSum += matchKda;
-        }
-
-        if (!matchPlayersSeen.has(memberId)) {
-          matchPlayersSeen.add(memberId);
-          p.matchesPlayed++;
-          if (matchWon) p.wins++;
-          else if (matchLost) p.losses++;
-        }
-      });
     });
 
     const result: PlayerStatsSummary[] = Object.values(playerMap).map((p) => {

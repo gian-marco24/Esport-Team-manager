@@ -320,52 +320,58 @@ export const ProfilePage: React.FC = () => {
         ? Math.round(((totalKills + totalAssists) / totalDeaths) * 100) / 100
         : totalKills + totalAssists;
 
-    // Convert agent map to sorted array
-    const agentList: UserAgentStat[] = Object.entries(agentMap).map(([agentName, data]) => {
-      const foundAgent = agents.find((a) => a.displayName.toLowerCase() === agentName.toLowerCase());
-      const aWinRate = data.times > 0 ? Math.round((data.wins / data.times) * 100) : 0;
-      const aKda =
-        data.deaths > 0
-          ? Math.round(((data.kills + data.assists) / data.deaths) * 100) / 100
-          : data.kills + data.assists;
+    // Convert agent map to sorted array (Top 5 most played)
+    const agentList: UserAgentStat[] = Object.entries(agentMap)
+      .map(([agentName, data]) => {
+        const foundAgent = agents.find((a) => a.displayName.toLowerCase() === agentName.toLowerCase());
+        const aWinRate = data.times > 0 ? Math.round((data.wins / data.times) * 100) : 0;
+        const aKda =
+          data.deaths > 0
+            ? Math.round(((data.kills + data.assists) / data.deaths) * 100) / 100
+            : data.kills + data.assists;
 
-      return {
-        agentName,
-        agentIcon: foundAgent?.displayIcon,
-        timesPlayed: data.times,
-        wins: data.wins,
-        losses: data.losses,
-        winRate: aWinRate,
-        kills: data.kills,
-        deaths: data.deaths,
-        assists: data.assists,
-        kdaRatio: aKda,
-      };
-    }).sort((a, b) => b.timesPlayed - a.timesPlayed || b.winRate - a.winRate);
+        return {
+          agentName,
+          agentIcon: foundAgent?.displayIcon,
+          timesPlayed: data.times,
+          wins: data.wins,
+          losses: data.losses,
+          winRate: aWinRate,
+          kills: data.kills,
+          deaths: data.deaths,
+          assists: data.assists,
+          kdaRatio: aKda,
+        };
+      })
+      .sort((a, b) => b.timesPlayed - a.timesPlayed || b.kdaRatio - a.kdaRatio || b.winRate - a.winRate)
+      .slice(0, 5);
 
-    // Convert map stats to sorted array
-    const mapList: UserMapStat[] = Object.entries(mapPerformanceMap).map(([mapName, data]) => {
-      const mapMeta = mapsData.find((m) => m.displayName.toLowerCase() === mapName.toLowerCase());
-      const mWinRate = data.times > 0 ? Math.round((data.wins / data.times) * 100) : 0;
-      const mKda =
-        data.deaths > 0
-          ? Math.round(((data.kills + data.assists) / data.deaths) * 100) / 100
-          : data.kills + data.assists;
+    // Convert map stats to sorted array (Top 5 sorted by highest KDA)
+    const mapList: UserMapStat[] = Object.entries(mapPerformanceMap)
+      .map(([mapName, data]) => {
+        const mapMeta = mapsData.find((m) => m.displayName.toLowerCase() === mapName.toLowerCase());
+        const mWinRate = data.times > 0 ? Math.round((data.wins / data.times) * 100) : 0;
+        const mKda =
+          data.deaths > 0
+            ? Math.round(((data.kills + data.assists) / data.deaths) * 100) / 100
+            : data.kills + data.assists;
 
-      return {
-        mapName,
-        splashUrl: mapMeta?.splash,
-        displayIcon: mapMeta?.displayIcon || mapMeta?.listViewIcon,
-        timesPlayed: data.times,
-        wins: data.wins,
-        losses: data.losses,
-        winRate: mWinRate,
-        kills: data.kills,
-        deaths: data.deaths,
-        assists: data.assists,
-        kdaRatio: mKda,
-      };
-    }).sort((a, b) => b.timesPlayed - a.timesPlayed || b.winRate - a.winRate);
+        return {
+          mapName,
+          splashUrl: mapMeta?.splash,
+          displayIcon: mapMeta?.displayIcon || mapMeta?.listViewIcon,
+          timesPlayed: data.times,
+          wins: data.wins,
+          losses: data.losses,
+          winRate: mWinRate,
+          kills: data.kills,
+          deaths: data.deaths,
+          assists: data.assists,
+          kdaRatio: mKda,
+        };
+      })
+      .sort((a, b) => b.kdaRatio - a.kdaRatio || b.winRate - a.winRate || b.timesPlayed - a.timesPlayed)
+      .slice(0, 5);
 
     return {
       totalMatches,
@@ -688,7 +694,7 @@ export const ProfilePage: React.FC = () => {
             </p>
           </div>
           <Badge variant="purple" className="text-xs font-bold uppercase px-3 py-1">
-            {detailedUserStats.totalMatches} {detailedUserStats.totalMatches === 1 ? 'partida' : 'partidas'}
+            {detailedUserStats.totalMatches} {detailedUserStats.totalMatches === 1 ? 'mapa' : 'mapas'}
           </Badge>
         </div>
 
@@ -731,9 +737,9 @@ export const ProfilePage: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-2">
               <Swords className="w-5 h-5" />
             </div>
-            <p className="text-xs text-gray-400 uppercase font-semibold">Partidas</p>
+            <p className="text-xs text-gray-400 uppercase font-semibold">Mapas</p>
             <p className="text-2xl sm:text-3xl font-black text-white">{detailedUserStats.totalMatches}</p>
-            <p className="text-xs text-gray-400 font-medium">Disputadas</p>
+            <p className="text-xs text-gray-400 font-medium">Disputados</p>
           </Card>
 
           {/* First Bloods / FK */}
@@ -744,7 +750,7 @@ export const ProfilePage: React.FC = () => {
             <p className="text-xs text-gray-400 uppercase font-semibold">1st Kills (FK)</p>
             <p className="text-2xl sm:text-3xl font-black text-[#E2B86E]">{detailedUserStats.totalFirstKills}</p>
             <p className="text-xs text-gray-400 font-medium">
-              {detailedUserStats.avgFirstKills} por partida
+              {detailedUserStats.avgFirstKills} por mapa
             </p>
           </Card>
 
@@ -792,7 +798,7 @@ export const ProfilePage: React.FC = () => {
                       <div className="min-w-0">
                         <p className="font-bold text-white text-sm sm:text-base truncate">{ag.agentName}</p>
                         <p className="text-xs text-gray-400">
-                          {ag.timesPlayed} {ag.timesPlayed === 1 ? 'partida' : 'partidas'} • {ag.wins}W - {ag.losses}L
+                          {ag.timesPlayed} {ag.timesPlayed === 1 ? 'mapa' : 'mapas'} • {ag.wins}W - {ag.losses}L
                         </p>
                       </div>
                     </div>
@@ -808,7 +814,7 @@ export const ProfilePage: React.FC = () => {
               </div>
             ) : (
               <p className="text-sm text-gray-500 italic text-center py-8">
-                Aún no hay registros de agentes en partidos para este usuario.
+                Aún no hay registros de agentes en mapas para este usuario.
               </p>
             )}
           </Card>
@@ -844,7 +850,7 @@ export const ProfilePage: React.FC = () => {
                       <div className="min-w-0">
                         <p className="font-bold text-white text-sm sm:text-base truncate">{mapItem.mapName}</p>
                         <p className="text-xs text-gray-400">
-                          {mapItem.timesPlayed} {mapItem.timesPlayed === 1 ? 'partida' : 'partidas'} • {mapItem.wins}W - {mapItem.losses}L
+                          {mapItem.timesPlayed} {mapItem.timesPlayed === 1 ? 'mapa' : 'mapas'} • {mapItem.wins}W - {mapItem.losses}L
                         </p>
                       </div>
                     </div>
@@ -872,7 +878,7 @@ export const ProfilePage: React.FC = () => {
             <div className="flex items-center justify-between border-b border-[#26143E] pb-3">
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-2">
                 <Swords className="w-5 h-5 text-[#8B44F7]" />
-                <span>Últimas Partidas Disputadas ({detailedUserStats.participationList.length})</span>
+                <span>Últimos Mapas Disputados ({detailedUserStats.participationList.length})</span>
               </h3>
             </div>
 

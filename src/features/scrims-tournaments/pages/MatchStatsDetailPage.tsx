@@ -140,13 +140,20 @@ export const MatchStatsDetailPage: React.FC = () => {
   const isWin = match.outcome === 'win';
   const isLoss = match.outcome === 'loss';
 
-  // Current Map MVP
+  // Current Map MVP (Highest kills; if tied, highest KDA ratio)
   let mapMvp: PlayerMapComparison | undefined;
   if (comparisons.length > 0) {
     mapMvp = [...comparisons].sort((a, b) => {
-      const scoreA = a.matchKills * 2 + a.matchAssists + a.matchFirstKills * 3;
-      const scoreB = b.matchKills * 2 + b.matchAssists + b.matchFirstKills * 3;
-      return scoreB - scoreA;
+      if (b.matchKills !== a.matchKills) {
+        return b.matchKills - a.matchKills;
+      }
+      if (b.matchKdaRatio !== a.matchKdaRatio) {
+        return b.matchKdaRatio - a.matchKdaRatio;
+      }
+      if (b.matchFirstKills !== a.matchFirstKills) {
+        return b.matchFirstKills - a.matchFirstKills;
+      }
+      return b.matchAssists - a.matchAssists;
     })[0];
   }
 
@@ -439,7 +446,7 @@ export const MatchStatsDetailPage: React.FC = () => {
                               )}
                             </div>
                             <span className="text-xs 2xl:text-sm text-gray-400 block truncate font-medium">
-                              {c.historical.timesPlayed} {c.historical.timesPlayed === 1 ? 'partido histórico' : 'partidos históricos'}
+                              {c.historical.timesPlayed} {c.historical.timesPlayed === 1 ? 'mapa histórico' : 'mapas históricos'}
                             </span>
                           </div>
                         </div>
@@ -499,7 +506,7 @@ export const MatchStatsDetailPage: React.FC = () => {
                             <div>
                               <p className="font-extrabold text-gray-200 text-sm 2xl:text-base">{c.historical.mostPlayedAgent}</p>
                               <span className="text-xs 2xl:text-sm text-gray-400 font-medium">
-                                Usado en {c.historical.agentUsageCount} {c.historical.agentUsageCount === 1 ? 'partida' : 'partidas'}
+                                Usado en {c.historical.agentUsageCount} {c.historical.agentUsageCount === 1 ? 'mapa' : 'mapas'}
                               </span>
                             </div>
                           </div>
@@ -519,7 +526,7 @@ export const MatchStatsDetailPage: React.FC = () => {
                             </p>
                           </div>
                         ) : (
-                          <span className="text-gray-500 text-xs 2xl:text-sm italic">Primer partido registrado</span>
+                          <span className="text-gray-500 text-xs 2xl:text-sm italic">Primer mapa registrado</span>
                         )}
                       </td>
 

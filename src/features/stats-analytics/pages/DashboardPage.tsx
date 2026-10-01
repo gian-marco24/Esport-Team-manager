@@ -13,6 +13,7 @@ import {
   Gamepad2,
   Crosshair,
   ChevronRight,
+  FileText,
 } from 'lucide-react';
 import { useUserStats } from '../hooks/useUserStats';
 import { useTeamStats } from '../hooks/useTeamStats';
@@ -95,7 +96,7 @@ export const DashboardPage: React.FC = () => {
               <p className="text-xl sm:text-2xl font-black text-[#E2B86E]">{teamOverview.winRate}%</p>
             </div>
             <div className="px-5 py-3 bg-[#0D0914]/80 border border-[#8B44F7]/40 rounded-xl text-center">
-              <p className="text-xs text-gray-400 font-semibold uppercase">Partidas Registradas</p>
+              <p className="text-xs text-gray-400 font-semibold uppercase">Mapas Registrados</p>
               <p className="text-xl sm:text-2xl font-black text-[#8B44F7]">{teamOverview.totalMatches}</p>
             </div>
           </div>
@@ -109,10 +110,10 @@ export const DashboardPage: React.FC = () => {
             <Swords className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
           <div>
-            <p className="text-xs sm:text-sm text-gray-400 font-medium">Partidas Jugadas</p>
+            <p className="text-xs sm:text-sm text-gray-400 font-medium">Mapas Jugados</p>
             <p className="text-2xl sm:text-3xl font-black text-white">{teamOverview.totalMatches}</p>
             <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-              <TrendingUp className="w-3.5 h-3.5" /> Partidas disputadas
+              <TrendingUp className="w-3.5 h-3.5" /> Mapas disputados
             </p>
           </div>
         </Card>
@@ -124,7 +125,7 @@ export const DashboardPage: React.FC = () => {
           <div>
             <p className="text-xs sm:text-sm text-gray-400 font-medium">Victorias</p>
             <p className="text-2xl sm:text-3xl font-black text-white">{teamOverview.wins}</p>
-            <p className="text-xs text-[#E2B86E] font-semibold mt-0.5">Partidas ganadas</p>
+            <p className="text-xs text-[#E2B86E] font-semibold mt-0.5">Mapas ganados</p>
           </div>
         </Card>
 
@@ -135,7 +136,7 @@ export const DashboardPage: React.FC = () => {
           <div>
             <p className="text-xs sm:text-sm text-gray-400 font-medium">Derrotas</p>
             <p className="text-2xl sm:text-3xl font-black text-white">{teamOverview.losses}</p>
-            <p className="text-xs text-purple-300 font-semibold mt-0.5">Partidas perdidas</p>
+            <p className="text-xs text-purple-300 font-semibold mt-0.5">Mapas perdidos</p>
           </div>
         </Card>
 
@@ -320,16 +321,27 @@ export const DashboardPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="space-y-2.5">
-            <Link to="/dashboard/scrims/new">
-              <Button variant="secondary" className="w-full text-sm" leftIcon={<Plus className="w-4.5 h-4.5" />}>
-                Cargar Nuevo Resultado
-              </Button>
+          <div className="space-y-2.5 pt-2">
+            <Link
+              to="/dashboard/scrims/new"
+              className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#8B44F7] to-[#6d28d9] hover:from-[#9D5BF8] hover:to-[#7c3aed] text-white font-bold text-xs sm:text-sm shadow-lg shadow-[#8B44F7]/20 border border-[#8B44F7]/40 transition-all active:scale-[0.98] group"
+            >
+              <Plus className="w-4 h-4 text-[#E2B86E] group-hover:rotate-90 transition-transform duration-200 shrink-0" />
+              <span>Cargar Nuevo Resultado</span>
             </Link>
-            <Link to="/dashboard/stats">
-              <Button variant="outline" className="w-full text-sm" leftIcon={<Award className="w-4.5 h-4.5 text-[#E2B86E]" />}>
-                Estadísticas & Análisis
-              </Button>
+            <Link
+              to="/dashboard/stats"
+              className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-[#180d29] hover:bg-[#26143E] text-gray-200 hover:text-white font-bold text-xs sm:text-sm border border-[#522B80]/60 hover:border-[#8B44F7]/60 shadow-sm transition-all active:scale-[0.98] group"
+            >
+              <Award className="w-4 h-4 text-[#E2B86E] group-hover:scale-110 transition-transform duration-200 shrink-0" />
+              <span>Estadísticas & Análisis</span>
+            </Link>
+            <Link
+              to="/dashboard/notes"
+              className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-[#180d29] hover:bg-[#26143E] text-gray-200 hover:text-white font-bold text-xs sm:text-sm border border-[#522B80]/60 hover:border-[#8B44F7]/60 shadow-sm transition-all active:scale-[0.98] group"
+            >
+              <FileText className="w-4 h-4 text-[#E2B86E] group-hover:scale-110 transition-transform duration-200 shrink-0" />
+              <span>Estrategias & Notas</span>
             </Link>
           </div>
         </Card>
