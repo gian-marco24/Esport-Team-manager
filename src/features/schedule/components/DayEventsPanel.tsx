@@ -46,22 +46,22 @@ export const DayEventsPanel: React.FC<DayEventsPanelProps> = ({
   const formattedDate = formatDateTitle(selectedDate);
 
   return (
-    <div className="bg-[#140b21] border border-[#26143E] rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col h-full space-y-4">
+    <div className="bg-[#140b21] border border-[#26143E] rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col h-full space-y-4">
       {/* PANEL HEADER */}
       <div className="flex items-center justify-between border-b border-[#26143E] pb-4">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-[#E2B86E] animate-pulse" />
-            <p className="text-[10px] text-[#E2B86E] font-bold uppercase tracking-widest">Eventos del Día</p>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#E2B86E] animate-pulse" />
+            <p className="text-xs text-[#E2B86E] font-bold uppercase tracking-widest">Eventos del Día</p>
           </div>
-          <h3 className="text-base font-black text-white mt-0.5">{formattedDate}</h3>
+          <h3 className="text-lg sm:text-xl font-black text-white mt-1">{formattedDate}</h3>
         </div>
 
         <Button
           onClick={() => onOpenAddModal(selectedDate)}
           variant="primary"
           size="sm"
-          className="text-xs font-bold"
+          className="text-xs sm:text-sm font-bold"
           leftIcon={<Plus className="w-4 h-4" />}
         >
           Nuevo Evento
@@ -78,13 +78,13 @@ export const DayEventsPanel: React.FC<DayEventsPanelProps> = ({
               <Card
                 key={evt.id}
                 glow={evt.type === 'tournament' ? 'gold' : 'purple'}
-                className="p-4 space-y-3 bg-[#0D0914]/80 border-[#26143E] hover:border-[#8B44F7]/40 transition-all"
+                className="p-4 sm:p-5 space-y-3 bg-[#0D0914]/80 border-[#26143E] hover:border-[#8B44F7]/40 transition-all"
               >
                 {/* Header de la tarjeta de evento */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center space-x-1.5 ${cfg.badgeBg} ${cfg.badgeText} ${cfg.badgeBorder}`}
+                      className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center space-x-1.5 ${cfg.badgeBg} ${cfg.badgeText} ${cfg.badgeBorder}`}
                     >
                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.dotColor }} />
                       <span>{cfg.label}</span>
@@ -94,18 +94,18 @@ export const DayEventsPanel: React.FC<DayEventsPanelProps> = ({
                   <button
                     onClick={() => onDeleteEvent(evt.id)}
                     title="Eliminar evento"
-                    className="text-gray-500 hover:text-red-400 p-1 rounded hover:bg-red-950/40 transition-colors"
+                    className="text-gray-500 hover:text-red-400 p-1.5 rounded hover:bg-red-950/40 transition-colors"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
 
                 {/* Título & Horario */}
                 <div>
-                  <h4 className="text-sm font-bold text-white leading-snug">{evt.title}</h4>
+                  <h4 className="text-sm sm:text-base font-bold text-white leading-snug">{evt.title}</h4>
                   {(evt.startTime || evt.endTime) && (
-                    <div className="flex items-center space-x-1.5 text-xs text-[#E2B86E] mt-1 font-semibold">
-                      <Clock className="w-3.5 h-3.5" />
+                    <div className="flex items-center space-x-1.5 text-xs sm:text-sm text-[#E2B86E] mt-1 font-semibold">
+                      <Clock className="w-4 h-4" />
                       <span>
                         {evt.startTime || '00:00'} - {evt.endTime || 'Por definir'}
                       </span>
@@ -115,13 +115,13 @@ export const DayEventsPanel: React.FC<DayEventsPanelProps> = ({
 
                 {/* Descripción */}
                 {evt.description && (
-                  <p className="text-xs text-gray-300 leading-relaxed bg-[#140b21]/60 p-2.5 rounded-lg border border-[#26143E]/60">
+                  <p className="text-xs sm:text-sm text-gray-300 leading-relaxed bg-[#140b21]/60 p-3 rounded-xl border border-[#26143E]/60">
                     {evt.description}
                   </p>
                 )}
 
                 {/* Alcance */}
-                <div className="flex items-center justify-between text-[11px] pt-1 border-t border-[#26143E]">
+                <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#26143E]">
                   <div className="flex items-center space-x-1.5 text-gray-400">
                     {evt.scope === 'all' ? (
                       <span className="flex items-center space-x-1 text-purple-300 font-medium">

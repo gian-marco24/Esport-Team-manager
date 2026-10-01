@@ -117,26 +117,26 @@ export const DashboardLayout: React.FC = () => {
         />
       )}
 
-      {/* Sidebar - Fixed & Invariable */}
+      {/* Sidebar - Fixed & Responsive */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 w-64 h-full md:h-screen shrink-0 bg-[#140b21] border-r border-[#26143E] flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed md:static inset-y-0 left-0 z-50 w-64 lg:w-72 2xl:w-80 h-full md:h-screen shrink-0 bg-[#140b21] border-r border-[#26143E] flex flex-col transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         {/* Sidebar Brand Header */}
-        <div className="p-5 border-b border-[#26143E] flex items-center justify-between shrink-0">
-          <Link to="/dashboard" className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-[#522B80]/40 border border-[#E2B86E]/50 flex items-center justify-center shadow-lg shadow-[#8B44F7]/30 p-1">
+        <div className="p-4 sm:p-5 2xl:p-6 border-b border-[#26143E] flex items-center justify-between shrink-0">
+          <Link to="/dashboard" className="flex items-center space-x-3 2xl:space-x-4">
+            <div className="w-11 h-11 2xl:w-13 2xl:h-13 rounded-xl bg-[#522B80]/40 border border-[#E2B86E]/50 flex items-center justify-center shadow-lg shadow-[#8B44F7]/30 p-1.5 shrink-0">
               <img src="/logo.png" alt={URS_GAMARA_TEAM.name} className="w-full h-full object-contain" />
             </div>
             <div>
-              <h2 className="font-black text-white tracking-wide text-sm">{URS_GAMARA_TEAM.name}</h2>
-              <p className="text-[10px] text-[#E2B86E] font-semibold tracking-widest uppercase">Team Portal</p>
+              <h2 className="font-black text-white tracking-wide text-sm sm:text-base 2xl:text-lg">{URS_GAMARA_TEAM.name}</h2>
+              <p className="text-[11px] 2xl:text-xs text-[#E2B86E] font-bold tracking-widest uppercase">Team Portal</p>
             </div>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="md:hidden text-gray-400 hover:text-white"
+            className="md:hidden text-gray-400 hover:text-white p-1"
           >
             <X className="w-5 h-5" />
           </button>
@@ -147,31 +147,31 @@ export const DashboardLayout: React.FC = () => {
           <Link
             to="/dashboard/profile"
             onClick={() => setSidebarOpen(false)}
-            className={`p-3.5 mx-3 my-3 border rounded-xl flex items-center space-x-3 transition-all duration-200 group ${
+            className={`p-3.5 2xl:p-4 mx-3 2xl:mx-4 my-3 2xl:my-4 border rounded-xl flex items-center space-x-3.5 transition-all duration-200 group ${
               location.pathname === '/dashboard/profile' || location.pathname === '/dashboard/perfil'
                 ? 'bg-[#26143E] border-[#E2B86E] shadow-lg shadow-[#8B44F7]/20 ring-1 ring-[#E2B86E]/40'
                 : 'bg-[#26143E]/50 border-[#8B44F7]/20 hover:bg-[#26143E] hover:border-[#8B44F7]/60 hover:shadow-md'
             }`}
             title="Ver mi perfil"
           >
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#8B44F7] to-[#522B80] flex items-center justify-center font-bold text-white shadow group-hover:scale-105 transition-transform">
+            <div className="w-11 h-11 2xl:w-12 2xl:h-12 rounded-full bg-gradient-to-br from-[#8B44F7] to-[#522B80] flex items-center justify-center font-bold text-sm 2xl:text-base text-white shadow group-hover:scale-105 transition-transform shrink-0">
               {user?.displayName?.charAt(0).toUpperCase() || 'U'}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-bold text-white truncate group-hover:text-[#E2B86E] transition-colors">
+                <p className="text-sm 2xl:text-base font-bold text-white truncate group-hover:text-[#E2B86E] transition-colors">
                   {user?.displayName}
                 </p>
               </div>
               <div className="flex items-center space-x-1.5 mt-0.5">
                 <Badge
                   variant={user?.role === 'ceo' || user?.teamRole === 'CEO' ? 'gold' : 'purple'}
-                  className="text-[9px] px-1.5 py-0 font-bold"
+                  className="text-xs px-2 py-0.5 font-bold"
                 >
                   {user?.teamRole || (user?.role === 'ceo' ? 'CEO' : user?.role)}
                 </Badge>
                 {user?.position && (
-                  <span className="text-[10px] text-gray-400 truncate">{user.position}</span>
+                  <span className="text-xs text-gray-400 truncate">{user.position}</span>
                 )}
               </div>
             </div>
@@ -179,7 +179,7 @@ export const DashboardLayout: React.FC = () => {
         </div>
 
         {/* Sidebar Nav Items */}
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 2xl:px-4 py-2 space-y-1.5 2xl:space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const isActive =
               item.path === '/dashboard'
@@ -192,29 +192,29 @@ export const DashboardLayout: React.FC = () => {
                 key={item.path}
                 to={item.path}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                className={`flex items-center justify-between px-4 py-3 2xl:py-3.5 rounded-xl text-sm 2xl:text-base font-medium transition-all duration-200 ${
                   isActive
-                    ? 'bg-[#522B80] text-white font-semibold shadow-md shadow-[#8B44F7]/20 border-l-4 border-[#E2B86E]'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-[#26143E]/60'
+                    ? 'bg-[#522B80] text-white font-bold shadow-md shadow-[#8B44F7]/25 border-l-4 border-[#E2B86E]'
+                    : 'text-gray-300 hover:text-white hover:bg-[#26143E]/70'
                 }`}
               >
-                <div className="flex items-center space-x-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#E2B86E]' : 'text-gray-400'}`} />
+                <div className="flex items-center space-x-3.5">
+                  <Icon className={`w-5 h-5 2xl:w-5.5 2xl:h-5.5 ${isActive ? 'text-[#E2B86E]' : 'text-gray-400'}`} />
                   <span>{item.label}</span>
                 </div>
-                {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#E2B86E]" />}
+                {isActive && <ChevronRight className="w-4 h-4 2xl:w-4.5 2xl:h-4.5 text-[#E2B86E]" />}
               </Link>
             );
           })}
         </nav>
 
         {/* Sidebar Footer Logout */}
-        <div className="p-4 border-t border-[#26143E] shrink-0">
+        <div className="p-4 2xl:p-5 border-t border-[#26143E] shrink-0">
           <Button
             onClick={() => setShowLogoutModal(true)}
             variant="ghost"
-            className="w-full justify-start text-xs text-red-400 hover:text-red-300 hover:bg-red-950/40"
-            leftIcon={<LogOut className="w-4 h-4" />}
+            className="w-full justify-start text-sm 2xl:text-base text-red-400 hover:text-red-300 hover:bg-red-950/40 py-3"
+            leftIcon={<LogOut className="w-5 h-5" />}
           >
             Cerrar Sesión
           </Button>
@@ -224,7 +224,7 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Dashboard Area - Right panel with dedicated scroll */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Topbar */}
-        <header className="h-16 bg-[#140b21]/70 border-b border-[#26143E] px-4 sm:px-6 flex items-center justify-between backdrop-blur-md shrink-0">
+        <header className="h-16 2xl:h-20 bg-[#140b21]/80 border-b border-[#26143E] px-4 sm:px-6 2xl:px-8 flex items-center justify-between backdrop-blur-md shrink-0">
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -232,7 +232,7 @@ export const DashboardLayout: React.FC = () => {
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="hidden sm:flex items-center space-x-2 text-xs text-gray-400">
+            <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-400">
               <span className="font-semibold text-white">{URS_GAMARA_TEAM.name}</span>
               <span>/</span>
               <span className="text-[#E2B86E]">Panel de Control</span>
@@ -242,16 +242,16 @@ export const DashboardLayout: React.FC = () => {
           <div className="flex items-center space-x-4">
             <Link
               to="/dashboard/profile"
-              className="flex items-center space-x-2 text-xs font-semibold text-[#E2B86E] hover:underline"
+              className="flex items-center space-x-2 text-sm font-semibold text-[#E2B86E] hover:underline"
             >
-              <UserIcon className="w-4 h-4" />
+              <UserIcon className="w-4.5 h-4.5" />
               <span>{user?.displayName}</span>
             </Link>
           </div>
         </header>
 
         {/* Content Outlet - ONLY THIS CONTAINER SCROLLS */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto min-h-0">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 2xl:p-10 overflow-y-auto min-h-0">
           <Outlet />
         </main>
       </div>

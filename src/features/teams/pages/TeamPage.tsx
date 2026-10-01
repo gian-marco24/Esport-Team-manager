@@ -92,21 +92,21 @@ export const TeamPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in w-full pb-10">
       {/* Top Header & Invitation Trigger */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 bg-gradient-to-r from-[#1c0c32] via-[#26143E] to-[#1c0c32] border border-[#522B80]/60 rounded-2xl shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center space-x-2">
-            <Badge variant="gold" className="text-[10px] font-bold uppercase tracking-wider">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 p-6 sm:p-8 bg-gradient-to-r from-[#1c0c32] via-[#26143E] to-[#1c0c32] border border-[#522B80]/60 rounded-2xl shadow-xl">
+        <div className="space-y-1.5">
+          <div className="flex items-center space-x-2.5">
+            <Badge variant="gold" className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5">
               {URS_GAMARA_TEAM.name}
             </Badge>
-            <span className="text-xs text-[#E2B86E] font-semibold flex items-center space-x-1">
-              <Shield className="w-3.5 h-3.5" />
+            <span className="text-xs sm:text-sm text-[#E2B86E] font-semibold flex items-center space-x-1.5">
+              <Shield className="w-4 h-4" />
               <span>Gestión de Plantilla</span>
             </span>
           </div>
-          <h1 className="text-2xl font-black text-white tracking-wide">Plantilla y Roles</h1>
-          <p className="text-xs text-gray-300">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-wide">Plantilla y Roles</h1>
+          <p className="text-xs sm:text-sm text-gray-300">
             Administra los integrantes del equipo, crea rosters competitivos y gestiona sus alineaciones.
           </p>
         </div>
@@ -114,7 +114,7 @@ export const TeamPage: React.FC = () => {
         <div className="flex items-center space-x-3 w-full sm:w-auto">
           <Button
             variant="ghost"
-            size="sm"
+            size="md"
             onClick={fetchData}
             leftIcon={<RefreshCw className="w-4 h-4 text-gray-400" />}
             title="Recargar datos"
@@ -124,8 +124,9 @@ export const TeamPage: React.FC = () => {
             <Button
               onClick={() => setIsInviteModalOpen(true)}
               variant="secondary"
-              className="py-2.5 px-5 font-bold shadow-lg shadow-[#8B44F7]/25 shrink-0 text-[#1c0c32]"
-              leftIcon={<UserPlus className="w-4.5 h-4.5 text-[#1c0c32]" />}
+              size="lg"
+              className="py-3 px-6 font-bold shadow-lg shadow-[#8B44F7]/25 shrink-0 text-[#1c0c32]"
+              leftIcon={<UserPlus className="w-5 h-5 text-[#1c0c32]" />}
             >
               Invitar Integrante
             </Button>

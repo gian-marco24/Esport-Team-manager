@@ -265,24 +265,24 @@ export const RoutinesPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 animate-fade-in">
+    <div className="space-y-6 w-full pb-12 animate-fade-in">
       {/* Top Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#1E0F35] via-[#26143E] to-[#140b21] border border-[#522B80]/60 rounded-2xl p-5 sm:p-6 shadow-2xl">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#1E0F35] via-[#26143E] to-[#140b21] border border-[#522B80]/60 rounded-2xl p-6 sm:p-8 shadow-2xl">
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-[#8B44F7]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="space-y-1.5">
             <div className="flex items-center space-x-2">
-              <div className="p-2 rounded-xl bg-[#522B80]/60 border border-[#E2B86E]/40 text-[#E2B86E]">
-                <Dumbbell className="w-5 h-5" />
+              <div className="p-2.5 rounded-xl bg-[#522B80]/60 border border-[#E2B86E]/40 text-[#E2B86E]">
+                <Dumbbell className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <Badge variant="gold" className="text-[10px] font-black uppercase tracking-wider">
+              <Badge variant="gold" className="text-xs font-black uppercase tracking-wider">
                 Entrenamiento Diario & Tracking
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
               Check-in de Rutina
             </h1>
-            <p className="text-xs sm:text-sm text-gray-300 max-w-2xl">
+            <p className="text-sm text-gray-300 max-w-3xl">
               Visualiza las rutinas oficiales de URS Gamara, reproduce los entrenamientos guiados y registra tu progreso diario en la plantilla estilo Excel.
             </p>
           </div>
@@ -292,8 +292,8 @@ export const RoutinesPage: React.FC = () => {
               <Button
                 variant="gold"
                 onClick={handleOpenCreateModal}
-                leftIcon={<Plus className="w-4 h-4" />}
-                className="text-xs font-bold shadow-lg shadow-[#E2B86E]/20"
+                leftIcon={<Plus className="w-4.5 h-4.5" />}
+                className="text-sm font-bold shadow-lg shadow-[#E2B86E]/20"
               >
                 Nueva Rutina
               </Button>

@@ -413,70 +413,70 @@ export const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto animate-fadeIn pb-12">
+    <div className="space-y-6 w-full animate-fadeIn pb-12">
       {/* Success Notification Alert */}
       {successMessage && (
-        <div className="p-3.5 bg-emerald-950/80 border border-emerald-500/50 rounded-xl flex items-center justify-between text-emerald-300 text-xs shadow-lg shadow-emerald-950/50 animate-fadeIn">
+        <div className="p-4 bg-emerald-950/80 border border-emerald-500/50 rounded-xl flex items-center justify-between text-emerald-300 text-sm shadow-lg shadow-emerald-950/50 animate-fadeIn">
           <div className="flex items-center space-x-2.5">
-            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+            <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
             <span className="font-semibold">{successMessage}</span>
           </div>
           <button
             onClick={() => setSuccessMessage(null)}
             className="text-emerald-400 hover:text-white p-1 rounded transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
       )}
 
       {/* 1. HEADER HERO BANNER */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#1c0c32] via-[#26143E] to-[#140b21] border border-[#522B80]/60 rounded-2xl p-6 shadow-xl">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#1c0c32] via-[#26143E] to-[#140b21] border border-[#522B80]/60 rounded-2xl p-6 sm:p-8 shadow-xl">
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-6 opacity-10 pointer-events-none">
           <Sparkles className="w-80 h-80 text-[#E2B86E]" />
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-          <div className="flex items-center space-x-4 sm:space-x-5">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-center space-x-4 sm:space-x-6">
             {/* User Avatar */}
             <div className="relative">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-[#8B44F7] via-[#522B80] to-[#26143E] p-1 shadow-lg shadow-[#8B44F7]/30 flex items-center justify-center">
-                <div className="w-full h-full rounded-xl bg-[#140b21]/80 flex items-center justify-center text-2xl sm:text-3xl font-black text-white border border-[#E2B86E]/40">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-[#8B44F7] via-[#522B80] to-[#26143E] p-1 shadow-lg shadow-[#8B44F7]/30 flex items-center justify-center">
+                <div className="w-full h-full rounded-xl bg-[#140b21]/80 flex items-center justify-center text-3xl sm:text-4xl font-black text-white border border-[#E2B86E]/40">
                   {user?.displayName?.charAt(0).toUpperCase() || 'U'}
                 </div>
               </div>
-              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-emerald-500 border-2 border-[#140b21] flex items-center justify-center shadow" title="Activo">
-                <CheckCircle2 className="w-3.5 h-3.5 text-black stroke-[3]" />
+              <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 border-2 border-[#140b21] flex items-center justify-center shadow" title="Activo">
+                <CheckCircle2 className="w-4 h-4 text-black stroke-[3]" />
               </div>
             </div>
 
             {/* Basic Identity Details */}
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-wide">
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-wide">
                   {user?.displayName || 'Integrante'}
                 </h1>
                 {(memberData?.gameTag || user?.gameTag) && (
-                  <span className="text-base font-extrabold text-[#E2B86E] bg-[#26143E] px-2.5 py-0.5 rounded-lg border border-[#8B44F7]/40">
+                  <span className="text-sm sm:text-base font-extrabold text-[#E2B86E] bg-[#26143E] px-3 py-1 rounded-lg border border-[#8B44F7]/40 font-mono">
                     {memberData?.gameTag || user?.gameTag}
                   </span>
                 )}
-                <Badge variant={getRoleBadgeVariant(activeRole)} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
+                <Badge variant={getRoleBadgeVariant(activeRole)} className="text-xs font-bold uppercase tracking-wider px-2.5 py-1">
                   {activeRole}
                 </Badge>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsEditNickModalOpen(true)}
-                  leftIcon={<Edit3 className="w-3.5 h-3.5 text-[#E2B86E]" />}
-                  className="bg-[#26143E]/80 hover:bg-[#522B80]/80 border border-[#8B44F7]/40 text-xs text-white px-2.5 py-1 ml-1"
+                  leftIcon={<Edit3 className="w-4 h-4 text-[#E2B86E]" />}
+                  className="bg-[#26143E]/80 hover:bg-[#522B80]/80 border border-[#8B44F7]/40 text-xs sm:text-sm text-white px-3 py-1.5 ml-1"
                 >
                   Cambiar Nick
                 </Button>
               </div>
 
-              <p className="text-xs text-gray-300 flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-[#E2B86E]" />
+              <p className="text-sm text-gray-300 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-[#E2B86E]" />
                 <span className="font-semibold text-white">{URS_GAMARA_TEAM.name}</span>
                 <span className="text-gray-500">•</span>
                 <span className="text-gray-300">
@@ -484,20 +484,20 @@ export const ProfilePage: React.FC = () => {
                 </span>
               </p>
 
-              <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-gray-400">
-                <span className="flex items-center gap-1">
-                  <Mail className="w-3 h-3 text-[#8B44F7]" />
+              <div className="flex flex-wrap items-center gap-4 pt-1 text-xs sm:text-sm text-gray-400">
+                <span className="flex items-center gap-1.5">
+                  <Mail className="w-4 h-4 text-[#8B44F7]" />
                   {user?.email}
                 </span>
                 {(memberData?.country || user?.country) && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-[#E2B86E]" />
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-[#E2B86E]" />
                     {memberData?.country || user?.country}
                   </span>
                 )}
                 {age !== null && (
-                  <span className="flex items-center gap-1 text-gray-300">
-                    <Calendar className="w-3 h-3 text-[#8B44F7]" />
+                  <span className="flex items-center gap-1.5 text-gray-300">
+                    <Calendar className="w-4 h-4 text-[#8B44F7]" />
                     {age} años
                   </span>
                 )}
@@ -506,13 +506,13 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           {/* Quick Team Status Tag */}
-          <div className="hidden lg:flex flex-col items-end justify-center bg-[#140b21]/70 border border-[#8B44F7]/30 rounded-xl px-4 py-2.5 text-right space-y-0.5">
-            <span className="text-[10px] uppercase font-bold text-[#E2B86E] tracking-wider">Estado en el Club</span>
-            <span className="text-xs font-semibold text-white flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <div className="hidden lg:flex flex-col items-end justify-center bg-[#140b21]/70 border border-[#8B44F7]/30 rounded-xl px-5 py-3 text-right space-y-1">
+            <span className="text-xs uppercase font-bold text-[#E2B86E] tracking-wider">Estado en el Club</span>
+            <span className="text-sm font-semibold text-white flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
               Miembro Activo
             </span>
-            <span className="text-[10px] text-gray-400">
+            <span className="text-xs text-gray-400">
               Registrado: {formatDate(memberData?.createdAt || user?.createdAt)}
             </span>
           </div>
@@ -523,62 +523,62 @@ export const ProfilePage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* DATOS CARGADOS */}
         <div className="lg:col-span-5 space-y-4">
-          <Card glow="purple" className="p-5 space-y-4 h-full flex flex-col justify-between">
-            <CardHeader className="p-0 border-b border-[#26143E] pb-3 flex items-center justify-between">
-              <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
-                <UserIcon className="w-4 h-4 text-[#8B44F7]" />
+          <Card glow="purple" className="p-5 sm:p-6 space-y-5 h-full flex flex-col justify-between">
+            <CardHeader className="p-0 border-b border-[#26143E] pb-3.5 flex items-center justify-between">
+              <CardTitle className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+                <UserIcon className="w-5 h-5 text-[#8B44F7]" />
                 <span>Datos del Perfil</span>
               </CardTitle>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setIsEditNickModalOpen(true)}
-                  className="text-xs text-[#E2B86E] hover:text-[#f3cd8e] flex items-center gap-1 font-semibold transition-colors"
+                  className="text-xs sm:text-sm text-[#E2B86E] hover:text-[#f3cd8e] flex items-center gap-1.5 font-semibold transition-colors"
                 >
-                  <Edit3 className="w-3.5 h-3.5" />
+                  <Edit3 className="w-4 h-4" />
                   <span>Editar Nick</span>
                 </button>
-                <Badge variant="purple" className="text-[9px]">ID Verificado</Badge>
+                <Badge variant="purple" className="text-[10px] sm:text-xs">ID Verificado</Badge>
               </div>
             </CardHeader>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs flex-1">
-              <div className="p-3 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1 relative group">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-sm flex-1">
+              <div className="p-3.5 sm:p-4 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1 relative group">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-gray-400 uppercase font-semibold block">Nickname & Tag</span>
+                  <span className="text-xs text-gray-400 uppercase font-semibold block">Nickname & Tag</span>
                   <button
                     onClick={() => setIsEditNickModalOpen(true)}
                     className="text-gray-400 hover:text-[#E2B86E] transition-colors p-0.5"
                     title="Editar Nickname"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
+                    <Edit3 className="w-4 h-4" />
                   </button>
                 </div>
-                <p className="font-bold text-white text-sm truncate">
+                <p className="font-bold text-white text-base truncate">
                   {user?.displayName}{' '}
                   {(memberData?.gameTag || user?.gameTag) && (
-                    <span className="text-[#E2B86E] text-xs font-mono">{memberData?.gameTag || user?.gameTag}</span>
+                    <span className="text-[#E2B86E] text-sm font-mono">{memberData?.gameTag || user?.gameTag}</span>
                   )}
                 </p>
               </div>
 
-              <div className="p-3 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1">
-                <span className="text-[10px] text-gray-400 uppercase font-semibold block">Rol Principal</span>
-                <p className="font-bold text-[#E2B86E] truncate">{activeRole}</p>
+              <div className="p-3.5 sm:p-4 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1">
+                <span className="text-xs text-gray-400 uppercase font-semibold block">Rol Principal</span>
+                <p className="font-bold text-[#E2B86E] text-base truncate">{activeRole}</p>
               </div>
 
-              <div className="p-3 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1 sm:col-span-2">
-                <span className="text-[10px] text-gray-400 uppercase font-semibold block">Correo Electrónico</span>
-                <p className="font-medium text-gray-200 truncate">{user?.email}</p>
+              <div className="p-3.5 sm:p-4 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1 sm:col-span-2">
+                <span className="text-xs text-gray-400 uppercase font-semibold block">Correo Electrónico</span>
+                <p className="font-medium text-gray-200 text-sm sm:text-base truncate">{user?.email}</p>
               </div>
 
-              <div className="p-3 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1">
-                <span className="text-[10px] text-gray-400 uppercase font-semibold block">País de Residencia</span>
-                <p className="font-semibold text-gray-200 truncate">{memberData?.country || user?.country || 'No especificado'}</p>
+              <div className="p-3.5 sm:p-4 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1">
+                <span className="text-xs text-gray-400 uppercase font-semibold block">País de Residencia</span>
+                <p className="font-semibold text-gray-200 text-sm sm:text-base truncate">{memberData?.country || user?.country || 'No especificado'}</p>
               </div>
 
-              <div className="p-3 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1">
-                <span className="text-[10px] text-gray-400 uppercase font-semibold block">Nacimiento / Edad</span>
-                <p className="font-semibold text-gray-200 truncate">
+              <div className="p-3.5 sm:p-4 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1">
+                <span className="text-xs text-gray-400 uppercase font-semibold block">Nacimiento / Edad</span>
+                <p className="font-semibold text-gray-200 text-sm sm:text-base truncate">
                   {birthDateValue ? (
                     <>
                       {birthDateValue} {age !== null && <span className="text-gray-400 font-normal">({age} años)</span>}
@@ -589,9 +589,9 @@ export const ProfilePage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-3 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1 sm:col-span-2">
-                <span className="text-[10px] text-gray-400 uppercase font-semibold block">Función / Posición en Equipo</span>
-                <p className="font-semibold text-white truncate">
+              <div className="p-3.5 sm:p-4 bg-[#180d29]/70 border border-[#522B80]/30 rounded-xl space-y-1 sm:col-span-2">
+                <span className="text-xs text-gray-400 uppercase font-semibold block">Función / Posición en Equipo</span>
+                <p className="font-semibold text-white text-sm sm:text-base truncate">
                   {memberData?.globalSubrole || user?.globalSubrole || user?.position || 'Miembro Oficial'}
                 </p>
               </div>
@@ -601,38 +601,38 @@ export const ProfilePage: React.FC = () => {
 
         {/* ROSTER Y ROLES EN EL EQUIPO */}
         <div className="lg:col-span-7 space-y-4">
-          <Card glow="gold" className="p-5 space-y-4 h-full flex flex-col">
-            <CardHeader className="p-0 border-b border-[#26143E] pb-3 flex items-center justify-between">
-              <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
-                <Layers className="w-4 h-4 text-[#E2B86E]" />
+          <Card glow="gold" className="p-5 sm:p-6 space-y-5 h-full flex flex-col">
+            <CardHeader className="p-0 border-b border-[#26143E] pb-3.5 flex items-center justify-between">
+              <CardTitle className="text-base sm:text-lg font-bold text-white flex items-center gap-2.5">
+                <Layers className="w-5 h-5 text-[#E2B86E]" />
                 <span>Rosters & Alineaciones en el Equipo</span>
               </CardTitle>
-              <span className="text-[10px] text-gray-400 font-medium">
+              <span className="text-xs text-gray-400 font-semibold">
                 {assignedRostersWithRoles.length} {assignedRostersWithRoles.length === 1 ? 'Roster' : 'Rosters'}
               </span>
             </CardHeader>
 
             <div className="flex-1 flex flex-col justify-between">
               {assignedRostersWithRoles.length > 0 ? (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {assignedRostersWithRoles.map((item, idx) => (
                     <div
                       key={item.rosterId || idx}
-                      className="p-3.5 bg-[#180d29]/80 border border-[#522B80]/40 rounded-xl flex items-center justify-between gap-3 hover:border-[#8B44F7]/60 transition-colors"
+                      className="p-4 bg-[#180d29]/80 border border-[#522B80]/40 rounded-xl flex items-center justify-between gap-4 hover:border-[#8B44F7]/60 transition-colors"
                     >
-                      <div className="flex items-center space-x-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-[#522B80]/40 border border-[#8B44F7]/40 flex items-center justify-center text-[#E2B86E] shrink-0 font-bold text-xs">
+                      <div className="flex items-center space-x-3.5 min-w-0">
+                        <div className="w-12 h-12 rounded-xl bg-[#522B80]/40 border border-[#8B44F7]/40 flex items-center justify-center text-[#E2B86E] shrink-0 font-bold text-sm">
                           {item.roster?.logoUrl ? (
                             <img src={item.roster.logoUrl} alt={item.roster.name} className="w-full h-full object-contain rounded-lg p-1" />
                           ) : (
-                            <Gamepad2 className="w-5 h-5 text-[#8B44F7]" />
+                            <Gamepad2 className="w-6 h-6 text-[#8B44F7]" />
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-white truncate">
+                          <p className="text-sm font-bold text-white truncate">
                             {item.roster?.name || 'Roster de Competencia'}
                           </p>
-                          <p className="text-[11px] text-gray-400 truncate">
+                          <p className="text-xs text-gray-400 truncate">
                             Juego: <strong className="text-gray-300">{item.roster?.game || 'Esport'}</strong>
                           </p>
                         </div>
@@ -645,7 +645,7 @@ export const ProfilePage: React.FC = () => {
                               ? 'gold'
                               : 'purple'
                           }
-                          className="text-[10px] font-bold"
+                          className="text-xs font-bold px-3 py-1"
                         >
                           {item.subrole || 'Asignado'}
                         </Badge>
@@ -654,19 +654,19 @@ export const ProfilePage: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="p-6 bg-[#180d29]/40 border border-dashed border-[#522B80]/50 rounded-xl text-center space-y-2 my-auto">
-                  <div className="w-10 h-10 rounded-full bg-[#26143E] flex items-center justify-center mx-auto text-gray-400">
-                    <Gamepad2 className="w-5 h-5" />
+                <div className="p-8 bg-[#180d29]/40 border border-dashed border-[#522B80]/50 rounded-xl text-center space-y-2.5 my-auto">
+                  <div className="w-12 h-12 rounded-full bg-[#26143E] flex items-center justify-center mx-auto text-gray-400">
+                    <Gamepad2 className="w-6 h-6" />
                   </div>
-                  <p className="text-xs font-bold text-white">Plantilla General del Club</p>
-                  <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
+                  <p className="text-sm font-bold text-white">Plantilla General del Club</p>
+                  <p className="text-xs text-gray-400 max-w-sm mx-auto">
                     Formas parte de la organización URS Gamara con acceso a las actividades y seguimiento competitivo.
                   </p>
                 </div>
               )}
 
               {/* Roster footer note */}
-              <div className="pt-3 border-t border-[#26143E]/60 flex items-center justify-between text-[11px] text-gray-400 mt-2">
+              <div className="pt-3.5 border-t border-[#26143E]/60 flex items-center justify-between text-xs text-gray-400 mt-3">
                 <span>Equipo Oficial: <strong className="text-white">{URS_GAMARA_TEAM.name}</strong></span>
                 <span>Tag: <strong className="text-[#E2B86E]">{URS_GAMARA_TEAM.tag}</strong></span>
               </div>
@@ -678,128 +678,128 @@ export const ProfilePage: React.FC = () => {
       {/* 3. DETAILED STATS SECTION (GLOBAL KPIS) */}
       <div className="space-y-4">
         <div className="flex items-center justify-between border-b border-[#26143E] pb-3">
-          <div className="space-y-0.5">
-            <h2 className="text-base sm:text-lg font-black text-white tracking-wide flex items-center gap-2">
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-xl font-black text-white tracking-wide flex items-center gap-2.5">
               <Activity className="w-5 h-5 text-[#8B44F7]" />
               <span>Estadísticas Detalladas de Rendimiento</span>
             </h2>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs sm:text-sm text-gray-400">
               Métricas individuales acumuladas de todos los partidos, scrims y torneos en los que has participado.
             </p>
           </div>
-          <Badge variant="purple" className="text-[9px] font-bold uppercase">
+          <Badge variant="purple" className="text-xs font-bold uppercase px-3 py-1">
             {detailedUserStats.totalMatches} {detailedUserStats.totalMatches === 1 ? 'partida' : 'partidas'}
           </Badge>
         </div>
 
         {/* Top KPI Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {/* KDA Card */}
-          <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-            <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
-              <Crosshair className="w-4 h-4" />
+          <Card glow="purple" className="p-4 sm:p-5 text-center space-y-1.5 bg-[#180d29]/90">
+            <div className="w-10 h-10 rounded-xl bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-2">
+              <Crosshair className="w-5 h-5" />
             </div>
-            <p className="text-[10px] text-gray-400 uppercase font-semibold">KDA Ratio</p>
-            <p className="text-xl font-black text-white">{detailedUserStats.kdaRatio.toFixed(2)}</p>
-            <p className="text-[9px] text-[#8B44F7] font-medium">{detailedUserStats.formattedKda}</p>
+            <p className="text-xs text-gray-400 uppercase font-semibold">KDA Ratio</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{detailedUserStats.kdaRatio.toFixed(2)}</p>
+            <p className="text-xs text-[#8B44F7] font-semibold">{detailedUserStats.formattedKda}</p>
           </Card>
 
           {/* K/D/A Average Card */}
-          <Card glow="gold" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-            <div className="w-8 h-8 rounded-lg bg-[#A88144]/30 flex items-center justify-center text-[#E2B86E] mx-auto mb-1.5">
-              <Sparkles className="w-4 h-4" />
+          <Card glow="gold" className="p-4 sm:p-5 text-center space-y-1.5 bg-[#180d29]/90">
+            <div className="w-10 h-10 rounded-xl bg-[#A88144]/30 flex items-center justify-center text-[#E2B86E] mx-auto mb-2">
+              <Sparkles className="w-5 h-5" />
             </div>
-            <p className="text-[10px] text-gray-400 uppercase font-semibold">K / D / A Prom.</p>
-            <p className="text-sm font-black text-[#E2B86E] font-mono">{detailedUserStats.formattedKda}</p>
-            <p className="text-[9px] text-[#E2B86E] font-medium">Bajas / Muertes / Asist.</p>
+            <p className="text-xs text-gray-400 uppercase font-semibold">K / D / A Prom.</p>
+            <p className="text-base sm:text-lg font-black text-[#E2B86E] font-mono">{detailedUserStats.formattedKda}</p>
+            <p className="text-[11px] text-[#E2B86E] font-medium">Bajas / Muertes / Asist.</p>
           </Card>
 
           {/* Winrate Card */}
-          <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-            <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
-              <Flame className="w-4 h-4" />
+          <Card glow="purple" className="p-4 sm:p-5 text-center space-y-1.5 bg-[#180d29]/90">
+            <div className="w-10 h-10 rounded-xl bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-2">
+              <Flame className="w-5 h-5" />
             </div>
-            <p className="text-[10px] text-gray-400 uppercase font-semibold">Winrate</p>
-            <p className="text-xl font-black text-white">{detailedUserStats.winRate}%</p>
-            <p className="text-[9px] text-emerald-400 font-medium">
+            <p className="text-xs text-gray-400 uppercase font-semibold">Winrate</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{detailedUserStats.winRate}%</p>
+            <p className="text-xs text-emerald-400 font-semibold">
               {detailedUserStats.wins}W - {detailedUserStats.losses}L
             </p>
           </Card>
 
           {/* Matches Played */}
-          <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-            <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
-              <Swords className="w-4 h-4" />
+          <Card glow="purple" className="p-4 sm:p-5 text-center space-y-1.5 bg-[#180d29]/90">
+            <div className="w-10 h-10 rounded-xl bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-2">
+              <Swords className="w-5 h-5" />
             </div>
-            <p className="text-[10px] text-gray-400 uppercase font-semibold">Partidas</p>
-            <p className="text-xl font-black text-white">{detailedUserStats.totalMatches}</p>
-            <p className="text-[9px] text-gray-400 font-medium">Disputadas</p>
+            <p className="text-xs text-gray-400 uppercase font-semibold">Partidas</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{detailedUserStats.totalMatches}</p>
+            <p className="text-xs text-gray-400 font-medium">Disputadas</p>
           </Card>
 
           {/* First Bloods / FK */}
-          <Card glow="gold" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-            <div className="w-8 h-8 rounded-lg bg-[#A88144]/30 flex items-center justify-center text-[#E2B86E] mx-auto mb-1.5">
-              <Target className="w-4 h-4" />
+          <Card glow="gold" className="p-4 sm:p-5 text-center space-y-1.5 bg-[#180d29]/90">
+            <div className="w-10 h-10 rounded-xl bg-[#A88144]/30 flex items-center justify-center text-[#E2B86E] mx-auto mb-2">
+              <Target className="w-5 h-5" />
             </div>
-            <p className="text-[10px] text-gray-400 uppercase font-semibold">1st Kills (FK)</p>
-            <p className="text-xl font-black text-[#E2B86E]">{detailedUserStats.totalFirstKills}</p>
-            <p className="text-[9px] text-gray-400 font-medium">
+            <p className="text-xs text-gray-400 uppercase font-semibold">1st Kills (FK)</p>
+            <p className="text-2xl sm:text-3xl font-black text-[#E2B86E]">{detailedUserStats.totalFirstKills}</p>
+            <p className="text-xs text-gray-400 font-medium">
               {detailedUserStats.avgFirstKills} por partida
             </p>
           </Card>
 
           {/* Total Kills */}
-          <Card glow="purple" className="p-4 text-center space-y-1 bg-[#180d29]/90">
-            <div className="w-8 h-8 rounded-lg bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-1.5">
-              <Award className="w-4 h-4" />
+          <Card glow="purple" className="p-4 sm:p-5 text-center space-y-1.5 bg-[#180d29]/90">
+            <div className="w-10 h-10 rounded-xl bg-[#522B80]/50 flex items-center justify-center text-[#8B44F7] mx-auto mb-2">
+              <Award className="w-5 h-5" />
             </div>
-            <p className="text-[10px] text-gray-400 uppercase font-semibold">Bajas Totales</p>
-            <p className="text-xl font-black text-white">{detailedUserStats.totalKills}</p>
-            <p className="text-[9px] text-purple-300 font-medium">{detailedUserStats.totalDeaths} muertes</p>
+            <p className="text-xs text-gray-400 uppercase font-semibold">Bajas Totales</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{detailedUserStats.totalKills}</p>
+            <p className="text-xs text-purple-300 font-medium">{detailedUserStats.totalDeaths} muertes</p>
           </Card>
         </div>
 
         {/* 4. AGENTS & MAPS BREAKDOWN (SIDE BY SIDE) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
           {/* Most Played Agents */}
-          <Card glow="purple" className="p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-[#26143E] pb-2.5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-1.5">
+          <Card glow="purple" className="p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#26143E] pb-3">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#8B44F7]" />
                 <span>Agentes Más Jugados ({detailedUserStats.agentList.length})</span>
               </h3>
             </div>
 
             {detailedUserStats.agentList.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {detailedUserStats.agentList.map((ag, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-[#180d29]/80 border border-[#522B80]/40 rounded-xl flex items-center justify-between hover:border-[#8B44F7] transition-colors"
+                    className="p-3.5 sm:p-4 bg-[#180d29]/80 border border-[#522B80]/40 rounded-xl flex items-center justify-between hover:border-[#8B44F7] transition-colors"
                   >
-                    <div className="flex items-center space-x-3 min-w-0">
+                    <div className="flex items-center space-x-3.5 min-w-0">
                       {ag.agentIcon ? (
                         <img
                           src={ag.agentIcon}
                           alt={ag.agentName}
-                          className="w-9 h-9 rounded-xl bg-[#26143E] p-1 border border-[#8B44F7]/40 object-contain shrink-0"
+                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#26143E] p-1 border border-[#8B44F7]/40 object-contain shrink-0"
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-xl bg-[#26143E] flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">
+                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#26143E] flex items-center justify-center text-sm font-bold text-gray-400 shrink-0">
                           {ag.agentName.slice(0, 2)}
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="font-bold text-white text-xs truncate">{ag.agentName}</p>
-                        <p className="text-[10px] text-gray-400">
+                        <p className="font-bold text-white text-sm sm:text-base truncate">{ag.agentName}</p>
+                        <p className="text-xs text-gray-400">
                           {ag.timesPlayed} {ag.timesPlayed === 1 ? 'partida' : 'partidas'} • {ag.wins}W - {ag.losses}L
                         </p>
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0 space-y-0.5">
-                      <p className="text-xs font-black text-[#E2B86E]">{ag.kdaRatio.toFixed(2)} KDA</p>
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                    <div className="text-right shrink-0 space-y-1">
+                      <p className="text-sm sm:text-base font-black text-[#E2B86E]">{ag.kdaRatio.toFixed(2)} KDA</p>
+                      <span className="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
                         {ag.winRate}% WR
                       </span>
                     </div>
@@ -807,51 +807,51 @@ export const ProfilePage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-500 italic text-center py-6">
+              <p className="text-sm text-gray-500 italic text-center py-8">
                 Aún no hay registros de agentes en partidos para este usuario.
               </p>
             )}
           </Card>
 
           {/* Performance by Map */}
-          <Card glow="gold" className="p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-[#26143E] pb-2.5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-1.5">
+          <Card glow="gold" className="p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#26143E] pb-3">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-[#E2B86E]" />
                 <span>Rendimiento por Mapa ({detailedUserStats.mapList.length})</span>
               </h3>
             </div>
 
             {detailedUserStats.mapList.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {detailedUserStats.mapList.map((mapItem, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-[#180d29]/80 border border-[#522B80]/40 rounded-xl flex items-center justify-between hover:border-[#E2B86E]/60 transition-colors relative overflow-hidden"
+                    className="p-3.5 sm:p-4 bg-[#180d29]/80 border border-[#522B80]/40 rounded-xl flex items-center justify-between hover:border-[#E2B86E]/60 transition-colors relative overflow-hidden"
                   >
-                    <div className="flex items-center space-x-3 min-w-0 z-10">
+                    <div className="flex items-center space-x-3.5 min-w-0 z-10">
                       {mapItem.displayIcon ? (
                         <img
                           src={mapItem.displayIcon}
                           alt={mapItem.mapName}
-                          className="w-9 h-9 rounded-xl bg-[#26143E] p-1 border border-[#E2B86E]/40 object-contain shrink-0"
+                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#26143E] p-1 border border-[#E2B86E]/40 object-contain shrink-0"
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-xl bg-[#26143E] flex items-center justify-center text-xs font-bold text-[#E2B86E] shrink-0">
-                          <MapPin className="w-4 h-4" />
+                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#26143E] flex items-center justify-center text-sm font-bold text-[#E2B86E] shrink-0">
+                          <MapPin className="w-5 h-5" />
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="font-bold text-white text-xs truncate">{mapItem.mapName}</p>
-                        <p className="text-[10px] text-gray-400">
+                        <p className="font-bold text-white text-sm sm:text-base truncate">{mapItem.mapName}</p>
+                        <p className="text-xs text-gray-400">
                           {mapItem.timesPlayed} {mapItem.timesPlayed === 1 ? 'partida' : 'partidas'} • {mapItem.wins}W - {mapItem.losses}L
                         </p>
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0 space-y-0.5 z-10">
-                      <p className="text-xs font-black text-white">{mapItem.kdaRatio.toFixed(2)} KDA</p>
-                      <span className="text-[10px] font-bold text-[#E2B86E] bg-[#26143E] px-1.5 py-0.2 rounded border border-[#E2B86E]/30">
+                    <div className="text-right shrink-0 space-y-1 z-10">
+                      <p className="text-sm sm:text-base font-black text-white">{mapItem.kdaRatio.toFixed(2)} KDA</p>
+                      <span className="text-xs font-bold text-[#E2B86E] bg-[#26143E] px-2 py-0.5 rounded border border-[#E2B86E]/30">
                         {mapItem.winRate}% WR
                       </span>
                     </div>
@@ -859,7 +859,7 @@ export const ProfilePage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-500 italic text-center py-6">
+              <p className="text-sm text-gray-500 italic text-center py-8">
                 Aún no hay mapas registrados con participación de este usuario.
               </p>
             )}
@@ -868,60 +868,60 @@ export const ProfilePage: React.FC = () => {
 
         {/* 5. RECENT MATCHES PARTICIPATION TABLE */}
         {detailedUserStats.participationList.length > 0 && (
-          <Card glow="purple" className="p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-[#26143E] pb-2.5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-1.5">
-                <Swords className="w-4 h-4 text-[#8B44F7]" />
+          <Card glow="purple" className="p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#26143E] pb-3">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-2">
+                <Swords className="w-5 h-5 text-[#8B44F7]" />
                 <span>Últimas Partidas Disputadas ({detailedUserStats.participationList.length})</span>
               </h3>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-[#26143E] bg-[#140b21]">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
-                  <tr className="bg-[#180d29] text-gray-400 uppercase text-[10px] font-bold border-b border-[#26143E]">
-                    <th className="py-2.5 px-3">Fecha & Rival</th>
-                    <th className="py-2.5 px-3">Mapa</th>
-                    <th className="py-2.5 px-3">Agente</th>
-                    <th className="py-2.5 px-3 text-center">Score Partido</th>
-                    <th className="py-2.5 px-3 text-center">K / D / A</th>
-                    <th className="py-2.5 px-3 text-center">KDA / FK</th>
-                    <th className="py-2.5 px-3 text-center">Resultado</th>
+                  <tr className="bg-[#180d29] text-gray-400 uppercase text-[11px] sm:text-xs font-bold border-b border-[#26143E]">
+                    <th className="py-3.5 px-4">Fecha & Rival</th>
+                    <th className="py-3.5 px-4">Mapa</th>
+                    <th className="py-3.5 px-4">Agente</th>
+                    <th className="py-3.5 px-4 text-center">Score Partido</th>
+                    <th className="py-3.5 px-4 text-center">K / D / A</th>
+                    <th className="py-3.5 px-4 text-center">KDA / FK</th>
+                    <th className="py-3.5 px-4 text-center">Resultado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#26143E]/60 text-gray-300">
                   {detailedUserStats.participationList.slice(0, 10).map((item, idx) => (
                     <tr key={idx} className="hover:bg-[#1f1035]/60 transition-colors">
-                      <td className="py-2.5 px-3">
-                        <p className="font-bold text-white">{item.opponentName}</p>
-                        <p className="text-[10px] text-gray-400">{item.date} • {item.type === 'tournament' ? 'Torneo' : 'Scrim'}</p>
+                      <td className="py-3.5 px-4">
+                        <p className="font-bold text-white text-sm">{item.opponentName}</p>
+                        <p className="text-xs text-gray-400">{item.date} • {item.type === 'tournament' ? 'Torneo' : 'Scrim'}</p>
                       </td>
-                      <td className="py-2.5 px-3 font-semibold text-gray-200">{item.mapName}</td>
-                      <td className="py-2.5 px-3">
-                        <div className="flex items-center space-x-1.5">
+                      <td className="py-3.5 px-4 font-semibold text-gray-200">{item.mapName}</td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center space-x-2">
                           {item.agentIcon && (
                             <img
                               src={item.agentIcon}
                               alt={item.agent || 'Agente'}
-                              className="w-5 h-5 rounded-md bg-[#26143E] object-contain p-0.5 border border-[#8B44F7]/40 shrink-0"
+                              className="w-6 h-6 rounded-md bg-[#26143E] object-contain p-0.5 border border-[#8B44F7]/40 shrink-0"
                             />
                           )}
-                          <span className="font-bold text-xs text-white">{item.agent || 'N/A'}</span>
+                          <span className="font-bold text-xs sm:text-sm text-white">{item.agent || 'N/A'}</span>
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-center font-extrabold text-[#E2B86E]">{item.overallScore}</td>
-                      <td className="py-2.5 px-3 text-center font-mono font-bold text-white">
+                      <td className="py-3.5 px-4 text-center font-extrabold text-sm sm:text-base text-[#E2B86E]">{item.overallScore}</td>
+                      <td className="py-3.5 px-4 text-center font-mono font-bold text-white text-xs sm:text-sm">
                         {item.kills} / {item.deaths} / {item.assists}
                       </td>
-                      <td className="py-2.5 px-3 text-center">
+                      <td className="py-3.5 px-4 text-center">
                         <span className="font-bold text-white">{item.kdaRatio.toFixed(2)}</span>
                         {item.firstKills > 0 && (
-                          <span className="text-amber-400 font-bold ml-1 text-[10px]">({item.firstKills} FK)</span>
+                          <span className="text-amber-400 font-bold ml-1 text-xs">({item.firstKills} FK)</span>
                         )}
                       </td>
-                      <td className="py-2.5 px-3 text-center">
+                      <td className="py-3.5 px-4 text-center">
                         <span
-                          className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
+                          className={`text-xs font-black px-2.5 py-1 rounded uppercase ${
                             item.outcome === 'win'
                               ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/40'
                               : item.outcome === 'loss'

@@ -46,25 +46,25 @@ export const SchedulePage: React.FC = () => {
   const absenceCount = events.filter((e) => e.type === 'absence').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full pb-10">
       {/* HEADER BANNER */}
-      <div className="bg-gradient-to-r from-[#26143E] via-[#522B80]/80 to-[#26143E] border border-[#8B44F7]/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#26143E] via-[#522B80]/80 to-[#26143E] border border-[#8B44F7]/30 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
         <div className="absolute right-4 bottom-0 opacity-10 pointer-events-none">
           <CalendarIcon className="w-64 h-64 text-[#E2B86E]" />
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center space-x-2">
-              <Badge variant="gold" className="text-[10px]">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center space-x-2.5">
+              <Badge variant="gold" className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5">
                 Calendario & Agenda
               </Badge>
-              <span className="text-xs text-[#E2B86E] font-bold">• {URS_GAMARA_TEAM.name}</span>
+              <span className="text-xs sm:text-sm text-[#E2B86E] font-bold">• {URS_GAMARA_TEAM.name}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-wide">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-wide">
               Calendario de Eventos & Ausencias
             </h1>
-            <p className="text-xs text-gray-300 max-w-xl">
+            <p className="text-xs sm:text-sm text-gray-300 max-w-xl">
               Organiza partidos de torneo, fechas límite, días de medios y registra faltas o ausencias previstas del equipo.
             </p>
           </div>
@@ -84,50 +84,50 @@ export const SchedulePage: React.FC = () => {
       </div>
 
       {/* METRICS ROW */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card glow="purple" className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-[#522B80]/60 border border-[#8B44F7]/40 flex items-center justify-center text-[#8B44F7]">
-            <CalendarIcon className="w-6 h-6" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <Card glow="purple" className="flex items-center space-x-4 p-5 sm:p-6">
+          <div className="w-14 h-14 rounded-2xl bg-[#522B80]/60 border border-[#8B44F7]/40 flex items-center justify-center text-[#8B44F7] shrink-0">
+            <CalendarIcon className="w-7 h-7" />
           </div>
           <div>
-            <p className="text-xs text-gray-400 font-medium">Total de Eventos</p>
-            <p className="text-xl font-black text-white">{events.length}</p>
-            <p className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-              <TrendingUp className="w-3 h-3" /> Base de datos real
+            <p className="text-xs sm:text-sm text-gray-400 font-semibold">Total de Eventos</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{events.length}</p>
+            <p className="text-xs text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+              <TrendingUp className="w-3.5 h-3.5" /> Base de datos real
             </p>
           </div>
         </Card>
 
-        <Card glow="gold" className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-[#A88144]/30 border border-[#E2B86E]/40 flex items-center justify-center text-[#E2B86E]">
-            <Trophy className="w-6 h-6" />
+        <Card glow="gold" className="flex items-center space-x-4 p-5 sm:p-6">
+          <div className="w-14 h-14 rounded-2xl bg-[#A88144]/30 border border-[#E2B86E]/40 flex items-center justify-center text-[#E2B86E] shrink-0">
+            <Trophy className="w-7 h-7" />
           </div>
           <div>
-            <p className="text-xs text-gray-400 font-medium">Partidos de Torneo</p>
-            <p className="text-xl font-black text-white">{tournamentCount}</p>
-            <p className="text-[10px] text-[#E2B86E] font-semibold mt-0.5">Oficiales agendados</p>
+            <p className="text-xs sm:text-sm text-gray-400 font-semibold">Partidos de Torneo</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{tournamentCount}</p>
+            <p className="text-xs text-[#E2B86E] font-semibold mt-0.5">Oficiales agendados</p>
           </div>
         </Card>
 
-        <Card glow="purple" className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-[#522B80]/60 border border-[#8B44F7]/40 flex items-center justify-center text-[#8B44F7]">
-            <Users className="w-6 h-6" />
+        <Card glow="purple" className="flex items-center space-x-4 p-5 sm:p-6">
+          <div className="w-14 h-14 rounded-2xl bg-[#522B80]/60 border border-[#8B44F7]/40 flex items-center justify-center text-[#8B44F7] shrink-0">
+            <Users className="w-7 h-7" />
           </div>
           <div>
-            <p className="text-xs text-gray-400 font-medium">Reuniones de Equipo</p>
-            <p className="text-xl font-black text-white">{meetingCount}</p>
-            <p className="text-[10px] text-purple-300 font-semibold mt-0.5">Charlas & Alineaciones</p>
+            <p className="text-xs sm:text-sm text-gray-400 font-semibold">Reuniones de Equipo</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{meetingCount}</p>
+            <p className="text-xs text-purple-300 font-semibold mt-0.5">Charlas & Alineaciones</p>
           </div>
         </Card>
 
-        <Card glow="gold" className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-red-950/40 border border-red-500/40 flex items-center justify-center text-red-400">
-            <UserX className="w-6 h-6" />
+        <Card glow="gold" className="flex items-center space-x-4 p-5 sm:p-6">
+          <div className="w-14 h-14 rounded-2xl bg-red-950/40 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
+            <UserX className="w-7 h-7" />
           </div>
           <div>
-            <p className="text-xs text-gray-400 font-medium">Faltas Previstas</p>
-            <p className="text-xl font-black text-white">{absenceCount}</p>
-            <p className="text-[10px] text-red-300 font-semibold mt-0.5">Ausencias notificadas</p>
+            <p className="text-xs sm:text-sm text-gray-400 font-semibold">Faltas Previstas</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{absenceCount}</p>
+            <p className="text-xs text-red-300 font-semibold mt-0.5">Ausencias notificadas</p>
           </div>
         </Card>
       </div>

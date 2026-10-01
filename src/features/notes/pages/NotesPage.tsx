@@ -112,8 +112,8 @@ export const NotesPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       {/* Page Top Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#180d29] via-[#26143E] to-[#140b21] border border-[#522B80]/60 rounded-3xl p-6 shadow-2xl">
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#180d29] via-[#26143E] to-[#140b21] border border-[#522B80]/60 rounded-3xl p-6 sm:p-8 shadow-2xl">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-1.5">
             <div className="flex items-center space-x-2">
               <Badge variant="gold" className="text-xs font-bold px-2.5 py-0.5">
@@ -126,26 +126,26 @@ export const NotesPage: React.FC = () => {
                 Vista de {user?.teamRole || (isCeo ? 'CEO' : user?.role)}
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-wide flex items-center space-x-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-wide flex items-center space-x-2">
               <span>Estrategias, Playbooks & Anotaciones</span>
             </h1>
-            <p className="text-xs sm:text-sm text-gray-300 max-w-2xl">
+            <p className="text-sm text-gray-300 max-w-3xl">
               Canales tácticos en tiempo real, anotaciones individuales 1 a 1, libretas de jugadas por mapa y tareas de análisis.
             </p>
           </div>
 
           {/* Roster Selector (for multi-roster, coaches, players with rosters, or CEO) */}
           {rosters.length > 0 && canSeeCompetitive && (
-            <div className="bg-[#140b21]/90 border border-[#522B80] rounded-2xl p-2.5 flex items-center space-x-2 shadow-xl">
-              <Gamepad2 className="w-4 h-4 text-[#E2B86E] shrink-0" />
+            <div className="bg-[#140b21]/90 border border-[#522B80] rounded-2xl p-3 flex items-center space-x-2.5 shadow-xl">
+              <Gamepad2 className="w-5 h-5 text-[#E2B86E] shrink-0" />
               <div className="flex flex-col">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                   Escuadra Activa
                 </span>
                 <select
                   value={selectedRosterId}
                   onChange={(e) => setSelectedRosterId(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer pr-4"
+                  className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer pr-4"
                 >
                   {rosters.map((r) => (
                     <option key={r.id} value={r.id} className="bg-[#140b21] text-white">
@@ -160,17 +160,17 @@ export const NotesPage: React.FC = () => {
       </div>
 
       {/* Main Top Navigation Tabs (Unified across roles with permission checks) */}
-      <div className="flex items-center space-x-2 p-1.5 bg-[#140b21] border border-[#26143E] rounded-2xl overflow-x-auto no-scrollbar">
+      <div className="flex items-center space-x-2 p-2 bg-[#140b21] border border-[#26143E] rounded-2xl overflow-x-auto no-scrollbar">
         {/* Tab 1: Individuales (EVERYONE HAS ACCESS) */}
         <button
           onClick={() => setActiveTab('individuales')}
-          className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 ${
+          className={`flex-1 min-w-[150px] py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'individuales'
-              ? 'bg-[#522B80] text-white shadow-lg shadow-[#8B44F7]/20 border border-[#E2B86E]/40'
+              ? 'bg-[#522B80] text-white shadow-lg shadow-[#8B44F7]/25 border border-[#E2B86E]/40'
               : 'text-gray-400 hover:text-white hover:bg-[#180d29]'
           }`}
         >
-          <MessageSquare className="w-4 h-4 text-[#E2B86E]" />
+          <MessageSquare className="w-4.5 h-4.5 text-[#E2B86E]" />
           <span>Individuales</span>
         </button>
 
@@ -178,13 +178,13 @@ export const NotesPage: React.FC = () => {
         {canSeeCompetitive && (
           <button
             onClick={() => setActiveTab('competitive')}
-            className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 ${
+            className={`flex-1 min-w-[180px] py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
               activeTab === 'competitive'
-                ? 'bg-[#522B80] text-white shadow-lg shadow-[#8B44F7]/20 border border-[#E2B86E]/40'
+                ? 'bg-[#522B80] text-white shadow-lg shadow-[#8B44F7]/25 border border-[#E2B86E]/40'
                 : 'text-gray-400 hover:text-white hover:bg-[#180d29]'
             }`}
           >
-            <Shield className="w-4 h-4 text-[#E2B86E]" />
+            <Shield className="w-4.5 h-4.5 text-[#E2B86E]" />
             <span>Escuadras & Competitivo</span>
           </button>
         )}
@@ -193,13 +193,13 @@ export const NotesPage: React.FC = () => {
         {canSeeCreators && (
           <button
             onClick={() => setActiveTab('creators')}
-            className={`flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 ${
+            className={`flex-1 min-w-[180px] py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
               activeTab === 'creators'
-                ? 'bg-[#522B80] text-white shadow-lg shadow-[#8B44F7]/20 border border-[#E2B86E]/40'
+                ? 'bg-[#522B80] text-white shadow-lg shadow-[#8B44F7]/25 border border-[#E2B86E]/40'
                 : 'text-gray-400 hover:text-white hover:bg-[#180d29]'
             }`}
           >
-            <Video className="w-4 h-4 text-[#E2B86E]" />
+            <Video className="w-4.5 h-4.5 text-[#E2B86E]" />
             <span>Creadores & Contenido</span>
           </button>
         )}
@@ -208,13 +208,13 @@ export const NotesPage: React.FC = () => {
         {canSeeManagement && (
           <button
             onClick={() => setActiveTab('management')}
-            className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 ${
+            className={`flex-1 min-w-[150px] py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
               activeTab === 'management'
-                ? 'bg-[#522B80] text-white shadow-lg shadow-[#8B44F7]/20 border border-[#E2B86E]/40'
+                ? 'bg-[#522B80] text-white shadow-lg shadow-[#8B44F7]/25 border border-[#E2B86E]/40'
                 : 'text-gray-400 hover:text-white hover:bg-[#180d29]'
             }`}
           >
-            <Crown className="w-4 h-4 text-[#E2B86E]" />
+            <Crown className="w-4.5 h-4.5 text-[#E2B86E]" />
             <span>Directiva & Staff</span>
           </button>
         )}
@@ -222,13 +222,13 @@ export const NotesPage: React.FC = () => {
         {/* Tab 5: Personal & Metas */}
         <button
           onClick={() => setActiveTab('personal')}
-          className={`flex-1 min-w-[150px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 ${
+          className={`flex-1 min-w-[160px] py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
             activeTab === 'personal'
-              ? 'bg-[#522B80] text-white shadow-lg shadow-[#8B44F7]/20 border border-[#E2B86E]/40'
+              ? 'bg-[#522B80] text-white shadow-lg shadow-[#8B44F7]/25 border border-[#E2B86E]/40'
               : 'text-gray-400 hover:text-white hover:bg-[#180d29]'
           }`}
         >
-          <Sparkles className="w-4 h-4 text-[#E2B86E]" />
+          <Sparkles className="w-4.5 h-4.5 text-[#E2B86E]" />
           <span>Mi Libreta & Metas</span>
         </button>
       </div>

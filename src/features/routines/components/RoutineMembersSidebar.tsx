@@ -154,69 +154,69 @@ export const RoutineMembersSidebar: React.FC<RoutineMembersSidebarProps> = ({
   const isSelfSelected = selectedUserId === 'self' || selectedUserId === user?.id;
 
   return (
-    <div className="bg-[#0D0914] border border-[#26143E] rounded-3xl p-3 flex flex-col space-y-2 h-full shadow-inner">
+    <div className="bg-[#0D0914] border border-[#26143E] rounded-3xl p-4 flex flex-col space-y-3 h-full shadow-inner">
       {/* Search Input */}
       <div className="relative">
-        <Search className="w-3.5 h-3.5 text-gray-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Buscar integrante..."
-          className="w-full bg-[#140b21] border border-[#26143E] rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#8B44F7]"
+          className="w-full bg-[#140b21] border border-[#26143E] rounded-xl pl-9 pr-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#8B44F7]"
         />
       </div>
 
       {/* Members Scroll List */}
-      <div className="flex-1 overflow-y-auto space-y-1.5 pr-0.5 select-none">
+      <div className="flex-1 overflow-y-auto space-y-2 pr-0.5 select-none">
         {/* Pinned "Yo" Card */}
         <button
           onClick={() => onSelectUser('self')}
-          className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between border transition-all ${
+          className={`w-full p-3.5 rounded-2xl text-left flex items-center justify-between border transition-all cursor-pointer ${
             isSelfSelected
-              ? 'bg-gradient-to-r from-[#522B80] to-[#26143E] border-[#E2B86E] text-white shadow-lg shadow-[#8B44F7]/20 ring-1 ring-[#E2B86E]/50'
+              ? 'bg-gradient-to-r from-[#522B80] to-[#26143E] border-[#E2B86E] text-white shadow-lg shadow-[#8B44F7]/25 ring-1 ring-[#E2B86E]/50'
               : 'bg-[#180d29] border-[#522B80]/40 text-gray-200 hover:bg-[#26143E]'
           }`}
         >
-          <div className="flex items-center space-x-2.5 min-w-0">
+          <div className="flex items-center space-x-3 min-w-0">
             <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shrink-0 shadow ${
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 shadow ${
                 isSelfSelected
                   ? 'bg-[#E2B86E] text-black'
                   : 'bg-gradient-to-br from-[#8B44F7] to-[#E2B86E] text-white'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center space-x-1.5">
-                <span className="text-xs font-black truncate text-white">Yo</span>
-                <span className="text-[9px] text-[#E2B86E] font-bold">(Tú)</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-black truncate text-white">Yo</span>
+                <span className="text-xs text-[#E2B86E] font-bold">(Tú)</span>
               </div>
-              <span className="text-[10px] text-gray-400 block truncate">
+              <span className="text-xs text-gray-400 block truncate">
                 Mi check-in y entrenamiento propio
               </span>
             </div>
           </div>
 
           {isSelfSelected ? (
-            <span className="w-2 h-2 rounded-full bg-[#E2B86E] animate-pulse shrink-0" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#E2B86E] animate-pulse shrink-0" />
           ) : (
-            <Badge variant="gold" className="text-[7.5px] px-1 py-0 font-bold shrink-0">
+            <Badge variant="gold" className="text-xs px-2 py-0.5 font-bold shrink-0">
               Personal
             </Badge>
           )}
         </button>
 
         {/* Separator / Category Header */}
-        <div className="pt-2 pb-1 px-1 flex items-center justify-between text-[9px] font-bold text-gray-500 uppercase tracking-wider border-t border-white/[0.06]">
+        <div className="pt-2 pb-1 px-1 flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-wider border-t border-white/[0.08]">
           <span>Directorio de Rutinas</span>
           <span>{filteredMembers.length}</span>
         </div>
 
         {/* Ranked Member items */}
         {filteredMembers.length === 0 ? (
-          <div className="p-4 text-center text-xs text-gray-500">
+          <div className="p-4 text-center text-sm text-gray-500">
             No se encontraron integrantes.
           </div>
         ) : (
@@ -228,27 +228,27 @@ export const RoutineMembersSidebar: React.FC<RoutineMembersSidebarProps> = ({
             return (
               <React.Fragment key={item.member.id}>
                 {showGroupHeader && !searchQuery && (
-                  <div className="pt-2 pb-0.5 px-1 text-[8.5px] font-bold text-[#E2B86E]/80 uppercase tracking-wider flex items-center space-x-1">
-                    {item.rank === 1 && <Crown className="w-2.5 h-2.5 text-[#E2B86E]" />}
-                    {item.rank === 2 && <Shield className="w-2.5 h-2.5 text-[#E2B86E]" />}
-                    {item.rank === 4 && <UserCog className="w-2.5 h-2.5 text-blue-400" />}
-                    {item.rank === 5 && <UserCheck className="w-2.5 h-2.5 text-[#8B44F7]" />}
-                    {item.rank === 6 && <Video className="w-2.5 h-2.5 text-emerald-400" />}
+                  <div className="pt-2.5 pb-1 px-1 text-xs font-bold text-[#E2B86E] uppercase tracking-wider flex items-center space-x-1.5">
+                    {item.rank === 1 && <Crown className="w-3.5 h-3.5 text-[#E2B86E]" />}
+                    {item.rank === 2 && <Shield className="w-3.5 h-3.5 text-[#E2B86E]" />}
+                    {item.rank === 4 && <UserCog className="w-3.5 h-3.5 text-blue-400" />}
+                    {item.rank === 5 && <UserCheck className="w-3.5 h-3.5 text-[#8B44F7]" />}
+                    {item.rank === 6 && <Video className="w-3.5 h-3.5 text-emerald-400" />}
                     <span>{item.categoryLabel}</span>
                   </div>
                 )}
 
                 <button
                   onClick={() => onSelectUser(item.member.id)}
-                  className={`w-full p-2 rounded-xl text-left flex items-center justify-between border transition-all ${
+                  className={`w-full p-3 rounded-2xl text-left flex items-center justify-between border transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-gradient-to-r from-[#522B80] to-[#26143E] border-[#E2B86E] text-white shadow-md shadow-[#8B44F7]/20 ring-1 ring-[#E2B86E]/40'
+                      ? 'bg-gradient-to-r from-[#522B80] to-[#26143E] border-[#E2B86E] text-white shadow-md shadow-[#8B44F7]/25 ring-1 ring-[#E2B86E]/40'
                       : 'bg-[#140b21]/70 border-[#26143E] text-gray-300 hover:bg-[#180d29] hover:border-[#522B80]'
                   }`}
                 >
-                  <div className="flex items-center space-x-2 min-w-0">
+                  <div className="flex items-center space-x-3 min-w-0">
                     <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${
                         isActive
                           ? 'bg-[#E2B86E] text-black'
                           : item.rank === 1
@@ -259,13 +259,13 @@ export const RoutineMembersSidebar: React.FC<RoutineMembersSidebarProps> = ({
                       {item.member.displayName.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <span className="text-xs font-bold block truncate">
+                      <span className="text-sm font-bold block truncate">
                         {item.member.displayName}
                       </span>
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-1.5 mt-0.5">
                         <Badge
                           variant={item.roleVariant}
-                          className="text-[7.5px] px-1 py-0 font-bold"
+                          className="text-xs px-2 py-0.5 font-bold"
                         >
                           {item.roleBadgeText}
                         </Badge>
@@ -274,7 +274,7 @@ export const RoutineMembersSidebar: React.FC<RoutineMembersSidebarProps> = ({
                   </div>
 
                   {isActive ? (
-                    <ChevronRight className="w-3.5 h-3.5 text-[#E2B86E] shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-[#E2B86E] shrink-0" />
                   ) : null}
                 </button>
               </React.Fragment>

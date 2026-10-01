@@ -102,51 +102,51 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   const todayStr = formatLocalDateString(new Date());
 
   return (
-    <div className="bg-[#140b21] border border-[#26143E] rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col space-y-4 h-full">
+    <div className="bg-[#140b21] border border-[#26143E] rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col space-y-4 h-full">
       {/* HEADER CALENDARIO */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#26143E] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#26143E] pb-4">
         {/* Título de Mes & Navegación */}
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-[#522B80]/60 border border-[#8B44F7]/40 flex items-center justify-center text-[#E2B86E]">
-            <CalendarIcon className="w-5 h-5" />
+        <div className="flex items-center space-x-3.5">
+          <div className="w-12 h-12 rounded-xl bg-[#522B80]/60 border border-[#8B44F7]/40 flex items-center justify-center text-[#E2B86E] shrink-0">
+            <CalendarIcon className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-black text-white tracking-wide">
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-wide">
               {MONTH_NAMES[month]} <span className="text-[#E2B86E]">{year}</span>
             </h2>
-            <p className="text-[11px] text-gray-400 font-medium">Calendario Oficial de Entrenamientos & Competencias</p>
+            <p className="text-xs text-gray-400 font-medium">Calendario Oficial de Entrenamientos & Competencias</p>
           </div>
         </div>
 
         {/* Botones Controles */}
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" onClick={handlePrevMonth} className="p-2 border border-[#8B44F7]/20">
-            <ChevronLeft className="w-4 h-4 text-gray-300" />
+          <Button variant="ghost" size="sm" onClick={handlePrevMonth} className="p-2.5 border border-[#8B44F7]/20">
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
           </Button>
           <Button
             variant="secondary"
             size="sm"
             onClick={handleToday}
-            className="text-xs font-semibold px-3 py-1 bg-[#26143E] hover:bg-[#522B80]"
+            className="text-xs sm:text-sm font-semibold px-4 py-1.5 bg-[#26143E] hover:bg-[#522B80]"
           >
             Hoy
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleNextMonth} className="p-2 border border-[#8B44F7]/20">
-            <ChevronRight className="w-4 h-4 text-gray-300" />
+          <Button variant="ghost" size="sm" onClick={handleNextMonth} className="p-2.5 border border-[#8B44F7]/20">
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
           </Button>
         </div>
       </div>
 
       {/* FILTROS DE CATEGORÍA */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-[#522B80]">
-        <div className="flex items-center space-x-1 pr-2 border-r border-[#26143E] text-xs text-gray-400 font-medium shrink-0">
-          <Filter className="w-3.5 h-3.5 text-[#E2B86E]" />
+      <div className="flex items-center space-x-2.5 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-[#522B80]">
+        <div className="flex items-center space-x-1.5 pr-2.5 border-r border-[#26143E] text-xs sm:text-sm text-gray-400 font-medium shrink-0">
+          <Filter className="w-4 h-4 text-[#E2B86E]" />
           <span>Filtro:</span>
         </div>
 
         <button
           onClick={() => onFilterChange('all')}
-          className={`px-3 py-1 rounded-full text-xs font-semibold transition-all shrink-0 border ${
+          className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 border ${
             selectedTypeFilter === 'all'
               ? 'bg-[#8B44F7] text-white border-[#E2B86E] shadow-md shadow-[#8B44F7]/30'
               : 'bg-[#26143E]/60 text-gray-400 border-transparent hover:text-white hover:bg-[#26143E]'
@@ -163,13 +163,13 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             <button
               key={typeKey}
               onClick={() => onFilterChange(typeKey)}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all shrink-0 flex items-center space-x-1.5 border ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 flex items-center space-x-1.5 border ${
                 isSelected
                   ? `${cfg.badgeBg} ${cfg.badgeText} ${cfg.badgeBorder} shadow-sm font-bold scale-105`
                   : 'bg-[#0D0914]/50 text-gray-400 border-[#26143E] hover:text-gray-200'
               }`}
             >
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.dotColor }} />
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.dotColor }} />
               <span>{cfg.label}</span>
             </button>
           );
@@ -177,18 +177,18 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       </div>
 
       {/* CUADRÍCULA DEL CALENDARIO */}
-      <div className="flex-1 min-h-[480px] flex flex-col">
+      <div className="flex-1 min-h-[520px] flex flex-col">
         {/* Cabecera Días de la Semana */}
-        <div className="grid grid-cols-7 text-center border-b border-[#26143E] pb-2 mb-2">
+        <div className="grid grid-cols-7 text-center border-b border-[#26143E] pb-2.5 mb-2.5">
           {WEEKDAY_NAMES.map((name) => (
-            <div key={name} className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <div key={name} className="text-xs sm:text-sm font-bold text-gray-400 uppercase tracking-wider">
               {name}
             </div>
           ))}
         </div>
 
         {/* Matriz de Días */}
-        <div className="grid grid-cols-7 grid-rows-5 gap-1.5 flex-1">
+        <div className="grid grid-cols-7 grid-rows-5 gap-2 flex-1">
           {allCalendarDays.map((cell) => {
             const isToday = cell.dateStr === todayStr;
             const isSelected = cell.dateStr === selectedDate;
@@ -198,7 +198,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               <div
                 key={cell.dateStr}
                 onClick={() => onSelectDate(cell.dateStr)}
-                className={`group relative p-1.5 rounded-xl border flex flex-col justify-between transition-all cursor-pointer min-h-[85px] sm:min-h-[95px] ${
+                className={`group relative p-2 sm:p-2.5 rounded-xl border flex flex-col justify-between transition-all cursor-pointer min-h-[95px] sm:min-h-[110px] 2xl:min-h-[125px] ${
                   !cell.isCurrentMonth
                     ? 'bg-[#0D0914]/40 border-[#26143E]/40 text-gray-600 hover:border-[#8B44F7]/30'
                     : isSelected
@@ -211,7 +211,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                 {/* Header del Día */}
                 <div className="flex items-center justify-between">
                   <span
-                    className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${
+                    className={`text-xs sm:text-sm font-bold px-2 py-0.5 rounded-md ${
                       isToday
                         ? 'bg-[#8B44F7] text-white shadow-sm'
                         : isSelected
@@ -231,9 +231,9 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                       onOpenAddModal(cell.dateStr);
                     }}
                     title="Agregar evento este día"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded bg-[#522B80] hover:bg-[#8B44F7] text-white"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg bg-[#522B80] hover:bg-[#8B44F7] text-white"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
@@ -244,7 +244,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                     return (
                       <div
                         key={evt.id}
-                        className={`px-1.5 py-0.5 rounded text-[10px] truncate font-medium border flex items-center space-x-1 ${cfg.badgeBg} ${cfg.badgeText} ${cfg.badgeBorder}`}
+                        className={`px-2 py-0.5 rounded text-[11px] truncate font-medium border flex items-center space-x-1.5 ${cfg.badgeBg} ${cfg.badgeText} ${cfg.badgeBorder}`}
                       >
                         <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cfg.dotColor }} />
                         <span className="truncate">{evt.title}</span>
@@ -253,8 +253,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                   })}
 
                   {dayEvents.length > 2 && (
-                    <div className="text-[9px] text-[#E2B86E] font-bold px-1">
-                      +{dayEvents.length - 2} eventos más
+                    <div className="text-[10px] sm:text-xs text-[#E2B86E] font-bold px-1">
+                      +{dayEvents.length - 2} más
                     </div>
                   )}
                 </div>
@@ -265,7 +265,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                     {dayEvents.map((evt) => (
                       <span
                         key={evt.id}
-                        className="w-1.5 h-1.5 rounded-full"
+                        className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: EVENT_TYPES_CONFIG[evt.type]?.dotColor || '#8B44F7' }}
                       />
                     ))}

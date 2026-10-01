@@ -47,29 +47,29 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
     <>
       <Card
         glow={match.type === 'tournament' ? 'gold' : 'purple'}
-        className="p-4 space-y-3 relative group transition-all hover:scale-[1.01]"
+        className="p-5 space-y-4 relative group transition-all hover:scale-[1.01]"
       >
         {/* Header: Type, Tournament Name & Action Buttons (Edit / Delete) */}
-        <div className="flex items-start justify-between border-b border-[#26143E] pb-2.5">
-          <div className="space-y-0.5 min-w-0">
-            <div className="flex items-center space-x-1.5 flex-wrap">
-              <Badge variant={match.type === 'tournament' ? 'gold' : 'purple'} className="text-[9px] px-2 py-0">
+        <div className="flex items-start justify-between border-b border-[#26143E] pb-3">
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center space-x-2 flex-wrap">
+              <Badge variant={match.type === 'tournament' ? 'gold' : 'purple'} className="text-xs px-2.5 py-0.5">
                 {match.type === 'tournament' ? 'Torneo' : 'Scrim'}
               </Badge>
-              <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                <Calendar className="w-3 h-3 text-[#E2B86E]" /> {match.date}
+              <span className="text-xs sm:text-sm text-gray-400 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#E2B86E]" /> {match.date}
               </span>
             </div>
             {match.type === 'tournament' && match.tournamentName && (
-              <p className="text-xs font-bold text-[#E2B86E] truncate flex items-center gap-1 mt-0.5">
-                <Trophy className="w-3 h-3 shrink-0" /> {match.tournamentName}
+              <p className="text-xs sm:text-sm font-bold text-[#E2B86E] truncate flex items-center gap-1.5 mt-0.5">
+                <Trophy className="w-3.5 h-3.5 shrink-0" /> {match.tournamentName}
               </p>
             )}
           </div>
 
-          <div className="flex items-center space-x-1.5 shrink-0">
+          <div className="flex items-center space-x-2 shrink-0">
             <span
-              className={`font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider ${
+              className={`font-black text-xs px-2.5 py-1 rounded-full uppercase tracking-wider ${
                 isWin
                   ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/40'
                   : isLoss
@@ -83,50 +83,50 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
             {/* Edit Button */}
             <Link
               to={`/dashboard/scrims/edit/${match.id}`}
-              className="p-1 text-gray-400 hover:text-[#E2B86E] transition-colors"
+              className="p-1.5 text-gray-400 hover:text-[#E2B86E] transition-colors"
               title="Editar partido"
             >
-              <Edit3 className="w-3.5 h-3.5" />
+              <Edit3 className="w-4 h-4" />
             </Link>
 
             {/* Delete Trigger */}
             {onDelete && (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
                 title="Eliminar registro"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             )}
           </div>
         </div>
 
         {/* Rival vs URS Gamara Score Box */}
-        <div className="p-3 bg-[#0D0914]/80 border border-[#26143E] rounded-lg flex items-center justify-between">
+        <div className="p-4 bg-[#0D0914]/80 border border-[#26143E] rounded-xl flex items-center justify-between">
           <div className="text-center flex-1 min-w-0">
-            <p className="text-[11px] text-gray-400 font-semibold truncate">{URS_GAMARA_TEAM.name}</p>
-            <p className="text-lg font-black text-white">{match.overallScore.split('-')[0]?.trim() || '0'}</p>
+            <p className="text-xs text-gray-400 font-semibold truncate">{URS_GAMARA_TEAM.name}</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{match.overallScore.split('-')[0]?.trim() || '0'}</p>
           </div>
 
-          <div className="px-2.5 py-0.5 bg-[#26143E] rounded text-[10px] font-extrabold text-[#E2B86E]">
+          <div className="px-3 py-1 bg-[#26143E] rounded-lg text-xs font-extrabold text-[#E2B86E]">
             VS
           </div>
 
           <div className="text-center flex-1 min-w-0">
-            <p className="text-[11px] text-gray-400 font-semibold truncate">{match.opponentName}</p>
-            <p className="text-lg font-black text-white">{match.overallScore.split('-')[1]?.trim() || '0'}</p>
+            <p className="text-xs text-gray-400 font-semibold truncate">{match.opponentName}</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{match.overallScore.split('-')[1]?.trim() || '0'}</p>
           </div>
         </div>
 
         {/* Maps Breakdown */}
         {match.maps && match.maps.length > 0 && (
           <div className="space-y-1">
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {match.maps.map((m, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between text-[11px] px-2.5 py-1 bg-[#180d29]/80 rounded border border-[#522B80]/40 flex-1 min-w-[120px]"
+                  className="flex items-center justify-between text-xs px-3 py-1.5 bg-[#180d29]/80 rounded-lg border border-[#522B80]/40 flex-1 min-w-[130px]"
                 >
                   <span className="font-bold text-gray-200">{m.mapName}</span>
                   <span className="font-extrabold text-[#E2B86E] ml-2">
@@ -138,7 +138,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
           </div>
         )}
 
-        {/* Screenshot Carousel Button (Prioritized above VODs) */}
+        {/* Screenshot Carousel Button */}
         {screenshots.length > 0 && (
           <div>
             <button
@@ -146,9 +146,9 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
                 setCurrentImageIndex(0);
                 setShowScreenshotModal(true);
               }}
-              className="w-full flex items-center justify-center space-x-1.5 py-1.5 px-3 bg-[#26143E]/60 hover:bg-[#522B80]/60 border border-[#8B44F7]/40 rounded-lg text-xs text-[#8B44F7] hover:text-[#E2B86E] font-semibold transition-colors"
+              className="w-full flex items-center justify-center space-x-2 py-2 px-3.5 bg-[#26143E]/60 hover:bg-[#522B80]/60 border border-[#8B44F7]/40 rounded-xl text-xs sm:text-sm text-[#8B44F7] hover:text-[#E2B86E] font-semibold transition-colors"
             >
-              <ImageIcon className="w-3.5 h-3.5" />
+              <ImageIcon className="w-4 h-4" />
               <span>
                 Ver Captura del Resultado {screenshots.length > 1 ? `(${screenshots.length})` : ''}
               </span>
@@ -156,19 +156,19 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
           </div>
         )}
 
-        {/* VODs Section (Single VOD or Multi-VOD List) */}
+        {/* VODs Section */}
         <div>
           {vods.length === 0 ? (
             <div className="relative group/tooltip inline-block w-full">
               <button
                 disabled
-                className="w-full flex items-center justify-center space-x-1.5 py-1.5 px-3 bg-[#180d29]/40 border border-gray-800 rounded-lg text-xs text-gray-500 font-medium cursor-not-allowed opacity-60"
+                className="w-full flex items-center justify-center space-x-2 py-2 px-3.5 bg-[#180d29]/40 border border-gray-800 rounded-xl text-xs text-gray-500 font-medium cursor-not-allowed opacity-60"
               >
-                <Video className="w-3.5 h-3.5" />
+                <Video className="w-4 h-4" />
                 <span>Ver VOD del Partido</span>
               </button>
               {/* Tooltip on hover */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover/tooltip:block bg-[#0D0914] text-gray-300 text-[10px] font-semibold py-1 px-2.5 rounded border border-[#522B80] shadow-xl whitespace-nowrap z-20">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover/tooltip:block bg-[#0D0914] text-gray-300 text-xs font-semibold py-1.5 px-3 rounded-lg border border-[#522B80] shadow-xl whitespace-nowrap z-20">
                 No se ha cargado la vod del partido
               </div>
             </div>
@@ -177,28 +177,28 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
               href={vods[0].url}
               target="_blank"
               rel="noreferrer"
-              className="w-full flex items-center justify-center space-x-1.5 py-1.5 px-3 bg-[#522B80]/40 hover:bg-[#8B44F7]/40 border border-[#8B44F7]/40 rounded-lg text-xs text-[#E2B86E] font-semibold transition-colors"
+              className="w-full flex items-center justify-center space-x-2 py-2 px-3.5 bg-[#522B80]/40 hover:bg-[#8B44F7]/40 border border-[#8B44F7]/40 rounded-xl text-xs sm:text-sm text-[#E2B86E] font-semibold transition-colors"
             >
-              <Video className="w-3.5 h-3.5" />
+              <Video className="w-4 h-4" />
               <span>Ver VOD del Partido</span>
-              <ExternalLink className="w-3 h-3 text-[#E2B86E]" />
+              <ExternalLink className="w-3.5 h-3.5 text-[#E2B86E]" />
             </a>
           ) : (
-            <div className="space-y-1 bg-[#140b21] p-2 rounded-lg border border-[#26143E]">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                <Video className="w-3 h-3 text-[#8B44F7]" /> VODs del Partido:
+            <div className="space-y-1.5 bg-[#140b21] p-2.5 rounded-xl border border-[#26143E]">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Video className="w-3.5 h-3.5 text-[#8B44F7]" /> VODs del Partido:
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {vods.map((v) => (
                   <a
                     key={v.id}
                     href={v.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center space-x-1 px-2 py-0.5 bg-[#26143E] hover:bg-[#522B80] border border-[#8B44F7]/30 rounded text-[10px] text-[#E2B86E] font-bold transition-colors"
+                    className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-[#26143E] hover:bg-[#522B80] border border-[#8B44F7]/30 rounded-lg text-xs text-[#E2B86E] font-bold transition-colors"
                   >
                     <span>{v.isFullMatch ? 'Partido Completo' : v.mapName || 'VOD'}</span>
-                    <ExternalLink className="w-2.5 h-2.5" />
+                    <ExternalLink className="w-3 h-3" />
                   </a>
                 ))}
               </div>
@@ -207,12 +207,12 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
         </div>
 
         {/* View Match Stats & Map Analysis Button */}
-        <div className="pt-0.5">
+        <div className="pt-1">
           <Link
             to={`/dashboard/scrims/match/${match.id}/stats`}
-            className="w-full flex items-center justify-center space-x-1.5 py-2 px-3 bg-gradient-to-r from-[#522B80]/70 via-[#26143E] to-[#522B80]/70 hover:from-[#8B44F7] hover:to-[#522B80] border border-[#8B44F7]/50 hover:border-[#E2B86E] rounded-xl text-xs text-white hover:text-[#E2B86E] font-bold transition-all shadow-md group"
+            className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 bg-gradient-to-r from-[#522B80]/70 via-[#26143E] to-[#522B80]/70 hover:from-[#8B44F7] hover:to-[#522B80] border border-[#8B44F7]/50 hover:border-[#E2B86E] rounded-xl text-xs sm:text-sm text-white hover:text-[#E2B86E] font-bold transition-all shadow-md group"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#E2B86E] group-hover:scale-110 transition-transform" />
+            <Sparkles className="w-4 h-4 text-[#E2B86E] group-hover:scale-110 transition-transform" />
             <span>Ver Estadísticas y Rendimiento por Mapa</span>
           </Link>
         </div>
