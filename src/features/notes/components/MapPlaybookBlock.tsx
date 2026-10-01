@@ -23,9 +23,11 @@ export const MapPlaybookBlock: React.FC<MapPlaybookBlockProps> = ({ roster, rost
   const [selectedMapId, setSelectedMapId] = useState<string>(availableMaps[0]?.id || 'ascent');
   const [rotationOnly, setRotationOnly] = useState<boolean>(true);
 
-  const filteredMaps = rotationOnly
-    ? availableMaps.filter((m) => m.isCompetitiveRotation)
-    : availableMaps;
+  const filteredMaps = (
+    rotationOnly ? availableMaps.filter((m) => m.isCompetitiveRotation) : availableMaps
+  )
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const selectedMap = availableMaps.find((m) => m.id === selectedMapId) || availableMaps[0];
   const channelId = `roster-${rosterId}-map-${selectedMap.id}`;

@@ -16,7 +16,7 @@ import { Select } from '../../../components/ui/Select';
 import { Badge } from '../../../components/ui/Badge';
 import { LoadingSpinner } from '../../../components/feedback/LoadingSpinner';
 import { scoreboardOcrService } from '../services/scoreboardOcrService';
-import { valorantApiService, type ValorantAgent, type ValorantMapData, FALLBACK_VALORANT_MAPS } from '../../../services/valorantApiService';
+import { valorantApiService, type ValorantAgent, type ValorantMapData, FALLBACK_VALORANT_MAPS, FALLBACK_VALORANT_AGENTS } from '../../../services/valorantApiService';
 import type { TeamMember } from '../../teams/types';
 import type { MatchPlayerStats } from '../types';
 
@@ -26,10 +26,14 @@ interface ScoreboardScannerModalProps {
   imageUrl?: string;
   imageFile?: File | null;
   rosterMembers: TeamMember[];
+  currentMapName?: string;
+  currentTeamScore?: number | '';
+  currentOpponentScore?: number | '';
+  existingMaps?: Array<{ mapName: string; teamScore: number; opponentScore: number }>;
   onApplyResults: (data: {
     mapName?: string;
-    teamScore?: number;
-    opponentScore?: number;
+    teamScore?: number | '';
+    opponentScore?: number | '';
     playerStats: MatchPlayerStats[];
   }) => void;
 }
@@ -40,28 +44,37 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
   imageUrl,
   imageFile,
   rosterMembers,
+  currentMapName,
+  currentTeamScore,
+  currentOpponentScore,
+  existingMaps = [],
   onApplyResults,
 }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
-  const [agents, setAgents] = useState<ValorantAgent[]>([]);
+  const [agents, setAgents] = useState<ValorantAgent[]>(FALLBACK_VALORANT_AGENTS);
   const [maps, setMaps] = useState<ValorantMapData[]>([]);
 
   // Parsed Form State
-  const [mapName, setMapName] = useState<string>('Lotus');
-  const [teamScore, setTeamScore] = useState<number>(13);
-  const [opponentScore, setOpponentScore] = useState<number>(10);
+  const [mapName, setMapName] = useState<string>(currentMapName || 'Abyss');
+  const [teamScore, setTeamScore] = useState<number | ''>(currentTeamScore ?? '');
+  const [opponentScore, setOpponentScore] = useState<number | ''>(currentOpponentScore ?? '');
   const [players, setPlayers] = useState<MatchPlayerStats[]>([]);
+  const [isRoundsPreserved, setIsRoundsPreserved] = useState<boolean>(false);
 
   // Fetch agents and maps from Valorant API
   useEffect(() => {
     const loadValorantAssets = async () => {
-      const [agentData, mapData] = await Promise.all([
-        valorantApiService.getAgents(),
-        valorantApiService.getMaps(),
-      ]);
-      setAgents(agentData);
-      setMaps(mapData);
+      try {
+        const [agentData, mapData] = await Promise.all([
+          valorantApiService.getAgents(),
+          valorantApiService.getMaps(),
+        ]);
+        if (agentData && agentData.length > 0) setAgents(agentData);
+        if (mapData && mapData.length > 0) setMaps(mapData);
+      } catch (err) {
+        console.warn('Failed loading assets in scanner modal:', err);
+      }
     };
     loadValorantAssets();
   }, []);
@@ -70,6 +83,7 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
   useEffect(() => {
     if (!isOpen) {
       setScanError(null);
+      setIsRoundsPreserved(false);
       return;
     }
 
@@ -86,20 +100,44 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
       try {
         const result = await scoreboardOcrService.parseValorantScoreboard(source, rosterMembers);
 
-        if (result.mapName) setMapName(result.mapName);
-        if (result.teamScore !== undefined) setTeamScore(result.teamScore);
-        if (result.opponentScore !== undefined) setOpponentScore(result.opponentScore);
+        const targetMap = result.mapName || currentMapName || 'Abyss';
+        setMapName(targetMap);
+
+        // Check if user already loaded/typed rounds for this map
+        const existingInList = existingMaps.find(
+          (m) => m.mapName.trim().toLowerCase() === targetMap.trim().toLowerCase()
+        );
+
+        if (existingInList && existingInList.teamScore !== undefined && existingInList.opponentScore !== undefined) {
+          setTeamScore(existingInList.teamScore);
+          setOpponentScore(existingInList.opponentScore);
+          setIsRoundsPreserved(true);
+        } else if (
+          currentMapName &&
+          currentMapName.trim().toLowerCase() === targetMap.trim().toLowerCase() &&
+          currentTeamScore !== '' &&
+          currentTeamScore !== undefined &&
+          currentOpponentScore !== '' &&
+          currentOpponentScore !== undefined
+        ) {
+          setTeamScore(Number(currentTeamScore));
+          setOpponentScore(Number(currentOpponentScore));
+          setIsRoundsPreserved(true);
+        } else {
+          setTeamScore(result.teamScore !== undefined ? result.teamScore : '');
+          setOpponentScore(result.opponentScore !== undefined ? result.opponentScore : '');
+          setIsRoundsPreserved(false);
+        }
 
         if (result.players && result.players.length > 0) {
-          const currentAgents = agents.length > 0 ? agents : await valorantApiService.getAgents();
+          const currentAgents = agents.length > 0 ? agents : FALLBACK_VALORANT_AGENTS;
           const enriched = result.players.map((p) => {
-            if (p.agent && !p.agentIcon) {
-              const ag = currentAgents.find((a) => a.displayName.toLowerCase() === p.agent?.toLowerCase());
-              if (ag) {
-                return { ...p, agent: ag.displayName, agentIcon: ag.displayIcon };
-              }
-            }
-            return p;
+            const ag = currentAgents.find((a) => a.displayName.toLowerCase() === p.agent?.toLowerCase());
+            return {
+              ...p,
+              agent: ag ? ag.displayName : p.agent,
+              agentIcon: ag ? ag.displayIcon : p.agentIcon,
+            };
           });
           setPlayers(enriched);
         } else if (rosterMembers.length > 0) {
@@ -126,7 +164,7 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
     };
 
     startScan();
-  }, [isOpen, imageUrl, imageFile, rosterMembers, agents]);
+  }, [isOpen, imageUrl, imageFile]);
 
   if (!isOpen) return null;
 
@@ -265,11 +303,24 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-1.5">
                     <Gamepad2 className="w-4 h-4 text-[#8B44F7]" />
-                    <span>Datos Detectados del Encuentro</span>
+                    <span>Datos del Encuentro & Mapa</span>
                   </h4>
-                  <Badge variant="purple" className="text-[10px]">
-                    {teamScore > opponentScore ? 'Victoria' : teamScore < opponentScore ? 'Derrota' : 'Empate'}
-                  </Badge>
+                  <div className="flex items-center space-x-2">
+                    {isRoundsPreserved && (
+                      <Badge variant="gold" className="text-[9px]">
+                        Rondas Preservadas
+                      </Badge>
+                    )}
+                    {teamScore !== '' && opponentScore !== '' && (
+                      <Badge variant="purple" className="text-[10px]">
+                        {Number(teamScore) > Number(opponentScore)
+                          ? 'Victoria'
+                          : Number(teamScore) < Number(opponentScore)
+                          ? 'Derrota'
+                          : 'Empate'}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -288,15 +339,17 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
                   <Input
                     label="Rondas URS Gamara"
                     type="number"
+                    placeholder="ej. 13"
                     value={teamScore}
-                    onChange={(e) => setTeamScore(Number(e.target.value))}
+                    onChange={(e) => setTeamScore(e.target.value === '' ? '' : Number(e.target.value))}
                   />
 
                   <Input
                     label="Rondas Rival"
                     type="number"
+                    placeholder="ej. 11"
                     value={opponentScore}
-                    onChange={(e) => setOpponentScore(Number(e.target.value))}
+                    onChange={(e) => setOpponentScore(e.target.value === '' ? '' : Number(e.target.value))}
                   />
                 </div>
               </div>

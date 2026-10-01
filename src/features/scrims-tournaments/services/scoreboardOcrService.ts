@@ -1,5 +1,5 @@
 import { createWorker, PSM } from 'tesseract.js';
-import { valorantApiService, type ValorantAgent, FALLBACK_VALORANT_MAPS } from '../../../services/valorantApiService';
+import { valorantApiService, type ValorantAgent, FALLBACK_VALORANT_MAPS, FALLBACK_VALORANT_AGENTS } from '../../../services/valorantApiService';
 import type { MatchPlayerStats } from '../types';
 import type { TeamMember } from '../../teams/types';
 
@@ -13,7 +13,6 @@ export interface ParsedScoreboardResult {
   rawText?: string;
 }
 
-// Color signatures for Valorant playable agents in scoreboard (Multi-region: Top, Center, Bottom, Overall)
 interface AgentColorSignature {
   name: string;
   top: [number, number, number];
@@ -23,35 +22,42 @@ interface AgentColorSignature {
 }
 
 const AGENT_SIGNATURES: AgentColorSignature[] = [
-  { name: 'Omen', top: [82, 94, 178], center: [45, 68, 120], bottom: [52, 58, 97], overall: [59, 72, 129] },
-  { name: 'Cypher', top: [141, 137, 132], center: [104, 101, 98], bottom: [113, 115, 114], overall: [111, 119, 116] },
-  { name: 'Phoenix', top: [96, 72, 68], center: [107, 73, 66], bottom: [132, 90, 68], overall: [108, 77, 69] },
-  { name: 'Brimstone', top: [181, 140, 81], center: [118, 79, 53], bottom: [88, 84, 72], overall: [124, 99, 67] },
-  { name: 'Jett', top: [188, 179, 184], center: [172, 145, 143], bottom: [108, 98, 95], overall: [144, 130, 132] },
-  { name: 'Sova', top: [162, 132, 125], center: [167, 142, 134], bottom: [117, 117, 112], overall: [152, 137, 129] },
-  { name: 'Killjoy', top: [95, 90, 75], center: [115, 90, 78], bottom: [98, 85, 54], overall: [102, 86, 68] },
-  { name: 'Viper', top: [114, 99, 102], center: [41, 42, 48], bottom: [57, 56, 58], overall: [72, 67, 69] },
-  { name: 'Skye', top: [141, 105, 87], center: [136, 96, 80], bottom: [90, 77, 75], overall: [116, 87, 74] },
-  { name: 'Raze', top: [128, 92, 76], center: [138, 97, 81], bottom: [90, 70, 61], overall: [119, 89, 75] },
-  { name: 'Sage', top: [123, 105, 105], center: [157, 124, 115], bottom: [110, 93, 92], overall: [121, 102, 100] },
-  { name: 'Neon', top: [88, 97, 120], center: [143, 114, 99], bottom: [71, 62, 67], overall: [102, 90, 92] },
-  { name: 'Yoru', top: [113, 96, 119], center: [78, 73, 111], bottom: [51, 63, 102], overall: [68, 74, 107] },
-  { name: 'Gekko', top: [120, 160, 60], center: [140, 130, 90], bottom: [80, 90, 60], overall: [110, 125, 70] },
-  { name: 'Reyna', top: [100, 50, 120], center: [110, 60, 100], bottom: [70, 40, 80], overall: [90, 50, 100] },
-  { name: 'Fade', top: [65, 65, 75], center: [90, 80, 85], bottom: [50, 50, 60], overall: [70, 65, 75] },
+  { name: 'Cypher', top: [135, 139, 135], center: [75, 92, 92], bottom: [111, 114, 110], overall: [107, 115, 112] },
+  { name: 'Astra', top: [76, 57, 51], center: [107, 79, 68], bottom: [101, 82, 95], overall: [94, 71, 68] },
+  { name: 'Raze', top: [132, 112, 94], center: [131, 102, 88], bottom: [95, 75, 65], overall: [122, 99, 85] },
+  { name: 'Raze', top: [135, 133, 124], center: [139, 110, 93], bottom: [91, 72, 66], overall: [125, 110, 99] },
+  { name: 'Fade', top: [118, 103, 103], center: [130, 106, 102], bottom: [104, 97, 101], overall: [119, 102, 102] },
+  { name: 'Sova', top: [156, 134, 124], center: [162, 145, 136], bottom: [164, 158, 146], overall: [160, 144, 134] },
+  { name: 'Breach', top: [133, 104, 90], center: [128, 98, 79], bottom: [90, 59, 45], overall: [120, 90, 75] },
+  { name: 'Yoru', top: [79, 80, 106], center: [103, 98, 117], bottom: [61, 76, 108], overall: [83, 86, 110] },
+  { name: 'Omen', top: [88, 91, 153], center: [62, 83, 135], bottom: [47, 54, 91], overall: [68, 79, 131] },
+  { name: 'Omen', top: [140, 113, 96], center: [94, 76, 84], bottom: [75, 118, 162], overall: [108, 101, 109] },
+  { name: 'Neon', top: [40, 62, 127], center: [56, 93, 146], bottom: [90, 89, 101], overall: [58, 80, 127] },
+  { name: 'Waylay', top: [70, 96, 96], center: [109, 120, 118], bottom: [140, 115, 96], overall: [101, 109, 104] },
+  { name: 'Phoenix', top: [120, 85, 55], center: [130, 90, 65], bottom: [140, 110, 75], overall: [130, 95, 65] },
+  { name: 'Chamber', top: [139, 113, 103], center: [137, 103, 96], bottom: [121, 97, 93], overall: [133, 105, 98] },
+  { name: 'Skye', top: [129, 107, 84], center: [144, 101, 89], bottom: [107, 81, 77], overall: [128, 98, 84] },
+  { name: 'Killjoy', top: [80, 76, 57], center: [119, 90, 71], bottom: [81, 77, 54], overall: [94, 81, 61] },
+  { name: 'Sage', top: [120, 105, 105], center: [130, 110, 105], bottom: [100, 95, 100], overall: [120, 105, 105] },
+  { name: 'Jett', top: [155, 150, 145], center: [145, 125, 110], bottom: [110, 95, 85], overall: [138, 123, 113] },
+  { name: 'Brimstone', top: [175, 135, 75], center: [118, 79, 53], bottom: [88, 84, 72], overall: [124, 99, 67] },
+  { name: 'Viper', top: [141, 132, 128], center: [86, 77, 83], bottom: [93, 85, 80], overall: [109, 100, 99] },
+  { name: 'Reyna', top: [95, 45, 115], center: [110, 55, 100], bottom: [70, 40, 80], overall: [90, 50, 98] },
+  { name: 'Gekko', top: [110, 155, 60], center: [135, 130, 85], bottom: [80, 90, 60], overall: [110, 125, 70] },
   { name: 'KAY/O', top: [70, 110, 140], center: [60, 120, 150], bottom: [60, 80, 100], overall: [65, 100, 130] },
-  { name: 'Breach', top: [140, 80, 50], center: [130, 90, 60], bottom: [100, 70, 50], overall: [120, 80, 55] },
-  { name: 'Astra', top: [90, 60, 110], center: [120, 90, 90], bottom: [80, 60, 90], overall: [95, 70, 95] },
-  { name: 'Chamber', top: [70, 65, 75], center: [140, 115, 95], bottom: [90, 85, 90], overall: [100, 88, 86] },
   { name: 'Deadlock', top: [150, 140, 120], center: [135, 115, 105], bottom: [85, 90, 95], overall: [120, 115, 105] },
   { name: 'Iso', top: [60, 55, 70], center: [120, 100, 95], bottom: [65, 55, 80], overall: [80, 70, 80] },
   { name: 'Clove', top: [150, 100, 140], center: [140, 110, 110], bottom: [100, 70, 110], overall: [130, 95, 120] },
   { name: 'Vyse', top: [110, 110, 120], center: [120, 115, 125], bottom: [80, 75, 85], overall: [100, 100, 110] },
   { name: 'Tejo', top: [120, 110, 90], center: [140, 120, 100], bottom: [90, 80, 70], overall: [110, 100, 85] },
-  { name: 'Miks', top: [100, 90, 120], center: [130, 110, 100], bottom: [80, 70, 90], overall: [100, 90, 105] },
-  { name: 'Waylay', top: [110, 90, 130], center: [125, 100, 110], bottom: [85, 65, 95], overall: [105, 85, 110] },
-  { name: 'Veto', top: [130, 110, 80], center: [135, 115, 90], bottom: [95, 85, 70], overall: [115, 100, 80] }
 ];
+
+function colorDist(c1: [number, number, number], c2: [number, number, number]): number {
+  const dr = c1[0] - c2[0];
+  const dg = c1[1] - c2[1];
+  const db = c1[2] - c2[2];
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
 
 // Determine if a row belongs to friendly team (Cyan / Teal / Blue / Gold) vs Enemy (Red)
 function isFriendlyRow(r: number, g: number, b: number): boolean {
@@ -138,7 +144,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-// Helper to convert crop to canvas data URL
+// Helper to convert crop to canvas data URL with contrast and binarization options
 function cropToDataUrl(
   img: HTMLImageElement,
   sx: number,
@@ -146,7 +152,8 @@ function cropToDataUrl(
   sw: number,
   sh: number,
   scale = 2,
-  enhanceContrast = true
+  enhanceContrast = true,
+  binarizeForScore = false
 ): string {
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, Math.round(sw * scale));
@@ -158,7 +165,24 @@ function cropToDataUrl(
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
 
-  if (enhanceContrast) {
+  if (binarizeForScore) {
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i];
+      const g = d[i + 1];
+      const b = d[i + 2];
+      const maxC = Math.max(r, g, b);
+      const minC = Math.min(r, g, b);
+      // Black text on white background binarization
+      const isText = maxC > 75 && (maxC - minC > 25 || (r > 140 && g > 140 && b > 140));
+      const val = isText ? 0 : 255;
+      d[i] = val;
+      d[i + 1] = val;
+      d[i + 2] = val;
+    }
+    ctx.putImageData(imgData, 0, 0);
+  } else if (enhanceContrast) {
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const d = imgData.data;
     for (let i = 0; i < d.length; i += 4) {
@@ -210,7 +234,7 @@ function sampleAverageRgb(
   ];
 }
 
-// Detect Valorant Agent from the agent portrait thumbnail in the scoreboard row
+// Detect Valorant Agent accurately using exact pixel sampling without resizing distortion
 function detectAgentFromImage(
   img: HTMLImageElement,
   cropX: number,
@@ -220,16 +244,16 @@ function detectAgentFromImage(
   agentList: ValorantAgent[]
 ): { agentName: string; agentIcon?: string } | null {
   const canvas = document.createElement('canvas');
-  canvas.width = 32;
-  canvas.height = 32;
+  canvas.width = Math.max(1, cropW);
+  canvas.height = Math.max(1, cropH);
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
 
-  ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, 32, 32);
-  const imgData = ctx.getImageData(0, 0, 32, 32).data;
+  ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
   function getPixel(x: number, y: number): [number, number, number] {
-    const idx = (y * 32 + x) * 4;
+    const idx = (y * canvas.width + x) * 4;
     return [imgData[idx], imgData[idx + 1], imgData[idx + 2]];
   }
 
@@ -241,76 +265,53 @@ function detectAgentFromImage(
         r += p[0]; g += p[1]; b += p[2]; count++;
       }
     }
-    return [Math.round(r / count), Math.round(g / count), Math.round(b / count)];
+    return [
+      Math.round(r / Math.max(1, count)),
+      Math.round(g / Math.max(1, count)),
+      Math.round(b / Math.max(1, count)),
+    ];
   }
 
+  // Inset horizontal by 3px on left and right to avoid row borders
+  const ix1 = 3;
+  const ix2 = Math.max(ix1, canvas.width - 3);
+  const topH = Math.round(canvas.height * 0.33);
+  const midH = Math.round(canvas.height * 0.33);
+
   const feat = {
-    top: getAvg(6, 2, 26, 10),
-    center: getAvg(8, 11, 24, 20),
-    bottom: getAvg(6, 21, 26, 30),
-    overall: getAvg(4, 4, 28, 28),
+    top: getAvg(ix1, 1, ix2, topH),
+    center: getAvg(ix1, topH + 1, ix2, topH + midH),
+    bottom: getAvg(ix1, topH + midH + 1, ix2, canvas.height - 1),
+    overall: getAvg(ix1, 1, ix2, canvas.height - 1),
   };
 
   let bestName: string | null = null;
-  let lowestDist = Infinity;
-
-  function colorDist(c1: [number, number, number], c2: [number, number, number]): number {
-    const dr = c1[0] - c2[0];
-    const dg = c1[1] - c2[1];
-    const db = c1[2] - c2[2];
-    return Math.sqrt(dr * dr + dg * dg + db * db);
-  }
+  let minDist = Infinity;
 
   for (const sig of AGENT_SIGNATURES) {
-    const dTop = colorDist(feat.top, sig.top) * 1.2;
-    const dCenter = colorDist(feat.center, sig.center) * 1.3;
-    const dBottom = colorDist(feat.bottom, sig.bottom) * 1.0;
-    const dOverall = colorDist(feat.overall, sig.overall) * 1.1;
+    const dTop = colorDist(feat.top, sig.top);
+    const dCenter = colorDist(feat.center, sig.center);
+    const dBottom = colorDist(feat.bottom, sig.bottom);
+    const dOverall = colorDist(feat.overall, sig.overall);
+    const totalDist = dTop * 1.2 + dCenter * 1.3 + dBottom * 1.0 + dOverall * 1.0;
 
-    let total = dTop + dCenter + dBottom + dOverall;
-
-    if (sig.name === 'Omen') {
-      const isBlueDom = feat.overall[2] > feat.overall[0] + 30 && feat.top[2] > feat.top[0] + 40;
-      if (isBlueDom) total *= 0.4;
-      else total *= 2.0;
-    }
-    if (sig.name === 'Cypher') {
-      const topVariance = Math.max(
-        Math.abs(feat.top[0] - feat.top[1]),
-        Math.abs(feat.top[1] - feat.top[2]),
-        Math.abs(feat.top[0] - feat.top[2])
-      );
-      if (topVariance < 10 && feat.top[0] > 120) total *= 0.4;
-    }
-    if (sig.name === 'Viper') {
-      if (feat.center[0] < 55 && feat.center[1] < 55 && feat.center[2] < 55) total *= 0.4;
-    }
-    if (sig.name === 'Jett') {
-      if (feat.top[0] > 170 && feat.top[2] > 150) total *= 0.5;
-    }
-    if (sig.name === 'Brimstone') {
-      if (feat.top[0] > 165 && feat.top[0] > feat.top[2] + 70) total *= 0.4;
-    }
-    if (sig.name === 'Killjoy') {
-      if (
-        (feat.bottom[0] > feat.bottom[2] + 25 && feat.bottom[1] > feat.bottom[2] + 20) ||
-        feat.center[0] > feat.center[2] + 30
-      ) {
-        total *= 0.5;
-      }
-    }
-
-    if (total < lowestDist) {
-      lowestDist = total;
+    if (totalDist < minDist) {
+      minDist = totalDist;
       bestName = sig.name;
     }
   }
 
   if (!bestName) return null;
 
-  const matchedAgent = agentList.find(
+  let matchedAgent = agentList.find(
     (a) => a.displayName.toLowerCase() === bestName?.toLowerCase()
   );
+
+  if (!matchedAgent) {
+    matchedAgent = FALLBACK_VALORANT_AGENTS.find(
+      (a) => a.displayName.toLowerCase() === bestName?.toLowerCase()
+    );
+  }
 
   return {
     agentName: matchedAgent ? matchedAgent.displayName : bestName,
@@ -321,7 +322,7 @@ function detectAgentFromImage(
 export const scoreboardOcrService = {
   /**
    * Process a scoreboard image:
-   * 1. Extracts map and scores from the header
+   * 1. Extracts map and scores precisely from the top-left scoreboard outcome area
    * 2. Distinguishes friendly team rows (Cyan/Green/Blue + Gold self) from enemy rows (Red)
    * 3. Detects the Valorant Agent used by each player from their portrait icon
    * 4. Cleans Premier tags and matches player nick against roster member display names and gameTag prefixes
@@ -353,62 +354,111 @@ export const scoreboardOcrService = {
       // Create OCR worker
       const worker = await createWorker('spa+eng');
 
-      // 1. Process Header (Score, Outcome, Map)
-      const headerUrl = cropToDataUrl(img, 0, 0, W, Math.round(H * 0.22), 2, true);
-      const headerResult = await worker.recognize(headerUrl);
-      const headerText = headerResult.data.text;
+      // 1. Process Score & Outcome Box
+      // Try Resumen tab left score box first (X: 1% to 22%, Y: 8% to 22%)
+      const scoreBoxUrl = cropToDataUrl(
+        img,
+        Math.round(W * 0.01),
+        Math.round(H * 0.08),
+        Math.round(W * 0.22),
+        Math.round(H * 0.14),
+        3,
+        false,
+        true
+      );
+      const scoreBoxResult = await worker.recognize(scoreBoxUrl);
+      const scoreBoxText = scoreBoxResult.data.text.trim();
 
       let detectedMap: string | undefined;
       let detectedTeamScore: number | undefined;
       let detectedOpponentScore: number | undefined;
       let detectedOutcome: 'win' | 'loss' | 'draw' | undefined;
 
-      // Detect outcome and scores
-      const scoreMatch = headerText.match(/(\d{1,2})\s*(VICTORIA|DERROTA|EMPATE|VICTORY|DEFEAT|DRAW)?\s*(\d{1,2})/i);
-      if (scoreMatch) {
-        detectedTeamScore = parseInt(scoreMatch[1], 10);
-        detectedOpponentScore = parseInt(scoreMatch[3], 10);
-        const outcomeWord = (scoreMatch[2] || '').toUpperCase();
-        if (outcomeWord.includes('VIC')) detectedOutcome = 'win';
-        else if (outcomeWord.includes('DER') || outcomeWord.includes('DEF')) detectedOutcome = 'loss';
-        else if (detectedTeamScore > detectedOpponentScore) detectedOutcome = 'win';
-        else if (detectedTeamScore < detectedOpponentScore) detectedOutcome = 'loss';
-        else detectedOutcome = 'draw';
-      }
+      let scoreNumbers = scoreBoxText.match(/\d{1,2}/g)?.map(Number);
+      let outcomeText = scoreBoxText;
 
-      // Check map in header
-      for (const mapName of mapNames) {
-        if (new RegExp(`\\b${mapName}\\b`, 'i').test(headerText)) {
-          detectedMap = mapName;
-          break;
+      // If no valid score on left, check Center Score Box (Marcador tab: X: 37% to 62%, Y: 7.5% to 14.5%)
+      if (!scoreNumbers || scoreNumbers.length < 2) {
+        const centerScoreUrl = cropToDataUrl(
+          img,
+          Math.round(W * 0.37),
+          Math.round(H * 0.075),
+          Math.round(W * 0.25),
+          Math.round(H * 0.07),
+          3,
+          false,
+          true
+        );
+        const centerRes = await worker.recognize(centerScoreUrl);
+        const centerText = centerRes.data.text.trim();
+        const centerDigits = centerText.match(/\d{1,2}/g)?.map(Number);
+        if (centerDigits && centerDigits.length >= 2) {
+          scoreNumbers = centerDigits;
+          outcomeText = centerText;
         }
       }
 
-      // If map not found in full header, crop top right specifically
+      if (scoreNumbers && scoreNumbers.length >= 2) {
+        detectedTeamScore = scoreNumbers[0];
+        detectedOpponentScore = scoreNumbers[1];
+
+        const upperText = outcomeText.toUpperCase();
+        if (upperText.includes('VIC')) {
+          detectedOutcome = 'win';
+        } else if (upperText.includes('DER') || upperText.includes('DEF')) {
+          detectedOutcome = 'loss';
+        } else if (upperText.includes('EMP') || upperText.includes('DRAW')) {
+          detectedOutcome = 'draw';
+        } else if (detectedTeamScore > detectedOpponentScore) {
+          detectedOutcome = 'win';
+        } else if (detectedTeamScore < detectedOpponentScore) {
+          detectedOutcome = 'loss';
+        } else {
+          detectedOutcome = 'draw';
+        }
+      }
+
+      // Check map name from top-right info crop (x: 75% to 98%, y: 2% to 18%)
+      const mapCropUrl = cropToDataUrl(
+        img,
+        Math.round(W * 0.75),
+        Math.round(H * 0.02),
+        Math.round(W * 0.23),
+        Math.round(H * 0.16),
+        3,
+        true
+      );
+      const mapRes = await worker.recognize(mapCropUrl);
+      const mapText = mapRes.data.text;
+
+      const matchMap = (text: string) => {
+        for (const mapName of mapNames) {
+          if (new RegExp(`\\b${mapName}\\b`, 'i').test(text) || similarity(text, mapName) > 0.55) {
+            return mapName;
+          }
+        }
+        return undefined;
+      };
+
+      detectedMap = matchMap(mapText);
       if (!detectedMap) {
-        const mapCropUrl = cropToDataUrl(
+        const topLeftMapUrl = cropToDataUrl(
           img,
-          Math.round(W * 0.75),
+          Math.round(W * 0.01),
           Math.round(H * 0.03),
-          Math.round(W * 0.24),
-          Math.round(H * 0.18),
+          Math.round(W * 0.18),
+          Math.round(H * 0.09),
           3,
           true
         );
-        const mapRes = await worker.recognize(mapCropUrl);
-        const mapText = mapRes.data.text;
-        for (const mapName of mapNames) {
-          if (new RegExp(`\\b${mapName}\\b`, 'i').test(mapText) || similarity(mapText, mapName) > 0.6) {
-            detectedMap = mapName;
-            break;
-          }
-        }
+        const tlRes = await worker.recognize(topLeftMapUrl);
+        detectedMap = matchMap(tlRes.data.text);
       }
 
-      // 2. Process Scoreboard Rows
-      const startYRel = 0.312;
-      const rowStepRel = 0.0430;
-      const rowHRel = 0.0420;
+      // 2. Process Scoreboard Rows (Precise Valorant 1080p alignment)
+      const startYRel = 0.3113;
+      const rowStepRel = 0.04522;
+      const rowHRel = 0.04174;
 
       const parsedPlayers: MatchPlayerStats[] = [];
 
@@ -424,9 +474,9 @@ export const scoreboardOcrService = {
         const [r, g, b] = sampleAverageRgb(
           img,
           Math.round(W * 0.35),
-          top + 5,
+          top + 4,
           20,
-          Math.max(1, height - 10)
+          Math.max(1, height - 8)
         );
 
         const isFriendly = isFriendlyRow(r, g, b);
@@ -436,22 +486,51 @@ export const scoreboardOcrService = {
           continue;
         }
 
-        // Detect Agent from portrait thumbnail
-        const detectedAgent = detectAgentFromImage(
+        // Try Resumen layout first (X: 22.17%), then Marcador layout (X: 14.5%)
+        let cropX = Math.round(W * 0.2217);
+        let cropW = Math.round(W * 0.0234);
+        let nameX = Math.round(W * 0.249);
+        let nameW = Math.round(W * 0.216);
+        let statsX = Math.round(W * 0.468);
+        let statsW = Math.round(W * 0.342);
+
+        const cropY = top + 2;
+        const cropH = Math.max(1, height - 4);
+
+        let detectedAgent = detectAgentFromImage(
           img,
-          Math.round(W * 0.220),
-          top + 2,
-          Math.round(W * 0.024),
-          Math.max(1, height - 4),
+          cropX,
+          cropY,
+          cropW,
+          cropH,
           agentList
         );
 
-        // Crop player name area (x: 24.5% to 47%)
+        // If no confident agent at 22.17%, try Marcador tab layout at 14.5%
+        if (!detectedAgent) {
+          cropX = Math.round(W * 0.145);
+          cropW = Math.round(W * 0.023);
+          nameX = Math.round(W * 0.172);
+          nameW = Math.round(W * 0.15);
+          statsX = Math.round(W * 0.33);
+          statsW = Math.round(W * 0.48);
+
+          detectedAgent = detectAgentFromImage(
+            img,
+            cropX,
+            cropY,
+            cropW,
+            cropH,
+            agentList
+          );
+        }
+
+        // Crop player name area
         const nameCropUrl = cropToDataUrl(
           img,
-          Math.round(W * 0.245),
+          nameX,
           top,
-          Math.round(W * 0.225),
+          nameW,
           height,
           2.5,
           true
@@ -460,12 +539,12 @@ export const scoreboardOcrService = {
         const rawNick = nameRes.data.text.trim();
         const cleanNick = cleanPremierPrefix(rawNick);
 
-        // Crop stats numbers (x: 47% to 80%)
+        // Crop stats numbers
         const statsCropUrl = cropToDataUrl(
           img,
-          Math.round(W * 0.47),
+          statsX,
           top,
-          Math.round(W * 0.33),
+          statsW,
           height,
           2.5,
           true
@@ -570,7 +649,7 @@ export const scoreboardOcrService = {
         opponentScore: detectedOpponentScore,
         outcome: detectedOutcome,
         players: finalPlayers,
-        rawText: headerText,
+        rawText: scoreBoxText,
       };
     } catch (error) {
       console.error('Scoreboard OCR processing error:', error);

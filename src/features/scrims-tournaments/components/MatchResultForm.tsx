@@ -244,10 +244,12 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
             )}
           </div>
 
-          {/* Lista de mapas ya agregados a la serie en modo Torneo */}
-          {matchType === 'tournament' && addedMaps.length > 0 && (
+          {/* Lista de mapas ya agregados / guardados */}
+          {addedMaps.length > 0 && (
             <div className="space-y-2 border-b border-[#26143E] pb-3">
-              <p className="text-[11px] text-gray-400 uppercase font-semibold">Mapas guardados en esta serie:</p>
+              <p className="text-[11px] text-gray-400 uppercase font-semibold">
+                {matchType === 'tournament' ? 'Mapas guardados en esta serie:' : 'Rondas guardadas para la Scrim:'}
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {addedMaps.map((m, idx) => {
                   const hasStats = m.playerStats && m.playerStats.length > 0;
@@ -259,7 +261,7 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
                       <div className="space-y-0.5 min-w-0">
                         <div className="flex items-center space-x-1.5 flex-wrap">
                           <span className="font-bold text-white">
-                            Mapa {idx + 1}: {m.mapName}
+                            {matchType === 'tournament' ? `Mapa ${idx + 1}: ${m.mapName}` : `Mapa: ${m.mapName}`}
                           </span>
                           {hasStats && (
                             <span className="text-[9px] px-1.5 py-0.2 bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 rounded-full font-semibold flex items-center gap-0.5">
@@ -314,7 +316,7 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
             <Input
               label="Rondas URS Gamara"
               type="number"
-              placeholder="13"
+              placeholder="ej. 13"
               value={currentTeamScore}
               onChange={(e) => setCurrentTeamScore(e.target.value === '' ? '' : Number(e.target.value))}
             />
@@ -322,7 +324,7 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
             <Input
               label={opponentRoundsLabel}
               type="number"
-              placeholder="8"
+              placeholder="ej. 11"
               value={currentOpponentScore}
               onChange={(e) => setCurrentOpponentScore(e.target.value === '' ? '' : Number(e.target.value))}
             />
@@ -388,19 +390,20 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
             </div>
           )}
 
-          {matchType === 'tournament' && (
-            <div className="pt-2 flex items-center justify-between">
-              <div>
-                {currentPlayerStats.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleClearCurrentMapDraft}
-                    className="text-xs text-gray-400 hover:text-red-400 font-medium transition-colors"
-                  >
-                    Limpiar formulario de mapa
-                  </button>
-                )}
-              </div>
+          <div className="pt-2 flex items-center justify-between flex-wrap gap-2">
+            <div>
+              {currentPlayerStats.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearCurrentMapDraft}
+                  className="text-xs text-gray-400 hover:text-red-400 font-medium transition-colors"
+                >
+                  Limpiar datos del mapa
+                </button>
+              )}
+            </div>
+
+            {matchType === 'tournament' ? (
               <Button
                 type="button"
                 variant="outline"
@@ -410,8 +413,18 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
               >
                 {isCurrentMapInSeries ? `Actualizar ${currentMapName} en la Serie` : `Guardar Mapa en la Serie`}
               </Button>
-            </div>
-          )}
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddMapToSeries}
+                leftIcon={<Save className="w-4 h-4 text-[#E2B86E]" />}
+              >
+                {addedMaps.length > 0 ? `Actualizar Rondas del Mapa` : `Guardar Rondas del Mapa`}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* 5. CARGA DE CAPTURAS CON OCR (MÚLTIPLES) - AHORA ARRIBA DE VODS */}
@@ -576,6 +589,10 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
         imageUrl={ocrTargetImage}
         imageFile={ocrTargetFile}
         rosterMembers={rosterMembers}
+        currentMapName={currentMapName}
+        currentTeamScore={currentTeamScore}
+        currentOpponentScore={currentOpponentScore}
+        existingMaps={addedMaps}
         onApplyResults={handleApplyOcrResults}
       />
     </>

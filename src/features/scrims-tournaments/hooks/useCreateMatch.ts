@@ -31,8 +31,8 @@ export const useCreateMatch = (matchId?: string) => {
   // Maps Management State
   const [addedMaps, setAddedMaps] = useState<MatchMapResult[]>([]);
   const [currentMapName, setCurrentMapName] = useState<string>(VALORANT_MAP_ROTATION[0]);
-  const [currentTeamScore, setCurrentTeamScore] = useState<number | ''>(13);
-  const [currentOpponentScore, setCurrentOpponentScore] = useState<number | ''>(8);
+  const [currentTeamScore, setCurrentTeamScore] = useState<number | ''>('');
+  const [currentOpponentScore, setCurrentOpponentScore] = useState<number | ''>('');
   const [currentPlayerStats, setCurrentPlayerStats] = useState<MatchPlayerStats[]>([]);
 
   // VODs State
@@ -150,7 +150,7 @@ export const useCreateMatch = (matchId?: string) => {
   // Add or update a map in the series
   const handleAddMapToSeries = () => {
     if (currentTeamScore === '' || currentOpponentScore === '') {
-      setFormError('Por favor ingresa las rondas de ambos equipos.');
+      setFormError('Por favor ingresa las rondas de ambos equipos antes de guardar el mapa.');
       return;
     }
 
@@ -160,6 +160,12 @@ export const useCreateMatch = (matchId?: string) => {
       opponentScore: Number(currentOpponentScore),
       playerStats: currentPlayerStats.length > 0 ? [...currentPlayerStats] : undefined,
     };
+
+    if (matchType === 'scrim') {
+      setAddedMaps([newMap]);
+      setFormError(null);
+      return;
+    }
 
     setAddedMaps((prev) => {
       const existingIdx = prev.findIndex(
@@ -174,8 +180,8 @@ export const useCreateMatch = (matchId?: string) => {
     setFormError(null);
 
     // Reset current map inputs and clear draft stats
-    setCurrentTeamScore(13);
-    setCurrentOpponentScore(8);
+    setCurrentTeamScore('');
+    setCurrentOpponentScore('');
     setCurrentPlayerStats([]);
 
     // Select next unused map in rotation if available
@@ -196,8 +202,8 @@ export const useCreateMatch = (matchId?: string) => {
 
   const handleClearCurrentMapDraft = () => {
     setCurrentPlayerStats([]);
-    setCurrentTeamScore(13);
-    setCurrentOpponentScore(8);
+    setCurrentTeamScore('');
+    setCurrentOpponentScore('');
   };
 
   // Add VOD link
@@ -300,11 +306,11 @@ export const useCreateMatch = (matchId?: string) => {
 
   const handleApplyOcrResults = (data: {
     mapName?: string;
-    teamScore?: number;
-    opponentScore?: number;
+    teamScore?: number | '';
+    opponentScore?: number | '';
     playerStats: MatchPlayerStats[];
   }) => {
-    // If tournament and map already exists in series: auto-merge and CLEAR draft inputs
+    // If tournament and map already exists in series: auto-merge stats and preserve previous rounds
     if (matchType === 'tournament' && data.mapName && addedMaps.length > 0) {
       const targetMapName = data.mapName.trim().toLowerCase();
       const matchIndex = addedMaps.findIndex(
@@ -315,10 +321,19 @@ export const useCreateMatch = (matchId?: string) => {
         setAddedMaps((prev) =>
           prev.map((m, idx) => {
             if (idx === matchIndex) {
+              const prevHasScore = m.teamScore !== undefined && m.opponentScore !== undefined;
               return {
                 ...m,
-                teamScore: data.teamScore !== undefined ? data.teamScore : m.teamScore,
-                opponentScore: data.opponentScore !== undefined ? data.opponentScore : m.opponentScore,
+                teamScore: prevHasScore
+                  ? m.teamScore
+                  : data.teamScore !== undefined && data.teamScore !== ''
+                  ? Number(data.teamScore)
+                  : m.teamScore,
+                opponentScore: prevHasScore
+                  ? m.opponentScore
+                  : data.opponentScore !== undefined && data.opponentScore !== ''
+                  ? Number(data.opponentScore)
+                  : m.opponentScore,
                 playerStats:
                   data.playerStats && data.playerStats.length > 0
                     ? data.playerStats
@@ -331,8 +346,8 @@ export const useCreateMatch = (matchId?: string) => {
 
         // Clear draft below so it doesn't linger
         setCurrentPlayerStats([]);
-        setCurrentTeamScore(13);
-        setCurrentOpponentScore(8);
+        setCurrentTeamScore('');
+        setCurrentOpponentScore('');
 
         const usedMapNames = new Set(addedMaps.map((m) => m.mapName.trim().toLowerCase()));
         const nextAvailable = VALORANT_MAP_ROTATION.find(
@@ -347,8 +362,16 @@ export const useCreateMatch = (matchId?: string) => {
 
     // Default flow (scrim or map not yet in addedMaps)
     if (data.mapName) setCurrentMapName(data.mapName);
-    if (data.teamScore !== undefined) setCurrentTeamScore(data.teamScore);
-    if (data.opponentScore !== undefined) setCurrentOpponentScore(data.opponentScore);
+
+    // If current draft already has scores for this map, keep them, otherwise apply detected scores
+    const isSameMap = data.mapName && currentMapName.trim().toLowerCase() === data.mapName.trim().toLowerCase();
+    const alreadyHasScores = isSameMap && currentTeamScore !== '' && currentOpponentScore !== '';
+
+    if (!alreadyHasScores) {
+      if (data.teamScore !== undefined && data.teamScore !== '') setCurrentTeamScore(Number(data.teamScore));
+      if (data.opponentScore !== undefined && data.opponentScore !== '') setCurrentOpponentScore(Number(data.opponentScore));
+    }
+
     if (data.playerStats && data.playerStats.length > 0) {
       setCurrentPlayerStats(data.playerStats);
     }
