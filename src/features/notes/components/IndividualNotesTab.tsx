@@ -373,6 +373,12 @@ export const IndividualNotesTab: React.FC<IndividualNotesTabProps> = ({
               }
               emptyPlaceholderMessage={`No hay notas ni mensajes registrados con ${selectedMemberData.member.displayName}. Escribe un apunte o asigna una tarea de análisis.`}
               allowTasks={true}
+              peerUser={{
+                id: selectedMemberData.member.id,
+                displayName: selectedMemberData.member.displayName,
+                role: selectedMemberData.roleBadgeText,
+                avatarUrl: selectedMemberData.member.avatarUrl,
+              }}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-xs sm:text-sm text-gray-500">

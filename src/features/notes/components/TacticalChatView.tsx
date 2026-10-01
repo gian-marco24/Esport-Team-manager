@@ -42,6 +42,12 @@ interface TacticalChatViewProps {
   icon?: React.ReactNode;
   emptyPlaceholderMessage?: string;
   allowTasks?: boolean;
+  peerUser?: {
+    id: string;
+    displayName: string;
+    role?: string;
+    avatarUrl?: string;
+  };
 }
 
 interface MessageGroup {
@@ -65,6 +71,7 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
   icon,
   emptyPlaceholderMessage = 'Aún no hay apuntes tácticos o mensajes en esta sección.',
   allowTasks = false,
+  peerUser,
 }) => {
   const { user } = useAuthContext();
   const {
@@ -101,6 +108,12 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Keep modal task synced in real-time if updated by peer
+  const activeTaskForModal = useMemo(() => {
+    if (!selectedTaskForModal) return null;
+    return tasks.find((t) => t.id === selectedTaskForModal.id) || selectedTaskForModal;
+  }, [tasks, selectedTaskForModal]);
 
   // Auto-resize textarea to fit text nicely without unwanted scrollbars
   useEffect(() => {
@@ -286,11 +299,13 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
 
       {/* Big Task Detail Modal */}
       <TaskDetailModal
-        task={selectedTaskForModal}
-        isOpen={Boolean(selectedTaskForModal)}
+        task={activeTaskForModal}
+        isOpen={Boolean(activeTaskForModal)}
         onClose={() => setSelectedTaskForModal(null)}
         onUpdateTask={updateTask}
         onDeleteTask={deleteTask}
+        peerUser={peerUser}
+        currentUser={user}
       />
 
       {/* Create Task Modal */}
@@ -298,6 +313,8 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
         isOpen={isCreateTaskModalOpen}
         onClose={() => setIsCreateTaskModalOpen(false)}
         onSubmit={createTask}
+        peerUser={peerUser}
+        currentUser={user}
       />
 
       {/* Top Header */}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckSquare, Calendar, Clock, Link as LinkIcon, FileText, Sparkles } from 'lucide-react';
+import { X, CheckSquare, Calendar, Clock, Link as LinkIcon, FileText, Sparkles, User, UserCheck, Users } from 'lucide-react';
 import type { TacticalTask } from '../types';
 import { Button } from '../../../components/ui/Button';
 import { buildDeadlineString, formatDeadlineDisplay } from '../utils/dateHelpers';
@@ -10,6 +10,8 @@ interface CreateTaskModalProps {
   onSubmit: (taskData: Partial<TacticalTask>, publishToChat: boolean) => Promise<any>;
   defaultTitle?: string;
   defaultMaterials?: string;
+  peerUser?: { id: string; displayName: string; role?: string; avatarUrl?: string };
+  currentUser?: { id: string; displayName: string } | null;
 }
 
 export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
@@ -18,9 +20,12 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   onSubmit,
   defaultTitle = '',
   defaultMaterials = '',
+  peerUser,
+  currentUser,
 }) => {
   const [title, setTitle] = useState(defaultTitle);
   const [materials, setMaterials] = useState(defaultMaterials);
+  const [assignedScope, setAssignedScope] = useState<'self' | 'peer' | 'both'>(peerUser ? 'peer' : 'self');
   const [deadlineDate, setDeadlineDate] = useState('');
   const [includeTime, setIncludeTime] = useState(false);
   const [deadlineTime, setDeadlineTime] = useState('18:00');
@@ -38,6 +43,24 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      let assignedToId: string | undefined;
+      let assignedToName: string | undefined;
+      let assigneeIds: string[] = [];
+
+      if (assignedScope === 'self') {
+        assignedToId = currentUser?.id;
+        assignedToName = currentUser?.displayName || 'Mí mismo';
+        if (currentUser?.id) assigneeIds.push(currentUser.id);
+      } else if (assignedScope === 'peer') {
+        assignedToId = peerUser?.id;
+        assignedToName = peerUser?.displayName || 'El otro integrante';
+        if (peerUser?.id) assigneeIds.push(peerUser.id);
+      } else {
+        assignedToName = 'Ambos integrantes';
+        if (currentUser?.id) assigneeIds.push(currentUser.id);
+        if (peerUser?.id && peerUser.id !== currentUser?.id) assigneeIds.push(peerUser.id);
+      }
+
       await onSubmit(
         {
           title: title.trim(),
@@ -45,6 +68,12 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           deadline: resolvedDeadline,
           priority,
           status: 'pending',
+          assignedScope,
+          assigneeIds,
+          assignedToId,
+          assignedToName,
+          peerId: peerUser?.id,
+          peerName: peerUser?.displayName,
           annotations: '',
         },
         publishToChat
@@ -106,6 +135,71 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               placeholder="Ej: ANALIZAR 3ER MAPA (ASCENT) Ronda por ronda detalladamente, análisis individual."
               className="w-full bg-[#0D0914] border border-[#522B80]/60 rounded-xl p-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#E2B86E]"
             />
+          </div>
+
+          {/* Asignación de la Tarea */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-300 flex items-center space-x-1.5">
+              <Users className="w-3.5 h-3.5 text-[#E2B86E]" />
+              <span>Asignada para redactar / análisis: *</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {/* Option 1: Peer User */}
+              <button
+                type="button"
+                onClick={() => setAssignedScope('peer')}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                  assignedScope === 'peer'
+                    ? 'bg-[#522B80] border-[#E2B86E] text-white shadow-md shadow-[#8B44F7]/25 ring-1 ring-[#E2B86E]'
+                    : 'bg-[#0D0914] border-[#26143E] text-gray-400 hover:text-gray-200 hover:border-[#522B80]'
+                }`}
+              >
+                <div className="flex items-center space-x-1.5">
+                  <UserCheck className={`w-3.5 h-3.5 ${assignedScope === 'peer' ? 'text-[#E2B86E]' : 'text-gray-500'}`} />
+                  <span className="text-xs font-bold truncate">
+                    {peerUser?.displayName || 'Al otro usuario'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-gray-300/80 mt-1">Él redacta las notas</span>
+              </button>
+
+              {/* Option 2: Self */}
+              <button
+                type="button"
+                onClick={() => setAssignedScope('self')}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                  assignedScope === 'self'
+                    ? 'bg-[#522B80] border-[#E2B86E] text-white shadow-md shadow-[#8B44F7]/25 ring-1 ring-[#E2B86E]'
+                    : 'bg-[#0D0914] border-[#26143E] text-gray-400 hover:text-gray-200 hover:border-[#522B80]'
+                }`}
+              >
+                <div className="flex items-center space-x-1.5">
+                  <User className={`w-3.5 h-3.5 ${assignedScope === 'self' ? 'text-[#E2B86E]' : 'text-gray-500'}`} />
+                  <span className="text-xs font-bold truncate">A mí mismo</span>
+                </div>
+                <span className="text-[10px] text-gray-300/80 mt-1">Yo redacto las notas</span>
+              </button>
+
+              {/* Option 3: Both */}
+              <button
+                type="button"
+                onClick={() => setAssignedScope('both')}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                  assignedScope === 'both'
+                    ? 'bg-[#522B80] border-[#E2B86E] text-white shadow-md shadow-[#8B44F7]/25 ring-1 ring-[#E2B86E]'
+                    : 'bg-[#0D0914] border-[#26143E] text-gray-400 hover:text-gray-200 hover:border-[#522B80]'
+                }`}
+              >
+                <div className="flex items-center space-x-1.5">
+                  <Users className={`w-3.5 h-3.5 ${assignedScope === 'both' ? 'text-[#E2B86E]' : 'text-gray-500'}`} />
+                  <span className="text-xs font-bold truncate">A ambos</span>
+                </div>
+                <span className="text-[10px] text-gray-300/80 mt-1">Ambos pueden redactar</span>
+              </button>
+            </div>
+            <p className="text-[10px] text-gray-400">
+              * Quien tenga la tarea asignada podrá redactar las anotaciones. Ambos integrantes podrán verla, seguir las actualizaciones y editar requisitos o plazos.
+            </p>
           </div>
 
           {/* Materiales / Recursos / Links */}

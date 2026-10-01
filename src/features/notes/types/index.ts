@@ -36,8 +36,12 @@ export interface TacticalTask {
   deadline?: string; // Fecha límite, ej. "2/10 o antes"
   status: 'pending' | 'in_progress' | 'completed';
   priority?: 'high' | 'medium' | 'low';
+  assignedScope?: 'self' | 'peer' | 'both'; // Asignado a mí mismo, al otro integrante o a ambos
+  assigneeIds?: string[];
   assignedToId?: string;
   assignedToName?: string;
+  peerId?: string;
+  peerName?: string;
   authorId: string;
   authorName: string;
   annotations?: string; // Análisis extenso / VOD review
