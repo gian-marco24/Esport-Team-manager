@@ -9,24 +9,32 @@ import {
 import { db } from '../../../lib/firebase';
 import type { IRoutinesPort } from './routinesPort';
 import type { Routine, UserRoutineMonthCheckIn, UserAssignedRoutine } from '../types';
-import { DEFAULT_VALORANT_ROUTINE, DEFAULT_AIMLAB_ROUTINE } from '../types';
 
 const LOCAL_ROUTINES_KEY = 'urs_routines_v1';
 const LOCAL_CHECKINS_KEY = 'urs_routine_checkins_v1';
 const LOCAL_ASSIGNMENTS_KEY = 'urs_user_assigned_routines_v1';
+
+// IDs of initial mockup test routines to clean up if lingering in cache
+const MOCK_ROUTINE_IDS = new Set(['routine-val-precision', 'routine-aimlab-speed']);
 
 export class FirebaseRoutinesAdapter implements IRoutinesPort {
   private getLocalRoutines(): Routine[] {
     try {
       const data = localStorage.getItem(LOCAL_ROUTINES_KEY);
       if (!data) {
-        const defaults = [DEFAULT_VALORANT_ROUTINE, DEFAULT_AIMLAB_ROUTINE];
-        localStorage.setItem(LOCAL_ROUTINES_KEY, JSON.stringify(defaults));
-        return defaults;
+        return [];
       }
-      return JSON.parse(data);
+      const parsed: Routine[] = JSON.parse(data);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter((r) => r && !MOCK_ROUTINE_IDS.has(r.id));
+        if (cleaned.length !== parsed.length) {
+          this.saveLocalRoutines(cleaned);
+        }
+        return cleaned;
+      }
+      return [];
     } catch {
-      return [DEFAULT_VALORANT_ROUTINE, DEFAULT_AIMLAB_ROUTINE];
+      return [];
     }
   }
 
@@ -79,11 +87,11 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
       try {
         const q = collection(db, 'routines');
         const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          const list = snapshot.docs.map((d) => d.data() as Routine);
-          this.saveLocalRoutines(list);
-          return list;
-        }
+        const list = snapshot.docs
+          .map((d) => d.data() as Routine)
+          .filter((r) => r && !MOCK_ROUTINE_IDS.has(r.id));
+        this.saveLocalRoutines(list);
+        return list;
       } catch (err) {
         console.warn('Firestore getRoutines error, fallback to local:', err);
       }
@@ -231,7 +239,7 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
       id: docId,
       userId,
       yearMonth,
-      routineId: currentAssignedRoutineId || DEFAULT_VALORANT_ROUTINE.id,
+      routineId: currentAssignedRoutineId || '',
       checkIns: {},
       updatedAt: new Date().toISOString(),
     };

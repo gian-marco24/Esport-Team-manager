@@ -159,8 +159,8 @@ export const RoutinesPage: React.FC = () => {
 
   // Check-in toggle handler
   const handleToggleCheckIn = async (exerciseId: string, day: number) => {
-    if (!effectiveUserId) return;
-    const routineIdToUse = gridActiveRoutine?.id || currentCarouselRoutine?.id || 'valorant-core-routine';
+    const routineIdToUse = gridActiveRoutine?.id || currentCarouselRoutine?.id || '';
+    if (!effectiveUserId || !routineIdToUse) return;
 
     // Optimistic local state update
     setMonthCheckIn((prev) => {
