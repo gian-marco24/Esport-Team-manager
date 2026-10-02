@@ -41,7 +41,7 @@ export const loginSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>;
 
 export const createRegisterSchema = (teamRole?: TeamRole) => {
-  const isTagRequired = teamRole === 'Player' || teamRole === 'Coach';
+  const isTagRequired = teamRole === 'Player';
   return z
     .object({
       code: z.string().min(1, 'Código de invitación requerido'),
@@ -64,7 +64,7 @@ export const createRegisterSchema = (teamRole?: TeamRole) => {
         return true;
       },
       {
-        message: 'Ingresa tu Tag del juego (obligatorio para Jugadores y Coaches, ej: #LAN, #1234)',
+        message: 'Ingresa tu Tag del juego (obligatorio para Jugadores, ej: #LAN, #1234)',
         path: ['gameTag'],
       }
     );

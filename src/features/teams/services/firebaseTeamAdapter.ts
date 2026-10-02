@@ -100,31 +100,70 @@ export class FirebaseTeamAdapter implements ITeamPort {
         const q = collection(db, 'users');
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
-          members = snapshot.docs.map((d) => {
+          const emailMap = new Map<string, TeamMember>();
+          const otherMembers: TeamMember[] = [];
+
+          for (const d of snapshot.docs) {
             const data = d.data();
-            const isCeo =
-              data.email?.toLowerCase() === 'gianm2405@gmail.com' ||
-              data.role?.toLowerCase() === 'ceo' ||
-              data.teamRole === 'CEO';
+            const emailClean = (data.email || '').trim().toLowerCase();
+            const teamRole: TeamRole =
+              data.teamRole ||
+              (data.role === 'ceo'
+                ? 'CEO'
+                : data.role === 'coach'
+                ? 'Coach'
+                : data.role === 'manager'
+                ? 'Manager'
+                : data.role === 'staff'
+                ? 'Staff'
+                : data.role === 'player'
+                ? 'Player'
+                : emailClean === 'gianm2405@gmail.com'
+                ? 'CEO'
+                : 'Player');
 
-            const teamRole: TeamRole = isCeo
-              ? 'CEO'
-              : data.teamRole || (data.role === 'ceo' ? 'CEO' : data.role === 'player' ? 'Player' : data.role === 'coach' ? 'Coach' : data.role === 'manager' ? 'Manager' : 'Staff');
+            const isCeo = teamRole === 'CEO';
+            const cleanGameTag = data.gameTag?.trim() ? data.gameTag.trim() : undefined;
 
-            return {
+            const memberItem: TeamMember = {
               id: d.id,
               email: data.email || '',
               displayName: data.displayName || data.nick || (isCeo ? 'Zeyn' : 'Integrante'),
-              gameTag: data.gameTag || (isCeo ? '#CEO' : undefined),
+              gameTag: cleanGameTag,
               teamRole,
               rosterAssignments: data.rosterAssignments || [],
-              globalSubrole: data.globalSubrole || (isCeo ? 'CEO / Propietario' : data.position),
+              globalSubrole: data.globalSubrole || (isCeo ? 'CEO / Propietario' : undefined),
               birthDate: data.birthDate || (isCeo ? '2007-05-24' : undefined),
               country: data.country || (isCeo ? 'Venezuela' : undefined),
               avatarUrl: data.avatarUrl,
               createdAt: data.createdAt || new Date().toISOString(),
             };
-          });
+
+            if (emailClean) {
+              const existing = emailMap.get(emailClean);
+              if (existing) {
+                // If there's an obsolete manual ID doc (e.g. KagNW6f4yfL1kbWujZpL), remove it
+                const staleDocId = d.id === 'KagNW6f4yfL1kbWujZpL' ? d.id : existing.id === 'KagNW6f4yfL1kbWujZpL' ? existing.id : null;
+                if (staleDocId) {
+                  try {
+                    deleteDoc(doc(db, 'users', staleDocId));
+                  } catch {
+                    // ignore
+                  }
+                }
+                // Keep the one with real Auth UID or fuller data
+                if (d.id !== 'KagNW6f4yfL1kbWujZpL') {
+                  emailMap.set(emailClean, memberItem);
+                }
+              } else {
+                emailMap.set(emailClean, memberItem);
+              }
+            } else {
+              otherMembers.push(memberItem);
+            }
+          }
+
+          members = [...Array.from(emailMap.values()), ...otherMembers];
         }
       } catch (err) {
         console.warn('Firestore fetch users error, using local fallback:', err);
@@ -135,14 +174,13 @@ export class FirebaseTeamAdapter implements ITeamPort {
       members = this.getLocalMembers();
     }
 
-    // Ensure the founder/CEO (gianm2405@gmail.com) is always present as CEO
+    // Ensure the founder/CEO (gianm2405@gmail.com) is present if empty
     const ceoIndex = members.findIndex((m) => m.email.toLowerCase() === 'gianm2405@gmail.com');
     if (ceoIndex !== -1) {
-      members[ceoIndex].teamRole = 'CEO';
       if (!members[ceoIndex].displayName) members[ceoIndex].displayName = 'Zeyn';
       if (!members[ceoIndex].country) members[ceoIndex].country = 'Venezuela';
       if (!members[ceoIndex].birthDate) members[ceoIndex].birthDate = '2007-05-24';
-    } else {
+    } else if (members.length === 0) {
       members.unshift({
         id: 'KagNW6f4yfL1kbWujZpL',
         email: 'gianm2405@gmail.com',
@@ -160,12 +198,34 @@ export class FirebaseTeamAdapter implements ITeamPort {
   }
 
   async updateMemberRole(memberId: string, newRole: TeamRole): Promise<void> {
+    const roleString = newRole === 'CEO' ? 'ceo' : newRole.toLowerCase();
+    const isCeo = newRole === 'CEO';
+    const position = `${newRole} del equipo`;
+    const globalSubrole = isCeo ? 'CEO / Propietario' : null;
+
+    const updates: Record<string, any> = {
+      teamRole: newRole,
+      role: roleString,
+      position,
+      globalSubrole,
+    };
+
+    if (newRole === 'Creador de contenido' || newRole === 'Manager' || newRole === 'Staff') {
+      updates.rosterAssignments = [];
+    }
+
     if (db) {
       try {
         const docRef = doc(db, 'users', memberId);
-        await updateDoc(docRef, { teamRole: newRole, role: newRole.toLowerCase() });
+        await updateDoc(docRef, updates);
       } catch (err) {
-        console.warn('Firestore update role error:', err);
+        console.warn('Firestore update role error, fallback to setDoc merge:', err);
+        try {
+          const docRef = doc(db, 'users', memberId);
+          await setDoc(docRef, updates, { merge: true });
+        } catch (e) {
+          console.warn('Firestore setDoc merge error:', e);
+        }
       }
     }
 
@@ -173,11 +233,49 @@ export class FirebaseTeamAdapter implements ITeamPort {
     const idx = members.findIndex((m) => m.id === memberId);
     if (idx !== -1) {
       members[idx].teamRole = newRole;
-      // If changing to a role that doesn't use rosters, clean assignments if needed
+      members[idx].globalSubrole = isCeo ? 'CEO / Propietario' : undefined;
       if (newRole === 'Creador de contenido' || newRole === 'Manager' || newRole === 'Staff') {
         members[idx].rosterAssignments = [];
       }
       this.saveLocalMembers(members);
+    }
+
+    // Sync mock storage and session
+    try {
+      const MOCK_SESSION_KEY = 'urs_gamara_mock_session';
+      const MOCK_STORAGE_KEY = 'urs_gamara_mock_users';
+      const sessionStr = localStorage.getItem(MOCK_SESSION_KEY);
+      if (sessionStr) {
+        const sessionUser = JSON.parse(sessionStr);
+        if (sessionUser.id === memberId || (idx !== -1 && members[idx]?.email?.toLowerCase() === sessionUser.email?.toLowerCase())) {
+          sessionUser.teamRole = newRole;
+          sessionUser.role = roleString;
+          sessionUser.position = position;
+          sessionUser.globalSubrole = isCeo ? 'CEO / Propietario' : undefined;
+          if (newRole === 'Creador de contenido' || newRole === 'Manager' || newRole === 'Staff') {
+            sessionUser.rosterAssignments = [];
+          }
+          localStorage.setItem(MOCK_SESSION_KEY, JSON.stringify(sessionUser));
+        }
+      }
+      const mockUsersStr = localStorage.getItem(MOCK_STORAGE_KEY);
+      if (mockUsersStr) {
+        const mockUsers = JSON.parse(mockUsersStr);
+        for (const k of Object.keys(mockUsers)) {
+          if (mockUsers[k].id === memberId || (idx !== -1 && mockUsers[k].email?.toLowerCase() === members[idx]?.email?.toLowerCase())) {
+            mockUsers[k].teamRole = newRole;
+            mockUsers[k].role = roleString;
+            mockUsers[k].position = position;
+            mockUsers[k].globalSubrole = isCeo ? 'CEO / Propietario' : undefined;
+            if (newRole === 'Creador de contenido' || newRole === 'Manager' || newRole === 'Staff') {
+              mockUsers[k].rosterAssignments = [];
+            }
+          }
+        }
+        localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(mockUsers));
+      }
+    } catch {
+      // ignore
     }
   }
 

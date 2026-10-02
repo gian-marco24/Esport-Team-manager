@@ -9,18 +9,24 @@ export interface IRoutinesPort {
   deleteRoutine(routineId: string, teamId?: string): Promise<void>;
 
   // User Routine Assignment
-  getUserAssignedRoutine(userId: string, yearMonth?: string): Promise<string | null>;
-  setUserAssignedRoutine(userId: string, routineId: string, assignedBy?: string): Promise<void>;
-  assignRoutineToUser(userId: string, routineId: string, yearMonth?: string): Promise<void>;
+  getUserAssignedRoutine(userId: string, yearMonth?: string, userEmail?: string): Promise<string | null>;
+  setUserAssignedRoutine(userId: string, routineId: string, assignedBy?: string, userEmail?: string): Promise<void>;
+  assignRoutineToUser(userId: string, routineId: string, yearMonth?: string, userEmail?: string): Promise<void>;
 
   // Check-ins
-  getUserMonthCheckIn(userId: string, yearMonth: string, currentAssignedRoutineId?: string): Promise<UserRoutineMonthCheckIn>;
+  getUserMonthCheckIn(
+    userId: string,
+    yearMonth: string,
+    currentAssignedRoutineId?: string,
+    userEmail?: string
+  ): Promise<UserRoutineMonthCheckIn>;
   toggleCheckIn(
     userId: string,
     yearMonth: string,
     routineId: string,
     exerciseId: string,
     day: number,
-    value?: boolean
+    value?: boolean,
+    userEmail?: string
   ): Promise<UserRoutineMonthCheckIn>;
 }

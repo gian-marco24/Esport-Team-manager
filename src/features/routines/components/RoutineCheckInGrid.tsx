@@ -5,6 +5,8 @@ import {
   Check,
   CheckCircle2,
   Dumbbell,
+  ChevronDown,
+  Lock,
 } from 'lucide-react';
 import type { Routine, UserRoutineMonthCheckIn } from '../types';
 import type { TeamMember } from '../../teams/types';
@@ -103,8 +105,6 @@ export const RoutineCheckInGrid: React.FC<RoutineCheckInGridProps> = ({
   const completionPercentage =
     totalPossibleChecks > 0 ? Math.round((totalChecked / totalPossibleChecks) * 100) : 0;
 
-
-
   return (
     <div className="bg-[#140b21] border border-[#26143E] rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5 flex flex-col">
       {/* Grid Top Bar */}
@@ -123,36 +123,61 @@ export const RoutineCheckInGrid: React.FC<RoutineCheckInGridProps> = ({
                 {selectedUser.teamRole}
               </Badge>
             )}
+            {!isSelfView && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-400 bg-[#0D0914] px-2 py-0.5 rounded-md border border-[#522B80]/60">
+                <Lock className="w-3 h-3 text-amber-400" />
+                <span>Modo Lectura</span>
+              </span>
+            )}
           </div>
           <p className="text-xs text-gray-400">
-            Marca los ejercicios completados en cada día del mes. Los datos se guardan en tiempo real.
+            {isSelfView
+              ? 'Marca los ejercicios completados en cada día del mes. Los datos se guardan en tiempo real.'
+              : 'Visualizando el progreso del jugador en modo lectura. Solo el jugador puede marcar sus ejercicios.'}
           </p>
         </div>
 
         {/* Center/Right Controls: Routine Selector for this player + Month Navigator */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Routine Selector Dropdown (Can change player's assigned routine) */}
-          {canAssignRoutine && routines.length > 0 && (
-            <div className="flex items-center space-x-2 bg-[#0D0914] border border-[#522B80]/60 rounded-xl px-3 py-1.5">
-              <Dumbbell className="w-4 h-4 text-[#E2B86E] shrink-0" />
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
-                  Rutina del Mes
+          {/* Routine Selector Dropdown (Entire container is interactive with seamless styling) */}
+          {canAssignRoutine && routines.length > 0 ? (
+            <div className="relative group flex items-center bg-[#0D0914] hover:bg-[#180d29] border border-[#522B80]/80 hover:border-[#E2B86E] rounded-xl px-3.5 py-2 transition-all shadow-md cursor-pointer">
+              <Dumbbell className="w-4 h-4 text-[#E2B86E] mr-2.5 shrink-0 pointer-events-none group-hover:scale-110 transition-transform" />
+              <div className="flex flex-col pr-6 min-w-[170px] sm:min-w-[210px] pointer-events-none">
+                <span className="text-[9px] uppercase tracking-wider text-gray-400 font-bold leading-none mb-1">
+                  Rutina del Mes (Coach / CEO)
                 </span>
-                <select
-                  value={activeRoutine?.id || routines[0]?.id}
-                  onChange={(e) => onAssignRoutineToUserMonth?.(e.target.value)}
-                  className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer pr-2"
-                >
-                  {routines.map((r) => (
-                    <option key={r.id} value={r.id} className="bg-[#140b21] text-white">
-                      {r.title}
-                    </option>
-                  ))}
-                </select>
+                <span className="text-xs sm:text-sm font-black text-white truncate line-clamp-1">
+                  {activeRoutine?.title || routines[0]?.title || 'Seleccionar Rutina'}
+                </span>
+              </div>
+              <ChevronDown className="w-4 h-4 text-[#E2B86E] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none group-hover:translate-y-[-40%] transition-transform" />
+              <select
+                value={activeRoutine?.id || routines[0]?.id}
+                onChange={(e) => onAssignRoutineToUserMonth?.(e.target.value)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-sm"
+                title="Cambiar rutina asignada al jugador"
+              >
+                {routines.map((r) => (
+                  <option key={r.id} value={r.id} className="bg-[#140b21] text-white py-2">
+                    {r.title} ({r.exercises.length} ejercicios)
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : activeRoutine ? (
+            <div className="flex items-center space-x-2 bg-[#0D0914] border border-[#522B80]/60 rounded-xl px-3.5 py-2">
+              <Dumbbell className="w-4 h-4 text-[#E2B86E] shrink-0" />
+              <div className="flex flex-col min-w-[140px] max-w-[220px]">
+                <span className="text-[9px] uppercase tracking-wider text-gray-400 font-bold leading-none mb-1">
+                  Rutina Asignada
+                </span>
+                <span className="text-xs sm:text-sm font-black text-white truncate" title={activeRoutine.title}>
+                  {activeRoutine.title}
+                </span>
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* Month Selector */}
           <div className="flex items-center space-x-1.5 bg-[#0D0914] border border-[#522B80]/60 rounded-xl p-1.5">
@@ -216,7 +241,7 @@ export const RoutineCheckInGrid: React.FC<RoutineCheckInGridProps> = ({
                           : 'text-gray-400 hover:text-white'
                       }`}
                     >
-                      <span>D{d}</span>
+                      <span>{d}</span>
                     </th>
                   );
                 })}
@@ -237,15 +262,21 @@ export const RoutineCheckInGrid: React.FC<RoutineCheckInGridProps> = ({
               ) : (
                 Object.entries(groupedExercises).map(([category, exList]) => (
                   <React.Fragment key={category}>
-                    {/* Category Header Row (Styled like Excel group banner) */}
-                    <tr className="bg-gradient-to-r from-[#522B80] via-[#3a1b60] to-[#26143E] text-white font-black text-xs uppercase tracking-wider border-y border-[#8B44F7]/40 shadow-sm">
-                      <td
-                        colSpan={daysInMonth + 1}
-                        className="py-2 px-4 flex items-center space-x-2"
-                      >
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#E2B86E]" />
-                        <span>{category}</span>
+                    {/* Category Header Row (Sticky Left Title + Spanned Row Background) */}
+                    <tr className="border-y border-[#8B44F7]/40">
+                      {/* Sticky Left Column Category Title */}
+                      <td className="sticky left-0 z-10 bg-gradient-to-r from-[#451e70] to-[#361759] py-2 px-4 border-r border-[#8B44F7]/40 text-xs font-black text-[#E2B86E] uppercase tracking-wider shadow-md">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#E2B86E] shadow-sm shadow-[#E2B86E]/50 shrink-0" />
+                          <span className="truncate">{category}</span>
+                        </div>
                       </td>
+
+                      {/* Spanning background across all day columns */}
+                      <td
+                        colSpan={daysInMonth}
+                        className="bg-gradient-to-r from-[#361759] to-[#1e0d33] border-b border-[#8B44F7]/20"
+                      />
                     </tr>
 
                     {/* Exercises within this Category */}
@@ -276,17 +307,29 @@ export const RoutineCheckInGrid: React.FC<RoutineCheckInGridProps> = ({
                           return (
                             <td
                               key={day}
-                              onClick={() => onToggleCheckIn(ex.id, day)}
-                              className={`p-1 text-center border-r border-[#26143E]/40 cursor-pointer transition-all ${
-                                isToday ? 'bg-[#522B80]/20' : ''
-                              } hover:bg-[#522B80]/50`}
-                              title={`Día ${day}: ${ex.name} (${isChecked ? 'Completado' : 'Pendiente'})`}
+                              onClick={() => {
+                                if (isSelfView) {
+                                  onToggleCheckIn(ex.id, day);
+                                }
+                              }}
+                              className={`p-1 text-center border-r border-[#26143E]/40 transition-all ${
+                                isSelfView
+                                  ? 'cursor-pointer hover:bg-[#522B80]/50'
+                                  : 'cursor-default'
+                              } ${isToday ? 'bg-[#522B80]/20' : ''}`}
+                              title={
+                                isSelfView
+                                  ? `Día ${day}: ${ex.name} (${isChecked ? 'Completado' : 'Pendiente'}) - Clic para marcar/desmarcar`
+                                  : `Día ${day}: ${ex.name} (${isChecked ? 'Completado' : 'Pendiente'}) - Solo el jugador puede marcar sus ejercicios`
+                              }
                             >
                               <div
                                 className={`w-6 h-6 mx-auto rounded-lg flex items-center justify-center transition-all ${
                                   isChecked
                                     ? 'bg-gradient-to-br from-[#E2B86E] to-[#cf9e46] text-black shadow-md shadow-[#E2B86E]/20 font-black scale-105'
-                                    : 'bg-[#140b21] border border-[#522B80]/80 hover:border-[#E2B86E]'
+                                    : isSelfView
+                                    ? 'bg-[#140b21] border border-[#522B80]/80 hover:border-[#E2B86E]'
+                                    : 'bg-[#140b21]/50 border border-[#522B80]/40'
                                 }`}
                               >
                                 {isChecked && <Check className="w-4 h-4 stroke-[3]" />}

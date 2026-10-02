@@ -14,6 +14,7 @@ import {
   ChevronRight,
   User as UserIcon,
   Dumbbell,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuthContext } from '../app/providers/AuthProvider';
 import { URS_GAMARA_TEAM } from '../features/teams/config/currentTeam.config';
@@ -28,6 +29,9 @@ export const DashboardLayout: React.FC = () => {
 
   const roleStr = (user?.role || '').toLowerCase();
   const teamRoleStr = (user?.teamRole || '').toLowerCase();
+  const isPlayerMissingGameTag = Boolean(
+    user && (user.teamRole === 'Player' || roleStr === 'player') && (!user.gameTag || user.gameTag.trim() === '')
+  );
 
   const isCeoOrStaff = Boolean(
     user &&
@@ -147,21 +151,33 @@ export const DashboardLayout: React.FC = () => {
           <Link
             to="/dashboard/profile"
             onClick={() => setSidebarOpen(false)}
-            className={`p-3.5 2xl:p-4 mx-3 2xl:mx-4 my-3 2xl:my-4 border rounded-xl flex items-center space-x-3.5 transition-all duration-200 group ${
+            className={`p-3.5 2xl:p-4 mx-3 2xl:mx-4 my-3 2xl:my-4 border rounded-xl flex items-center space-x-3.5 transition-all duration-200 group relative ${
               location.pathname === '/dashboard/profile' || location.pathname === '/dashboard/perfil'
                 ? 'bg-[#26143E] border-[#E2B86E] shadow-lg shadow-[#8B44F7]/20 ring-1 ring-[#E2B86E]/40'
                 : 'bg-[#26143E]/50 border-[#8B44F7]/20 hover:bg-[#26143E] hover:border-[#8B44F7]/60 hover:shadow-md'
             }`}
-            title="Ver mi perfil"
+            title={isPlayerMissingGameTag ? '¡Atención! Falta configurar tu Nickname/Tag de juego' : 'Ver mi perfil'}
           >
-            <div className="w-11 h-11 2xl:w-12 2xl:h-12 rounded-full bg-gradient-to-br from-[#8B44F7] to-[#522B80] flex items-center justify-center font-bold text-sm 2xl:text-base text-white shadow group-hover:scale-105 transition-transform shrink-0">
-              {user?.displayName?.charAt(0).toUpperCase() || 'U'}
+            <div className="relative shrink-0">
+              <div className="w-11 h-11 2xl:w-12 2xl:h-12 rounded-full bg-gradient-to-br from-[#8B44F7] to-[#522B80] flex items-center justify-center font-bold text-sm 2xl:text-base text-white shadow group-hover:scale-105 transition-transform">
+                {user?.displayName?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              {isPlayerMissingGameTag && (
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full border-2 border-[#140b21] flex items-center justify-center shadow-lg animate-pulse" title="Falta configurar tu Nickname y Tag de juego">
+                  <AlertTriangle className="w-3 h-3 text-black stroke-[3]" />
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <p className="text-sm 2xl:text-base font-bold text-white truncate group-hover:text-[#E2B86E] transition-colors">
                   {user?.displayName}
                 </p>
+                {isPlayerMissingGameTag && (
+                  <span className="text-amber-400 ml-1 shrink-0" title="Configuración de nick requerida">
+                    <AlertTriangle className="w-4 h-4 animate-bounce" />
+                  </span>
+                )}
               </div>
               <div className="flex items-center space-x-1.5 mt-0.5">
                 <Badge

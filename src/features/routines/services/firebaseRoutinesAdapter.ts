@@ -5,6 +5,8 @@ import {
   getDoc,
   setDoc,
   deleteDoc,
+  query,
+  where,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import type { IRoutinesPort } from './routinesPort';
@@ -109,6 +111,7 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
       title: routineData.title || 'Nueva Rutina',
       description: routineData.description || '',
       videoUrl: routineData.videoUrl || '',
+      imageUrls: routineData.imageUrls || [],
       externalLink: routineData.externalLink || '',
       externalLinkLabel: routineData.externalLinkLabel || 'Abrir enlace de rutina',
       duration: routineData.duration || '30 min',
@@ -164,25 +167,43 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
 
   // --- Assignments ---
 
-  async getUserAssignedRoutine(userId: string, _yearMonth?: string): Promise<string | null> {
+  async getUserAssignedRoutine(userId: string, _yearMonth?: string, userEmail?: string): Promise<string | null> {
     if (db) {
       try {
         const snap = await getDoc(doc(db, 'user_assigned_routines', userId));
         if (snap.exists()) {
           const data = snap.data() as UserAssignedRoutine;
-          return data.routineId;
+          if (data.routineId) return data.routineId;
+        }
+
+        if (userEmail) {
+          const q = query(
+            collection(db, 'user_assigned_routines'),
+            where('userEmail', '==', userEmail.toLowerCase())
+          );
+          const emailSnap = await getDocs(q);
+          if (!emailSnap.empty) {
+            const data = emailSnap.docs[0].data() as UserAssignedRoutine;
+            return data.routineId;
+          }
         }
       } catch (err) {
         console.warn('Firestore getUserAssignedRoutine error:', err);
       }
     }
     const map = this.getLocalAssignments();
-    return map[userId] || null;
+    return map[userId] || (userEmail ? map[userEmail.toLowerCase()] : null) || null;
   }
 
-  async setUserAssignedRoutine(userId: string, routineId: string, assignedBy?: string): Promise<void> {
-    const payload: UserAssignedRoutine = {
+  async setUserAssignedRoutine(
+    userId: string,
+    routineId: string,
+    assignedBy?: string,
+    userEmail?: string
+  ): Promise<void> {
+    const payload: UserAssignedRoutine & { userEmail?: string } = {
       userId,
+      userEmail: userEmail ? userEmail.toLowerCase() : undefined,
       routineId,
       assignedBy,
       assignedAt: new Date().toISOString(),
@@ -198,11 +219,19 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
 
     const map = this.getLocalAssignments();
     map[userId] = routineId;
+    if (userEmail) {
+      map[userEmail.toLowerCase()] = routineId;
+    }
     this.saveLocalAssignments(map);
   }
 
-  async assignRoutineToUser(userId: string, routineId: string, _yearMonth?: string): Promise<void> {
-    return this.setUserAssignedRoutine(userId, routineId);
+  async assignRoutineToUser(
+    userId: string,
+    routineId: string,
+    _yearMonth?: string,
+    userEmail?: string
+  ): Promise<void> {
+    return this.setUserAssignedRoutine(userId, routineId, undefined, userEmail);
   }
 
   // --- Month Check-Ins ---
@@ -210,15 +239,58 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
   async getUserMonthCheckIn(
     userId: string,
     yearMonth: string,
-    currentAssignedRoutineId?: string
+    currentAssignedRoutineId?: string,
+    userEmail?: string
   ): Promise<UserRoutineMonthCheckIn> {
     const docId = `${userId}_${yearMonth}`;
 
     if (db) {
       try {
+        // 1. Try direct doc ID match (Auth UID or direct ID)
         const snap = await getDoc(doc(db, 'routine_checkins', docId));
         if (snap.exists()) {
           const item = snap.data() as UserRoutineMonthCheckIn;
+          const hasChecks = Object.keys(item.checkIns || {}).length > 0;
+          if (hasChecks) {
+            const map = this.getLocalCheckIns();
+            map[docId] = item;
+            this.saveLocalCheckIns(map);
+            return item;
+          }
+        }
+
+        // 2. Fallback: Search by userEmail in routine_checkins
+        if (userEmail) {
+          const q = query(
+            collection(db, 'routine_checkins'),
+            where('yearMonth', '==', yearMonth),
+            where('userEmail', '==', userEmail.toLowerCase())
+          );
+          const emailSnap = await getDocs(q);
+          if (!emailSnap.empty) {
+            const item = emailSnap.docs[0].data() as UserRoutineMonthCheckIn;
+            const map = this.getLocalCheckIns();
+            map[docId] = item;
+            this.saveLocalCheckIns(map);
+            // Also sync to docId so next fetch is immediate
+            try {
+              await setDoc(doc(db, 'routine_checkins', docId), item, { merge: true });
+            } catch {
+              // ignore
+            }
+            return item;
+          }
+        }
+
+        // 3. Fallback: Check if document was saved with user.id matching field
+        const qUserId = query(
+          collection(db, 'routine_checkins'),
+          where('yearMonth', '==', yearMonth),
+          where('userId', '==', userId)
+        );
+        const userSnap = await getDocs(qUserId);
+        if (!userSnap.empty) {
+          const item = userSnap.docs[0].data() as UserRoutineMonthCheckIn;
           const map = this.getLocalCheckIns();
           map[docId] = item;
           this.saveLocalCheckIns(map);
@@ -232,6 +304,9 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
     const map = this.getLocalCheckIns();
     if (map[docId]) {
       return map[docId];
+    }
+    if (userEmail && map[`${userEmail.toLowerCase()}_${yearMonth}`]) {
+      return map[`${userEmail.toLowerCase()}_${yearMonth}`];
     }
 
     // Default empty record for the month
@@ -253,7 +328,8 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
     routineId: string,
     exerciseId: string,
     day: number,
-    value?: boolean
+    value?: boolean,
+    userEmail?: string
   ): Promise<UserRoutineMonthCheckIn> {
     const docId = `${userId}_${yearMonth}`;
     const map = this.getLocalCheckIns();
@@ -278,19 +354,29 @@ export class FirebaseRoutinesAdapter implements IRoutinesPort {
       },
     };
 
-    const updatedRecord: UserRoutineMonthCheckIn = {
+    const updatedRecord: UserRoutineMonthCheckIn & { userEmail?: string } = {
       ...existing,
+      userId,
+      userEmail: userEmail ? userEmail.toLowerCase() : (existing as any).userEmail,
       routineId: existing.routineId || routineId,
       checkIns: updatedCheckIns,
       updatedAt: new Date().toISOString(),
     };
 
     map[docId] = updatedRecord;
+    if (userEmail) {
+      map[`${userEmail.toLowerCase()}_${yearMonth}`] = updatedRecord;
+    }
     this.saveLocalCheckIns(map);
 
     if (db) {
       try {
         await setDoc(doc(db, 'routine_checkins', docId), updatedRecord);
+        // Also if userEmail is different from userId, sync with email if needed
+        if (userEmail && userEmail.toLowerCase() !== userId.toLowerCase()) {
+          const emailDocId = `${userEmail.toLowerCase()}_${yearMonth}`;
+          await setDoc(doc(db, 'routine_checkins', emailDocId), { ...updatedRecord, id: emailDocId }, { merge: true });
+        }
       } catch (err) {
         console.warn('Firestore toggleCheckIn error:', err);
       }

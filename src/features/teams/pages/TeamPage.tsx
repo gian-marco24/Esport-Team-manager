@@ -16,7 +16,7 @@ import { AssignRosterModal } from '../components/AssignRosterModal';
 import { LoadingSpinner } from '../../../components/feedback/LoadingSpinner';
 
 export const TeamPage: React.FC = () => {
-  const { user } = useAuthContext();
+  const { user, refreshUser } = useAuthContext();
 
   const isCeoOrStaff = Boolean(
     user &&
@@ -61,6 +61,9 @@ export const TeamPage: React.FC = () => {
   const handleUpdateRole = async (memberId: string, newRole: TeamRole) => {
     try {
       await teamService.updateMemberRole(memberId, newRole);
+      if (user && (user.id === memberId || user.email?.toLowerCase() === members.find((m) => m.id === memberId)?.email?.toLowerCase())) {
+        await refreshUser();
+      }
       await fetchData();
     } catch (err) {
       alert((err as Error).message || 'Error al actualizar el rol.');

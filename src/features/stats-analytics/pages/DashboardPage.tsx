@@ -354,7 +354,7 @@ export const DashboardPage: React.FC = () => {
             <Award className="w-5 h-5 text-[#8B44F7]" />
             <span>Historial Reciente de Scrims y Torneos</span>
           </CardTitle>
-          <span className="text-xs sm:text-sm text-gray-400 font-medium">Total: {recentMatches.length}</span>
+          <span className="text-xs sm:text-sm text-gray-400 font-medium">Total: {recentMatches.slice(0, 10).length}</span>
         </CardHeader>
 
         {recentMatches.length > 0 ? (
@@ -370,7 +370,7 @@ export const DashboardPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#26143E]">
-                {recentMatches.map((m) => (
+                {recentMatches.slice(0, 10).map((m) => (
                   <tr key={m.id} className="hover:bg-[#26143E]/40 transition-colors">
                     <td className="p-3.5 sm:p-4 font-medium text-gray-400">{m.date}</td>
                     <td className="p-3.5 sm:p-4 font-bold text-white">{m.opponentName}</td>

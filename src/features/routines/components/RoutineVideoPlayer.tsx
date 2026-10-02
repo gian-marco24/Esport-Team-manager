@@ -41,7 +41,7 @@ export const RoutineVideoPlayer: React.FC<RoutineVideoPlayerProps> = ({ videoUrl
 
   if (!videoUrl) {
     return (
-      <div className="w-full h-full min-h-[200px] sm:min-h-[240px] bg-[#0D0914] border border-[#26143E] rounded-2xl flex flex-col items-center justify-center p-6 text-center text-gray-500 space-y-2">
+      <div className="w-full h-full min-h-[260px] bg-[#0D0914] border border-[#26143E] rounded-2xl flex flex-col items-center justify-center p-6 text-center text-gray-500 space-y-2 shadow-inner">
         <VideoIcon className="w-8 h-8 text-gray-600" />
         <p className="text-xs font-medium">Sin video demostrativo adjunto.</p>
       </div>
@@ -49,10 +49,13 @@ export const RoutineVideoPlayer: React.FC<RoutineVideoPlayerProps> = ({ videoUrl
   }
 
   return (
-    <div className="relative w-full h-full min-h-[220px] sm:min-h-[250px] bg-black/80 rounded-2xl overflow-hidden border border-[#522B80]/60 shadow-xl flex items-center justify-center group">
+    <div className="relative w-full h-full min-h-[280px] sm:min-h-[320px] bg-black/90 rounded-2xl overflow-hidden border border-[#522B80]/60 shadow-xl flex flex-col group">
       {!isPlaying ? (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1b0c30] via-[#140b21] to-black flex flex-col items-center justify-center p-6 text-center space-y-3">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#522B80]/50 border border-[#E2B86E] flex items-center justify-center text-[#E2B86E] shadow-xl group-hover:scale-110 transition-transform cursor-pointer">
+        <div className="w-full h-full flex-1 bg-gradient-to-br from-[#1b0c30] via-[#140b21] to-black flex flex-col items-center justify-center p-6 text-center space-y-3">
+          <div
+            onClick={() => setIsPlaying(true)}
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#522B80]/50 border border-[#E2B86E] flex items-center justify-center text-[#E2B86E] shadow-xl group-hover:scale-110 transition-transform cursor-pointer"
+          >
             <Play className="w-6 h-6 fill-current ml-1" />
           </div>
 
@@ -76,12 +79,12 @@ export const RoutineVideoPlayer: React.FC<RoutineVideoPlayerProps> = ({ videoUrl
           </Button>
         </div>
       ) : (
-        <div className="relative w-full h-full flex flex-col">
+        <div className="relative w-full h-full flex-1 flex flex-col min-h-[280px]">
           {/* Top minimal control to power off player */}
           <div className="absolute top-2 right-2 z-20 flex items-center space-x-1.5">
             <button
               onClick={() => setIsPlaying(false)}
-              className="px-2 py-1 bg-black/80 hover:bg-red-950/80 border border-red-500/40 rounded-lg text-[10px] font-bold text-red-300 hover:text-white flex items-center gap-1 transition-all backdrop-blur-sm"
+              className="px-2.5 py-1 bg-black/80 hover:bg-red-950/80 border border-red-500/40 rounded-lg text-[10px] font-bold text-red-300 hover:text-white flex items-center gap-1 transition-all backdrop-blur-sm shadow-md"
               title="Apagar reproductor"
             >
               <Power className="w-3 h-3" />
@@ -93,7 +96,7 @@ export const RoutineVideoPlayer: React.FC<RoutineVideoPlayerProps> = ({ videoUrl
             <iframe
               src={embedUrl}
               title={`Video de ${title}`}
-              className="w-full h-full min-h-[220px] sm:min-h-[250px] border-0"
+              className="w-full h-full flex-1 border-0 min-h-[280px]"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
@@ -102,7 +105,7 @@ export const RoutineVideoPlayer: React.FC<RoutineVideoPlayerProps> = ({ videoUrl
               src={embedUrl || ''}
               controls
               autoPlay
-              className="w-full h-full object-contain bg-black"
+              className="w-full h-full flex-1 object-contain bg-black"
             />
           )}
         </div>

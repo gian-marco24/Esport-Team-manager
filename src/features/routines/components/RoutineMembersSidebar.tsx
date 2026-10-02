@@ -42,7 +42,7 @@ export const RoutineMembersSidebar: React.FC<RoutineMembersSidebarProps> = ({
     const isSelf = (m: TeamMember) => {
       if (!user) return false;
       if (user.id && (m.id === user.id || (m as any).userId === user.id)) return true;
-      if (user.email && m.email && m.email.toLowerCase() === user.email.toLowerCase()) return true;
+      if (user.email && m.email && m.email.trim().toLowerCase() === user.email.trim().toLowerCase()) return true;
       if (
         user.displayName &&
         m.displayName &&
@@ -55,36 +55,35 @@ export const RoutineMembersSidebar: React.FC<RoutineMembersSidebarProps> = ({
 
     const otherMembers = members.filter((m) => !isSelf(m));
 
-    const mapped: RankedMember[] = otherMembers.map((m) => {
-      const isCeo =
-        m.teamRole === 'CEO' ||
-        (m as any).role === 'ceo' ||
-        m.globalSubrole?.toLowerCase().includes('ceo');
+    // Deduplicate any repeated members by email or name
+    const uniqueOtherMembers: TeamMember[] = [];
+    const seenEmails = new Set<string>();
+    const seenNames = new Set<string>();
 
-      const isCoach =
-        m.teamRole === 'Coach' ||
-        (m as any).role === 'coach' ||
-        m.globalSubrole?.toLowerCase().includes('coach');
+    for (const m of otherMembers) {
+      const emailClean = m.email ? m.email.trim().toLowerCase() : '';
+      const nameClean = m.displayName ? m.displayName.trim().toLowerCase() : '';
 
-      const isManager =
-        m.teamRole === 'Manager' ||
-        (m as any).role === 'manager' ||
-        m.globalSubrole?.toLowerCase().includes('manager');
+      if (emailClean && seenEmails.has(emailClean)) continue;
+      if (nameClean && seenNames.has(nameClean)) continue;
 
-      const isCreator =
-        m.teamRole === 'Creador de contenido' ||
-        m.globalSubrole?.toLowerCase().includes('creador');
+      if (emailClean) seenEmails.add(emailClean);
+      if (nameClean) seenNames.add(nameClean);
 
-      const isStaff =
-        m.teamRole === 'Staff' ||
-        (m as any).role === 'staff' ||
-        m.globalSubrole?.toLowerCase().includes('staff');
+      uniqueOtherMembers.push(m);
+    }
 
-      const subrole = m.rosterAssignments?.[0]?.subrole || m.globalSubrole || '';
-      const isTitular =
-        subrole.toLowerCase().includes('titular') || (!subrole && m.teamRole === 'Player');
+    const mapped: RankedMember[] = uniqueOtherMembers.map((m) => {
+      const isCeo = m.teamRole === 'CEO';
+      const isCoach = m.teamRole === 'Coach';
+      const isManager = m.teamRole === 'Manager';
+      const isCreator = m.teamRole === 'Creador de contenido';
+      const isStaff = m.teamRole === 'Staff';
+      const isPlayer = m.teamRole === 'Player';
+
+      const subrole = m.rosterAssignments?.[0]?.subrole || '';
+      const isTitular = subrole.toLowerCase().includes('titular') || (!subrole && isPlayer);
       const isSuplente = subrole.toLowerCase().includes('suplente');
-      const isPlayer = m.teamRole === 'Player' || isTitular || isSuplente;
 
       let rank = 7;
       let categoryLabel = 'Otros Integrantes';

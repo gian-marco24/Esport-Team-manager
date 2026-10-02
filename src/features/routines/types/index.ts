@@ -11,6 +11,7 @@ export interface Routine {
   title: string;
   description: string;
   videoUrl?: string; // Video tutorial (YouTube, Twitch, Vimeo, MP4)
+  imageUrls?: string[]; // Optional configuration/reference images (settings, crosshair, posture, etc.)
   externalLink?: string; // Aimlab playlist, Kovaaks, external docs
   externalLinkLabel?: string;
   duration?: string; // e.g. "35 - 45 min"

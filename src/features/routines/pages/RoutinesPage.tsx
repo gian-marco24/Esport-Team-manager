@@ -74,6 +74,7 @@ export const RoutinesPage: React.FC = () => {
     if (selectedUserId === 'self' || selectedUserId === user?.id) {
       return {
         id: user?.id || 'self',
+        email: user?.email || '',
         displayName: `${user?.displayName || 'Mi Usuario'} (Tú)`,
         teamRole: user?.teamRole || (isCeo ? 'CEO' : isCoach ? 'Coach' : 'Player'),
       };
@@ -82,6 +83,7 @@ export const RoutinesPage: React.FC = () => {
     if (found) return found;
     return {
       id: selectedUserId,
+      email: '',
       displayName: 'Jugador',
       teamRole: 'Player',
     };
@@ -123,9 +125,10 @@ export const RoutinesPage: React.FC = () => {
     if (!effectiveUserId) return;
     setIsGridLoading(true);
     try {
+      const userEmail = selectedMemberObj?.email || (selectedUserId === 'self' ? user?.email : undefined);
       const [checkIn, assignedRoutineId] = await Promise.all([
-        routinesService.getUserMonthCheckIn(effectiveUserId, currentYearMonth),
-        routinesService.getUserAssignedRoutine(effectiveUserId, currentYearMonth),
+        routinesService.getUserMonthCheckIn(effectiveUserId, currentYearMonth, undefined, userEmail),
+        routinesService.getUserAssignedRoutine(effectiveUserId, currentYearMonth, userEmail),
       ]);
 
       const effectiveRoutineId = checkIn.routineId || assignedRoutineId || (routines[0]?.id ?? '');
@@ -138,7 +141,7 @@ export const RoutinesPage: React.FC = () => {
     } finally {
       setIsGridLoading(false);
     }
-  }, [effectiveUserId, currentYearMonth, routines]);
+  }, [effectiveUserId, currentYearMonth, routines, selectedMemberObj, selectedUserId, user]);
 
   useEffect(() => {
     loadCheckInData();
@@ -157,8 +160,11 @@ export const RoutinesPage: React.FC = () => {
   // Carousel current routine
   const currentCarouselRoutine = routines[activeRoutineIndex] || routines[0] || null;
 
-  // Check-in toggle handler
+  // Check-in toggle handler (Only the user can toggle their own check-ins)
   const handleToggleCheckIn = async (exerciseId: string, day: number) => {
+    const isSelf = selectedUserId === 'self' || selectedUserId === user?.id || selectedUserId === (user as any)?.uid;
+    if (!isSelf) return;
+
     const routineIdToUse = gridActiveRoutine?.id || currentCarouselRoutine?.id || '';
     if (!effectiveUserId || !routineIdToUse) return;
 
@@ -182,7 +188,15 @@ export const RoutinesPage: React.FC = () => {
     });
 
     try {
-      await routinesService.toggleCheckIn(effectiveUserId, currentYearMonth, routineIdToUse, exerciseId, day);
+      await routinesService.toggleCheckIn(
+        effectiveUserId,
+        currentYearMonth,
+        routineIdToUse,
+        exerciseId,
+        day,
+        undefined,
+        user?.email
+      );
     } catch (err) {
       console.error('Failed to save check-in state:', err);
       // Re-sync on failure
@@ -190,11 +204,12 @@ export const RoutinesPage: React.FC = () => {
     }
   };
 
-  // Routine assignment to user for active month
+  // Routine assignment to user for active month (Only Coach / CEO)
   const handleAssignRoutine = async (routineId: string) => {
-    if (!effectiveUserId) return;
+    if (!canManageRoutines || !effectiveUserId) return;
     try {
-      await routinesService.assignRoutineToUser(effectiveUserId, routineId, currentYearMonth);
+      const userEmail = selectedMemberObj?.email;
+      await routinesService.assignRoutineToUser(effectiveUserId, routineId, currentYearMonth, userEmail);
       setMonthCheckIn((prev) => ({
         ...prev,
         routineId,

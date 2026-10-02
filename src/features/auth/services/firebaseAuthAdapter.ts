@@ -5,7 +5,17 @@ import {
   onAuthStateChanged as firebaseOnAuthStateChanged,
   updateProfile,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../../../lib/firebase';
 import type { IAuthPort } from './authPort';
 import type { User, LoginFormData, RegisterFormData, UserRole } from '../types';
@@ -14,31 +24,78 @@ import { URS_GAMARA_TEAM } from '../../teams/config/currentTeam.config';
 import { MockAuthAdapter } from './mockAuthAdapter';
 import { teamService } from '../../teams/services/teamService';
 
+async function fetchUserDocData(uid: string, email: string): Promise<any | null> {
+  if (!db) return null;
+  try {
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    if (userDoc.exists()) {
+      return userDoc.data();
+    }
+  } catch (e) {
+    console.warn('Firestore fetch userDoc by UID error:', e);
+  }
+
+  // Fallback: If user doc was created manually with a custom document ID
+  if (email) {
+    try {
+      const q = query(collection(db, 'users'), where('email', '==', email.toLowerCase()));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        for (const foundDoc of snap.docs) {
+          const data = foundDoc.data();
+          if (foundDoc.id !== uid) {
+            try {
+              await setDoc(doc(db, 'users', uid), { ...data, id: uid }, { merge: true });
+              await deleteDoc(doc(db, 'users', foundDoc.id));
+            } catch (err) {
+              console.warn('Syncing/cleaning duplicate manual doc error:', err);
+            }
+          }
+          return data;
+        }
+      }
+    } catch (e) {
+      console.warn('Firestore fallback user query by email error:', e);
+    }
+  }
+
+  return null;
+}
+
 const processUserProfile = (uid: string, email: string, rawData?: any): User => {
-  const isCeoUser =
-    email.toLowerCase() === 'gianm2405@gmail.com' ||
-    rawData?.role?.toLowerCase() === 'ceo' ||
-    rawData?.teamRole === 'CEO';
+  const teamRole: TeamRole =
+    rawData?.teamRole ||
+    (rawData?.role === 'ceo'
+      ? 'CEO'
+      : rawData?.role === 'coach'
+      ? 'Coach'
+      : rawData?.role === 'manager'
+      ? 'Manager'
+      : rawData?.role === 'staff'
+      ? 'Staff'
+      : rawData?.role === 'player'
+      ? 'Player'
+      : email.toLowerCase() === 'gianm2405@gmail.com'
+      ? 'CEO'
+      : 'Player');
 
-  const role: UserRole = isCeoUser
-    ? 'ceo'
-    : (rawData?.role || (rawData?.teamRole ? rawData.teamRole.toLowerCase() : 'player')) as UserRole;
+  const role: UserRole =
+    rawData?.role || (teamRole === 'CEO' ? 'ceo' : (teamRole.toLowerCase() as UserRole));
 
-  const teamRole: TeamRole = isCeoUser
-    ? 'CEO'
-    : rawData?.teamRole || (role === 'ceo' ? 'CEO' : role === 'player' ? 'Player' : role === 'coach' ? 'Coach' : role === 'manager' ? 'Manager' : 'Staff');
+  // GameTag: only assign if explicitly provided; non-players don't get #CEO or #Coach defaults
+  const gameTag = rawData?.gameTag?.trim() ? rawData.gameTag.trim() : undefined;
 
   return {
     id: uid,
     email: rawData?.email || email,
-    displayName: rawData?.displayName || (isCeoUser ? 'Zeyn' : email.split('@')[0]),
-    gameTag: rawData?.gameTag || (isCeoUser ? '#CEO' : undefined),
+    displayName: rawData?.displayName || (email.split('@')[0]),
+    gameTag,
     role,
     teamRole,
-    birthDate: rawData?.birthDate || (isCeoUser ? '2007-05-24' : undefined),
-    country: rawData?.country || (isCeoUser ? 'Venezuela' : undefined),
+    birthDate: rawData?.birthDate,
+    country: rawData?.country,
     rosterAssignments: rawData?.rosterAssignments || [],
-    globalSubrole: rawData?.globalSubrole || (isCeoUser ? 'CEO / Propietario' : undefined),
+    globalSubrole: rawData?.globalSubrole || (teamRole === 'CEO' ? 'CEO / Propietario' : undefined),
     avatarUrl: rawData?.avatarUrl,
     teamId: URS_GAMARA_TEAM.id,
     teamName: URS_GAMARA_TEAM.name,
@@ -72,15 +129,9 @@ export class FirebaseAuthAdapter implements IAuthPort {
 
       const firebaseUser = userCredential.user;
 
-      if (db) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (userDoc.exists()) {
-            return processUserProfile(firebaseUser.uid, credentials.email, userDoc.data());
-          }
-        } catch (e) {
-          console.warn('Firestore fetch failed, returning synthesized auth profile:', e);
-        }
+      const docData = await fetchUserDocData(firebaseUser.uid, credentials.email);
+      if (docData) {
+        return processUserProfile(firebaseUser.uid, credentials.email, docData);
       }
 
       return processUserProfile(firebaseUser.uid, credentials.email, {
@@ -188,15 +239,9 @@ export class FirebaseAuthAdapter implements IAuthPort {
     const current = auth.currentUser;
     if (!current) return null;
 
-    if (db) {
-      try {
-        const userDoc = await getDoc(doc(db, 'users', current.uid));
-        if (userDoc.exists()) {
-          return processUserProfile(current.uid, current.email || '', userDoc.data());
-        }
-      } catch (e) {
-        console.warn('Firestore fetch user error:', e);
-      }
+    const docData = await fetchUserDocData(current.uid, current.email || '');
+    if (docData) {
+      return processUserProfile(current.uid, current.email || '', docData);
     }
 
     return processUserProfile(current.uid, current.email || '', {
@@ -215,16 +260,10 @@ export class FirebaseAuthAdapter implements IAuthPort {
         return;
       }
 
-      if (db) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (userDoc.exists()) {
-            callback(processUserProfile(firebaseUser.uid, firebaseUser.email || '', userDoc.data()));
-            return;
-          }
-        } catch {
-          // fallback to auth profile below
-        }
+      const docData = await fetchUserDocData(firebaseUser.uid, firebaseUser.email || '');
+      if (docData) {
+        callback(processUserProfile(firebaseUser.uid, firebaseUser.email || '', docData));
+        return;
       }
 
       callback(processUserProfile(firebaseUser.uid, firebaseUser.email || '', {

@@ -10,6 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   setUser: (user: User | null) => void;
   updateUser: (data: { displayName?: string; gameTag?: string }) => Promise<User>;
+  refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -28,6 +29,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => unsubscribe();
   }, []);
+
+  const refreshUser = async () => {
+    try {
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+    } catch (err) {
+      console.warn('Failed to refresh user auth state:', err);
+    }
+  };
 
   const updateUser = async (data: { displayName?: string; gameTag?: string }): Promise<User> => {
     if (!user) throw new Error('No hay usuario autenticado');
@@ -61,6 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         setUser,
         updateUser,
+        refreshUser,
         logout,
       }}
     >

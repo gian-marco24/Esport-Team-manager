@@ -11,7 +11,7 @@ interface RegisterFormProps {
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ invitation }) => {
-  const isTagRequired = invitation.teamRole === 'Player' || invitation.teamRole === 'Coach';
+  const isTagRequired = invitation.teamRole === 'Player';
   const { register, handleSubmit, errors, isSubmitting, authError } = useRegisterForm(
     invitation.code,
     invitation.teamRole

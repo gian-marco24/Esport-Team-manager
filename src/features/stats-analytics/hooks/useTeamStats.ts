@@ -53,9 +53,13 @@ export const useTeamStats = () => {
     activeRosterCount: 5,
   };
 
+  const recent10Matches = [...matches]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 10);
+
   return {
     teamOverview,
-    recentMatches: matches,
+    recentMatches: recent10Matches,
     isLoading,
   };
 };

@@ -18,6 +18,7 @@ import {
   Edit3,
   CheckCircle,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuthContext } from '../../../app/providers/AuthProvider';
 import { URS_GAMARA_TEAM } from '../../teams/config/currentTeam.config';
@@ -137,6 +138,11 @@ export const ProfilePage: React.FC = () => {
       : user?.role === 'manager'
       ? 'Manager'
       : 'Staff');
+
+  const isPlayer = activeRole === 'Player';
+  const effectiveGameTag = (memberData?.gameTag || user?.gameTag || '').trim();
+  const isMissingGameTag = isPlayer && !effectiveGameTag;
+  const displayTag = effectiveGameTag || (isPlayer ? `#${activeRole}` : undefined);
 
   // Roster assignments
   const userAssignments =
@@ -420,6 +426,37 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <div className="space-y-6 w-full animate-fadeIn pb-12">
+      {/* Missing Nickname / GameTag Warning Banner for Players */}
+      {isMissingGameTag && (
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-950/90 via-amber-900/80 to-amber-950/90 border-2 border-amber-500/70 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl shadow-amber-950/50 animate-fadeIn">
+          <div className="flex items-start space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-center shrink-0 mt-0.5 text-amber-400">
+              <AlertTriangle className="w-5 h-5 text-amber-400 stroke-[2.5]" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-amber-300 tracking-wide flex items-center gap-2">
+                <span>Configuración de Nickname & Tag Requerida</span>
+                <span className="text-[10px] bg-amber-400 text-black font-extrabold uppercase px-2 py-0.5 rounded-full">
+                  Acción Necesaria
+                </span>
+              </h3>
+              <p className="text-xs sm:text-sm text-amber-200/90 mt-1 max-w-2xl leading-relaxed">
+                Tu rol activo es <span className="font-bold text-white underline">Player</span>. Para vincular correctamente tus estadísticas en Scrims, Torneos y emparejamiento OCR en partidas, debes configurar tu Nickname y Tag de juego oficial (ej: <code className="bg-black/40 px-1 py-0.5 rounded text-amber-300 font-mono">Nick#TAG</code>). Mientras tanto, tu tag temporal es <code className="bg-black/40 px-1.5 py-0.5 rounded text-amber-300 font-mono font-bold">{user?.displayName || 'Player'}#Player</code>.
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => setIsEditNickModalOpen(true)}
+            variant="secondary"
+            size="sm"
+            className="shrink-0 bg-amber-400 hover:bg-amber-300 text-black font-extrabold shadow-md shadow-amber-950/50 py-2.5 px-4"
+            leftIcon={<Edit3 className="w-4 h-4 text-black stroke-[2.5]" />}
+          >
+            Configurar Nickname & Tag
+          </Button>
+        </div>
+      )}
+
       {/* Success Notification Alert */}
       {successMessage && (
         <div className="p-4 bg-emerald-950/80 border border-emerald-500/50 rounded-xl flex items-center justify-between text-emerald-300 text-sm shadow-lg shadow-emerald-950/50 animate-fadeIn">
@@ -462,9 +499,16 @@ export const ProfilePage: React.FC = () => {
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-wide">
                   {user?.displayName || 'Integrante'}
                 </h1>
-                {(memberData?.gameTag || user?.gameTag) && (
-                  <span className="text-sm sm:text-base font-extrabold text-[#E2B86E] bg-[#26143E] px-3 py-1 rounded-lg border border-[#8B44F7]/40 font-mono">
-                    {memberData?.gameTag || user?.gameTag}
+                {displayTag && (
+                  <span
+                    className={`text-sm sm:text-base font-extrabold px-3 py-1 rounded-lg border font-mono ${
+                      isMissingGameTag
+                        ? 'bg-amber-950/60 text-amber-300 border-amber-500/50'
+                        : 'bg-[#26143E] text-[#E2B86E] border-[#8B44F7]/40'
+                    }`}
+                    title={isMissingGameTag ? 'Tag temporal generado automáticamente' : 'Tag oficial de juego'}
+                  >
+                    {displayTag}
                   </span>
                 )}
                 <Badge variant={getRoleBadgeVariant(activeRole)} className="text-xs font-bold uppercase tracking-wider px-2.5 py-1">
@@ -486,7 +530,7 @@ export const ProfilePage: React.FC = () => {
                 <span className="font-semibold text-white">{URS_GAMARA_TEAM.name}</span>
                 <span className="text-gray-500">•</span>
                 <span className="text-gray-300">
-                  {memberData?.globalSubrole || user?.globalSubrole || user?.position || `${activeRole} oficial`}
+                  {memberData?.globalSubrole || user?.globalSubrole || user?.position || (activeRole === 'CEO' ? 'CEO / Propietario' : `${activeRole} del equipo`)}
                 </span>
               </p>
 

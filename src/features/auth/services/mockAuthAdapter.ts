@@ -2,7 +2,7 @@ import type { IAuthPort } from './authPort';
 import type { User, LoginFormData, RegisterFormData, UserRole } from '../types';
 import { URS_GAMARA_TEAM } from '../../teams/config/currentTeam.config';
 import { teamService } from '../../teams/services/teamService';
-import type { TeamMember } from '../../teams/types';
+import type { TeamMember, TeamRole } from '../../teams/types';
 
 const MOCK_STORAGE_KEY = 'urs_gamara_mock_users';
 const MOCK_SESSION_KEY = 'urs_gamara_mock_session';
@@ -43,10 +43,6 @@ export class MockAuthAdapter implements IAuthPort {
       const data = localStorage.getItem(MOCK_SESSION_KEY);
       if (!data) return null;
       const user: User = JSON.parse(data);
-      if (user.email?.toLowerCase() === 'gianm2405@gmail.com') {
-        user.role = 'ceo';
-        user.teamRole = 'CEO';
-      }
       return user;
     } catch {
       return null;
@@ -56,10 +52,6 @@ export class MockAuthAdapter implements IAuthPort {
   private setStoredSession(user: User | null) {
     try {
       if (user) {
-        if (user.email?.toLowerCase() === 'gianm2405@gmail.com') {
-          user.role = 'ceo';
-          user.teamRole = 'CEO';
-        }
         localStorage.setItem(MOCK_SESSION_KEY, JSON.stringify(user));
       } else {
         localStorage.removeItem(MOCK_SESSION_KEY);
@@ -83,14 +75,14 @@ export class MockAuthAdapter implements IAuthPort {
         id: `mock-${Date.now()}`,
         email: credentials.email,
         displayName: isCeo ? 'Zeyn' : credentials.email.split('@')[0],
-        gameTag: isCeo ? '#CEO' : undefined,
+        gameTag: undefined,
         role: isCeo ? 'ceo' : 'player',
         teamRole: isCeo ? 'CEO' : 'Player',
         birthDate: isCeo ? '2007-05-24' : undefined,
         country: isCeo ? 'Venezuela' : undefined,
         teamId: URS_GAMARA_TEAM.id,
         teamName: URS_GAMARA_TEAM.name,
-        position: isCeo ? 'CEO / Propietario' : 'Flex',
+        position: isCeo ? 'CEO / Propietario' : 'Player del equipo',
         stats: defaultStats,
         createdAt: new Date().toISOString(),
       };
@@ -98,12 +90,6 @@ export class MockAuthAdapter implements IAuthPort {
       this.saveUsers(users);
       this.setStoredSession(newUser);
       return newUser;
-    }
-
-    if (isCeo) {
-      user.role = 'ceo';
-      user.teamRole = 'CEO';
-      if (!user.gameTag) user.gameTag = '#CEO';
     }
 
     this.setStoredSession(user);
@@ -132,32 +118,36 @@ export class MockAuthAdapter implements IAuthPort {
       throw new Error('El correo electrónico ya está registrado.');
     }
 
-    const isCeo = data.email.toLowerCase() === 'gianm2405@gmail.com' || invitation.teamRole === 'CEO';
+    const roleToAssign: TeamRole = invitation.teamRole;
 
-    const mappedRole: UserRole = isCeo
-      ? 'ceo'
-      : invitation.teamRole === 'Player'
-      ? 'player'
-      : invitation.teamRole === 'Coach'
-      ? 'coach'
-      : invitation.teamRole === 'Manager'
-      ? 'manager'
-      : 'staff';
+    const mappedRole: UserRole =
+      roleToAssign === 'CEO'
+        ? 'ceo'
+        : roleToAssign === 'Player'
+        ? 'player'
+        : roleToAssign === 'Coach'
+        ? 'coach'
+        : roleToAssign === 'Manager'
+        ? 'manager'
+        : 'staff';
 
     const userId = `usr-${Date.now()}`;
+    const cleanTag = data.gameTag?.trim() || undefined;
+
     const newUser: User = {
       id: userId,
       email: data.email,
       displayName: invitation.nick,
-      gameTag: data.gameTag,
+      gameTag: cleanTag,
       role: mappedRole,
-      teamRole: isCeo ? 'CEO' : invitation.teamRole,
+      teamRole: roleToAssign,
       birthDate: data.birthDate,
       country: data.country,
       rosterAssignments: [],
+      globalSubrole: roleToAssign === 'CEO' ? 'CEO / Propietario' : undefined,
       teamId: URS_GAMARA_TEAM.id,
       teamName: URS_GAMARA_TEAM.name,
-      position: `${isCeo ? 'CEO' : invitation.teamRole} del equipo`,
+      position: `${roleToAssign} del equipo`,
       stats: defaultStats,
       createdAt: new Date().toISOString(),
     };
@@ -173,7 +163,8 @@ export class MockAuthAdapter implements IAuthPort {
       id: userId,
       email: data.email,
       displayName: invitation.nick,
-      teamRole: isCeo ? 'CEO' : invitation.teamRole,
+      gameTag: cleanTag,
+      teamRole: roleToAssign,
       rosterAssignments: [],
       birthDate: data.birthDate,
       country: data.country,
