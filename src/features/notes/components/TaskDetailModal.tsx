@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
-  Clock,
   Calendar,
   Link as LinkIcon,
   FileText,
@@ -14,9 +13,13 @@ import {
   Edit3,
   UserCheck,
   Users,
+  ExternalLink,
+  Trash2,
+  ListPlus,
+  Timer,
+  Quote,
 } from 'lucide-react';
 import type { TacticalTask } from '../types';
-import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { MarkdownContent } from '../utils/markdownRenderer';
 import { buildDeadlineString, formatDeadlineDisplay } from '../utils/dateHelpers';
@@ -162,7 +165,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const handleInsertHelper = (textToInsert: string) => {
     if (!canEditAnnotations) return;
     setActiveTab('edit');
-    setAnnotations((prev) => prev + (prev ? '\n' : '') + textToInsert);
+    setAnnotations((prev) => (prev ? prev + (prev.endsWith('\n') ? '' : '\n') + textToInsert : textToInsert));
   };
 
   const copyMaterials = () => {
@@ -181,39 +184,68 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       ? task.authorName
       : 'Asignado');
 
+  const priorityColor =
+    task.priority === 'high'
+      ? 'bg-rose-500/15 text-rose-300 border-rose-500/40'
+      : task.priority === 'low'
+      ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40'
+      : 'bg-amber-500/15 text-amber-300 border-amber-500/40';
+
+  const priorityLabel =
+    task.priority === 'high' ? 'Alta' : task.priority === 'low' ? 'Baja' : 'Media';
+
+  // Helper to extract first link if any
+  const firstUrlMatch = task.materials?.match(/(https?:\/\/[^\s]+)/)?.[0];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md animate-fade-in">
       <div
-        className="bg-[#140b21] border border-[#522B80] rounded-3xl w-full max-w-5xl 2xl:max-w-6xl h-[90vh] max-h-[940px] 2xl:max-h-[1080px] flex flex-col shadow-2xl overflow-hidden animate-scale-up"
+        className="bg-[#12091c] border border-[#3c1e5e] rounded-2xl sm:rounded-3xl w-full max-w-5xl 2xl:max-w-6xl h-[94vh] max-h-[960px] 2xl:max-h-[1120px] flex flex-col shadow-2xl overflow-hidden animate-scale-up"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header (Fixed) */}
-        <div className="p-4 sm:p-6 bg-gradient-to-r from-[#180d29] via-[#26143E] to-[#180d29] border-b border-[#522B80]/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
-          <div className="space-y-2 flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-              <span className="px-3 py-1 rounded-full text-xs sm:text-sm font-black uppercase tracking-wider bg-[#522B80] text-[#E2B86E] border border-[#E2B86E]/40 flex items-center gap-1.5 shadow-sm">
-                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        {/* Compact Header */}
+        <div className="px-4 py-3 sm:px-6 sm:py-3.5 bg-gradient-to-r from-[#170c27] via-[#210f38] to-[#170c27] border-b border-[#3c1e5e]/80 flex flex-col gap-2.5 shrink-0">
+          {/* Top Row: Category + Priority + Status pills + Action buttons */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            {/* Left Badges */}
+            <div className="flex items-center flex-wrap gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-black uppercase tracking-wider bg-[#522B80]/90 text-[#E2B86E] border border-[#E2B86E]/40 flex items-center gap-1 shadow-sm">
+                <Sparkles className="w-3 h-3 text-[#E2B86E]" />
                 Tarea / Análisis
               </span>
 
-              {/* Assignment Pill */}
-              <span className="px-3.5 py-1 rounded-full text-xs sm:text-sm font-bold bg-[#26143E] text-white border border-[#8B44F7]/50 flex items-center gap-1.5 shadow-sm">
-                {task.assignedScope === 'both' ? (
-                  <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E2B86E]" />
-                ) : (
-                  <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E2B86E]" />
-                )}
-                <span>Asignado a: <strong className="text-[#E2B86E] font-black">{assigneeDisplay}</strong></span>
+              <span className={`px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold border ${priorityColor}`}>
+                Prioridad {priorityLabel}
               </span>
 
-              {/* Status Switcher Buttons (Available for both users) */}
-              <div className="inline-flex rounded-xl p-1 bg-[#0D0914] border border-[#522B80] shadow-sm">
+              {/* Assignment Pill */}
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-[#1d0e33] text-gray-200 border border-[#522B80]/60 flex items-center gap-1.5 shadow-sm">
+                {task.assignedScope === 'both' ? (
+                  <Users className="w-3 h-3 text-[#E2B86E]" />
+                ) : (
+                  <UserCheck className="w-3 h-3 text-[#E2B86E]" />
+                )}
+                <span>Asignado a: <strong className="text-[#E2B86E] font-bold">{assigneeDisplay}</strong></span>
+              </span>
+
+              {task.deadline && (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-medium bg-amber-950/35 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+                  <Calendar className="w-3 h-3 text-amber-400" />
+                  Entrega: <strong className="text-white font-bold">{formatDeadlineDisplay(task.deadline)}</strong>
+                </span>
+              )}
+            </div>
+
+            {/* Right Controls: Status switch + Edit toggle + Close */}
+            <div className="flex items-center gap-2">
+              {/* Status Switcher (Compact Segmented) */}
+              <div className="inline-flex rounded-lg p-0.5 bg-[#09040e] border border-[#3c1e5e] shadow-sm">
                 <button
                   type="button"
                   onClick={() => handleStatusChange('pending')}
-                  className={`px-3 py-1 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-all ${
                     task.status === 'pending'
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                      ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-sm'
                       : 'text-gray-400 hover:text-gray-200'
                   }`}
                 >
@@ -222,9 +254,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleStatusChange('in_progress')}
-                  className={`px-3 py-1 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-all ${
                     task.status === 'in_progress'
-                      ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm'
+                      ? 'bg-blue-500/25 text-blue-300 border border-blue-500/40 shadow-sm'
                       : 'text-gray-400 hover:text-gray-200'
                   }`}
                 >
@@ -233,9 +265,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleStatusChange('completed')}
-                  className={`px-3 py-1 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-all ${
                     task.status === 'completed'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                      ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm'
                       : 'text-gray-400 hover:text-gray-200'
                   }`}
                 >
@@ -243,314 +275,326 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 </button>
               </div>
 
-              {task.deadline && (
-                <span className="px-3.5 py-1 rounded-full text-xs sm:text-sm font-bold bg-amber-950/40 text-[#E2B86E] border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
-                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
-                  Entrega: {formatDeadlineDisplay(task.deadline)}
-                </span>
-              )}
-            </div>
+              {/* Edit Requirements Button */}
+              <button
+                type="button"
+                onClick={() => setIsEditingRequirements(!isEditingRequirements)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 shadow-sm ${
+                  isEditingRequirements
+                    ? 'bg-[#E2B86E] text-black border-[#E2B86E]'
+                    : 'bg-[#180d29] text-gray-300 border-[#522B80] hover:bg-[#26143E] hover:text-white'
+                }`}
+                title="Modificar requisitos, VOD link o fecha límite"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isEditingRequirements ? 'Cerrar Edición' : 'Editar Info'}</span>
+              </button>
 
-            <h2 className="text-lg sm:text-2xl font-black text-white tracking-wide truncate leading-tight">
-              {task.title}
-            </h2>
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#26143E] border border-transparent hover:border-[#522B80] transition-colors"
+                title="Cerrar modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-2.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => setIsEditingRequirements(!isEditingRequirements)}
-              className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 shadow-sm ${
-                isEditingRequirements
-                  ? 'bg-[#E2B86E] text-black border-[#E2B86E]'
-                  : 'bg-[#180d29] text-gray-200 border-[#522B80]/80 hover:bg-[#26143E] hover:text-white hover:border-[#8B44F7]'
-              }`}
-              title="Modificar requisitos, VOD link o fecha límite"
-            >
-              <Edit3 className="w-4 h-4" />
-              <span>{isEditingRequirements ? 'Cancelar Edición' : 'Editar Requisitos / Plazo'}</span>
-            </button>
-
-            <button
-              onClick={onClose}
-              className="p-2 sm:p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-[#26143E] border border-transparent hover:border-[#522B80] transition-colors"
-              title="Cerrar modal"
-            >
-              <X className="w-5 h-5 sm:w-6 sm:h-6" />
-            </button>
+          {/* Row 2: Task Title (Clean, Prominent) */}
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-base sm:text-xl font-black text-white tracking-wide leading-snug line-clamp-1" title={task.title}>
+              {task.title}
+            </h2>
+            <div className="text-[11px] text-gray-400 shrink-0 font-mono hidden md:block">
+              Por: <span className="text-gray-200 font-medium">{task.authorName}</span> • {new Date(task.createdAt).toLocaleDateString()}
+            </div>
           </div>
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 flex flex-col p-4 sm:p-6 gap-4 overflow-y-auto min-h-0">
+        <div className="flex-1 flex flex-col p-3 sm:p-5 gap-3 sm:gap-4 overflow-hidden min-h-0">
           {/* Requirements Editor (Toggled Mode) */}
           {isEditingRequirements ? (
-            <div className="p-4 sm:p-5 bg-[#0D0914] border border-[#E2B86E]/50 rounded-2xl space-y-4 shrink-0 shadow-lg">
-              <div className="flex items-center justify-between border-b border-[#26143E] pb-2.5">
-                <span className="text-sm sm:text-base font-black text-[#E2B86E] flex items-center gap-2">
-                  <Edit3 className="w-4 h-4" />
+            <div className="p-3.5 sm:p-4 bg-[#09040e] border border-[#E2B86E]/50 rounded-2xl space-y-3 shrink-0 shadow-lg animate-fade-in">
+              <div className="flex items-center justify-between border-b border-[#26143E] pb-2">
+                <span className="text-xs sm:text-sm font-bold text-[#E2B86E] flex items-center gap-1.5">
+                  <Edit3 className="w-3.5 h-3.5" />
                   Editar Requisitos, Enlaces y Plazo de la Tarea
                 </span>
-                <span className="text-xs text-gray-400">Editable por ambos integrantes</span>
+                <span className="text-[11px] text-gray-400">Editable por ambos integrantes</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-7 space-y-2">
-                  <label className="text-xs sm:text-sm font-bold text-gray-200">Requisito u Objetivo *</label>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <div className="md:col-span-6 space-y-1.5">
+                  <label className="text-xs font-bold text-gray-200">Requisito u Objetivo *</label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={reqTitle}
                     onChange={(e) => setReqTitle(e.target.value)}
-                    className="w-full bg-[#140b21] border border-[#522B80]/70 rounded-xl p-3 text-sm sm:text-base text-white focus:outline-none focus:border-[#E2B86E] leading-relaxed"
+                    className="w-full bg-[#140b21] border border-[#522B80]/70 rounded-xl p-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-[#E2B86E] leading-relaxed resize-none"
                   />
                 </div>
-                <div className="md:col-span-5 space-y-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs sm:text-sm font-bold text-gray-200">Materiales / Enlaces VOD</label>
+                <div className="md:col-span-6 space-y-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-200">Materiales / Enlaces VOD</label>
                     <input
                       type="text"
                       value={reqMaterials}
                       onChange={(e) => setReqMaterials(e.target.value)}
                       placeholder="https://..."
-                      className="w-full bg-[#140b21] border border-[#522B80]/70 rounded-xl px-3 py-2 text-sm sm:text-base text-white focus:outline-none focus:border-[#E2B86E]"
+                      className="w-full bg-[#140b21] border border-[#522B80]/70 rounded-xl px-3 py-1.5 text-xs sm:text-sm text-white focus:outline-none focus:border-[#E2B86E]"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-xs sm:text-sm font-bold text-gray-200">Fecha Límite & Prioridad</label>
-                    <div className="flex items-center space-x-2.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-bold text-gray-300">Fecha Límite</label>
                       <input
                         type="date"
                         value={reqDeadlineDate}
                         onChange={(e) => setReqDeadlineDate(e.target.value)}
-                        className="flex-1 bg-[#140b21] border border-[#522B80]/70 rounded-xl px-3 py-2 text-sm sm:text-base text-white focus:outline-none focus:border-[#E2B86E] cursor-pointer"
+                        className="w-full bg-[#140b21] border border-[#522B80]/70 rounded-xl px-2.5 py-1 text-xs text-white focus:outline-none focus:border-[#E2B86E] cursor-pointer"
                       />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-gray-300">Prioridad</label>
                       <select
                         value={reqPriority}
                         onChange={(e) => setReqPriority(e.target.value as any)}
-                        className="bg-[#140b21] border border-[#522B80]/70 rounded-xl px-3 py-2 text-sm sm:text-base text-white focus:outline-none focus:border-[#E2B86E] cursor-pointer font-bold"
+                        className="w-full bg-[#140b21] border border-[#522B80]/70 rounded-xl px-2.5 py-1 text-xs text-white focus:outline-none focus:border-[#E2B86E] cursor-pointer font-bold"
                       >
                         <option value="high" className="bg-[#140b21] text-rose-400">Alta</option>
                         <option value="medium" className="bg-[#140b21] text-amber-400">Media</option>
                         <option value="low" className="bg-[#140b21] text-cyan-400">Baja</option>
                       </select>
                     </div>
-
-                    {reqDeadlineDate && (
-                      <div className="flex items-center space-x-3 pt-1.5 text-xs sm:text-sm text-gray-300">
-                        <label className="flex items-center space-x-2 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={reqIncludeTime}
-                            onChange={(e) => setReqIncludeTime(e.target.checked)}
-                            className="rounded border-[#522B80] text-[#E2B86E] focus:ring-0 focus:ring-offset-0 bg-[#140b21] w-4 h-4"
-                          />
-                          <span>Incluir hora límite</span>
-                        </label>
-                        {reqIncludeTime && (
-                          <input
-                            type="time"
-                            value={reqDeadlineTime}
-                            onChange={(e) => setReqDeadlineTime(e.target.value)}
-                            className="bg-[#140b21] border border-[#522B80]/70 rounded-xl px-3 py-1 text-sm text-white focus:outline-none focus:border-[#E2B86E]"
-                          />
-                        )}
-                      </div>
-                    )}
                   </div>
+
+                  {reqDeadlineDate && (
+                    <div className="flex items-center space-x-2 pt-1 text-xs text-gray-300">
+                      <label className="flex items-center space-x-1.5 cursor-pointer select-none text-[11px]">
+                        <input
+                          type="checkbox"
+                          checked={reqIncludeTime}
+                          onChange={(e) => setReqIncludeTime(e.target.checked)}
+                          className="rounded border-[#522B80] text-[#E2B86E] focus:ring-0 bg-[#140b21] w-3.5 h-3.5"
+                        />
+                        <span>Hora</span>
+                      </label>
+                      {reqIncludeTime && (
+                        <input
+                          type="time"
+                          value={reqDeadlineTime}
+                          onChange={(e) => setReqDeadlineTime(e.target.value)}
+                          className="bg-[#140b21] border border-[#522B80]/70 rounded-lg px-2 py-0.5 text-xs text-white focus:outline-none focus:border-[#E2B86E]"
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-3 border-t border-[#26143E]">
-                <Button variant="outline" size="md" onClick={() => setIsEditingRequirements(false)}>
+              <div className="flex justify-end space-x-2 pt-2 border-t border-[#26143E]">
+                <Button variant="outline" size="sm" onClick={() => setIsEditingRequirements(false)} className="text-xs">
                   Cancelar
                 </Button>
                 <Button
                   variant="secondary"
-                  size="md"
+                  size="sm"
                   isLoading={isSavingRequirements}
                   onClick={handleSaveRequirements}
-                  className="font-bold shadow-md"
+                  className="font-bold shadow-md text-xs"
                 >
                   Guardar Requisitos
                 </Button>
               </div>
             </div>
           ) : (
-            /* Top Info Grid (Compact) */
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 shrink-0">
-              {/* Left: Requisitos / Detalles */}
-              <div className="md:col-span-7 bg-[#0D0914] border border-[#26143E] rounded-2xl p-4 sm:p-5 space-y-3 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-sm sm:text-base font-bold text-white">
-                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#8B44F7]" />
-                    <span>Requisito & Objetivos de la Tarea</span>
+            /* Streamlined & Compact Task Context Bar (Takes minimal height) */
+            <div className="bg-[#09040e]/90 border border-[#2d1547] rounded-xl px-3.5 py-2.5 sm:px-4 sm:py-3 flex flex-col md:flex-row md:items-center justify-between gap-2.5 shrink-0 shadow-sm">
+              {/* Left: Requisito / Descripción */}
+              <div className="flex-1 min-w-0 flex items-start sm:items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-[#200f36] border border-[#522B80]/60 shrink-0 text-[#8B44F7]">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#E2B86E]">Objetivo / Requisito</span>
+                    {task.description && (
+                      <span className="text-[10px] text-gray-400 font-mono">Con detalles adicionales</span>
+                    )}
                   </div>
-                  <Badge variant="purple" className="text-xs sm:text-sm px-2.5 py-0.5 font-bold uppercase tracking-wide">
-                    Prioridad: {task.priority || 'Media'}
-                  </Badge>
-                </div>
-                <div className="text-sm sm:text-base text-gray-200 font-sans leading-relaxed bg-[#140b21]/80 p-3 sm:p-4 rounded-xl border border-[#522B80]/50 max-h-32 overflow-y-auto">
-                  <MarkdownContent content={task.title + (task.description ? `\n\n${task.description}` : '')} />
-                </div>
-                <div className="flex items-center justify-between text-xs sm:text-sm text-gray-400 font-mono pt-1">
-                  <span>Asignado por: <strong className="text-gray-200 font-bold">{task.authorName}</strong></span>
-                  <span>Creado: {new Date(task.createdAt).toLocaleDateString()}</span>
+                  <p className="text-xs sm:text-sm text-gray-200 line-clamp-1 truncate font-medium">
+                    {task.description ? `${task.title} — ${task.description}` : task.title}
+                  </p>
                 </div>
               </div>
 
-              {/* Right: Materiales & Recursos */}
-              <div className="md:col-span-5 bg-[#0D0914] border border-[#26143E] rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3 shadow-sm">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2 text-sm sm:text-base font-bold text-white">
-                      <LinkIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#E2B86E]" />
-                      <span>Materiales & Recursos (VOD)</span>
+              {/* Right: VOD / Materiales Link Preview */}
+              <div className="flex items-center gap-2 shrink-0 border-t md:border-t-0 md:border-l border-[#2d1547] pt-2 md:pt-0 md:pl-4">
+                {task.materials ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#140b21] border border-[#522B80]/60 text-xs text-purple-200 max-w-[220px] sm:max-w-[280px]">
+                      <LinkIcon className="w-3.5 h-3.5 text-[#E2B86E] shrink-0" />
+                      <span className="truncate font-mono text-[11px]" title={task.materials}>
+                        {task.materials}
+                      </span>
                     </div>
-                    {task.materials && (
-                      <button
-                        onClick={copyMaterials}
-                        className="text-xs sm:text-sm text-gray-400 hover:text-[#E2B86E] flex items-center gap-1.5 transition-colors font-semibold px-2 py-0.5 rounded-lg hover:bg-[#26143E]"
-                        title="Copiar enlace"
+
+                    {firstUrlMatch && (
+                      <a
+                        href={firstUrlMatch}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 bg-[#1f1035] hover:bg-[#321757] border border-[#522B80] rounded-lg text-gray-200 hover:text-white transition-colors"
+                        title="Abrir enlace"
                       >
-                        {hasCopiedUrl ? <CheckCheck className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{hasCopiedUrl ? 'Copiado' : 'Copiar'}</span>
-                      </button>
+                        <ExternalLink className="w-3.5 h-3.5 text-[#E2B86E]" />
+                      </a>
                     )}
-                  </div>
 
-                  {task.materials ? (
-                    <div className="bg-[#140b21]/80 p-3 sm:p-3.5 rounded-xl border border-[#522B80]/50 space-y-1 text-sm sm:text-base max-h-24 overflow-y-auto">
-                      <MarkdownContent content={task.materials} />
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 italic p-3 bg-[#140b21]/40 rounded-xl border border-[#26143E]">
-                      No se adjuntaron enlaces o materiales específicos.
-                    </p>
-                  )}
-                </div>
-
-                {task.deadline && (
-                  <div className="p-2.5 sm:p-3 rounded-xl bg-amber-950/25 border border-amber-500/40 flex items-center space-x-2.5 text-xs sm:text-sm text-amber-300 shadow-sm">
-                    <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Plazo de entrega: <strong className="text-white font-bold">{formatDeadlineDisplay(task.deadline)}</strong></span>
+                    <button
+                      onClick={copyMaterials}
+                      className="px-2 py-1 bg-[#1f1035] hover:bg-[#321757] border border-[#522B80] rounded-lg text-xs text-gray-300 hover:text-white flex items-center gap-1 transition-colors font-medium"
+                      title="Copiar enlace"
+                    >
+                      {hasCopiedUrl ? <CheckCheck className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <span className="text-[11px]">{hasCopiedUrl ? 'Copiado' : 'Copiar'}</span>
+                    </button>
                   </div>
+                ) : (
+                  <span className="text-xs text-gray-500 italic flex items-center gap-1">
+                    <LinkIcon className="w-3 h-3 text-gray-600" />
+                    Sin enlaces o VODs adjuntos
+                  </span>
                 )}
               </div>
             </div>
           )}
 
-          {/* Bottom Section: Anotaciones Block that fills remaining space and scrolls internally */}
-          <div className="flex-1 flex flex-col min-h-[320px] bg-[#0D0914] border border-[#522B80]/80 rounded-2xl p-4 sm:p-5 gap-3 shadow-inner overflow-hidden">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#26143E] shrink-0">
-              <div className="flex items-center space-x-2.5">
-                <h3 className="text-sm sm:text-base md:text-lg font-black text-white flex items-center space-x-2.5">
-                  <span>Anotaciones & Análisis de la Tarea / VOD</span>
-                  <Badge variant="gold" className="text-xs px-2.5 py-0.5 font-bold">
-                    Libreta Amplia
-                  </Badge>
+          {/* Bottom Section: Anotaciones Block that fills all remaining space comfortably */}
+          <div className="flex-1 flex flex-col bg-[#09040e] border border-[#3c1e5e] rounded-2xl overflow-hidden shadow-inner min-h-[350px]">
+            {/* Toolbar: Sleek, compact and responsive */}
+            <div className="px-3.5 py-2 sm:px-4 sm:py-2.5 bg-[#170c27] border-b border-[#2d1547] flex flex-wrap items-center justify-between gap-2 shrink-0">
+              {/* Title & Badge */}
+              <div className="flex items-center space-x-2">
+                <Edit3 className="w-4 h-4 text-[#E2B86E]" />
+                <h3 className="text-xs sm:text-sm font-bold text-white tracking-wide">
+                  Anotaciones & Libreta de Análisis
                 </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2a1445] text-[#E2B86E] border border-[#E2B86E]/30 hidden sm:inline-block">
+                  Espacio Amplio
+                </span>
               </div>
 
-              {/* View Mode Toggle & Format Helpers (If allowed to edit) */}
+              {/* View Mode Toggle & Compact Format Helpers */}
               {canEditAnnotations ? (
                 <div className="flex items-center flex-wrap gap-2">
-                  {/* Switcher [Editar] / [Vista Previa] */}
-                  <div className="inline-flex rounded-xl p-0.5 bg-[#140b21] border border-[#522B80] shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('edit')}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all ${
-                        activeTab === 'edit'
-                          ? 'bg-[#522B80] text-white shadow-sm ring-1 ring-[#E2B86E]/50'
-                          : 'text-gray-400 hover:text-gray-200'
-                      }`}
-                    >
-                      <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span>Editar</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('preview')}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all ${
-                        activeTab === 'preview'
-                          ? 'bg-[#8B44F7] text-white shadow-sm ring-1 ring-[#E2B86E]/50'
-                          : 'text-gray-400 hover:text-gray-200'
-                      }`}
-                    >
-                      <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E2B86E]" />
-                      <span>Vista Previa</span>
-                    </button>
-                  </div>
-
-                  {/* Helpers (only in edit mode) */}
+                  {/* Quick Format Helpers (Compact chips) */}
                   {activeTab === 'edit' && (
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => handleInsertHelper('**Ronda 1:** ')}
-                        className="px-2.5 sm:px-3 py-1 bg-[#180d29] hover:bg-[#26143E] border border-[#522B80] rounded-lg text-xs sm:text-sm text-gray-200 hover:text-white transition-all font-mono font-bold shadow-sm"
+                        className="px-2 py-1 bg-[#13091f] hover:bg-[#281340] border border-[#482370] rounded-md text-[11px] text-gray-200 hover:text-white transition-all font-mono font-semibold flex items-center gap-1 shadow-sm"
+                        title="Insertar encabezado de ronda"
                       >
-                        + Ronda
+                        <ListPlus className="w-3 h-3 text-purple-300" />
+                        <span>+ Ronda</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleInsertHelper('> Conclusión táctica: ')}
-                        className="px-2.5 sm:px-3 py-1 bg-[#180d29] hover:bg-[#26143E] border border-[#522B80] rounded-lg text-xs sm:text-sm text-[#E2B86E] hover:text-white transition-all font-mono font-bold shadow-sm"
+                        className="px-2 py-1 bg-[#13091f] hover:bg-[#281340] border border-[#482370] rounded-md text-[11px] text-[#E2B86E] hover:text-amber-200 transition-all font-mono font-semibold flex items-center gap-1 shadow-sm"
+                        title="Insertar bloque de conclusión"
                       >
-                        + Conclusión
+                        <Quote className="w-3 h-3 text-[#E2B86E]" />
+                        <span>+ Conclusión</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleInsertHelper('[00:00] Timemark: ')}
-                        className="px-2.5 sm:px-3 py-1 bg-[#180d29] hover:bg-[#26143E] border border-[#522B80] rounded-lg text-xs sm:text-sm text-purple-300 hover:text-white transition-all font-mono font-bold shadow-sm"
+                        className="px-2 py-1 bg-[#13091f] hover:bg-[#281340] border border-[#482370] rounded-md text-[11px] text-cyan-300 hover:text-cyan-100 transition-all font-mono font-semibold flex items-center gap-1 shadow-sm"
+                        title="Insertar minuto del VOD"
                       >
-                        + Minuto VOD
+                        <Timer className="w-3 h-3 text-cyan-400" />
+                        <span>+ Minuto VOD</span>
                       </button>
                     </div>
                   )}
+
+                  {/* Switcher [Editar] / [Vista Previa] */}
+                  <div className="inline-flex rounded-lg p-0.5 bg-[#0e0618] border border-[#3c1e5e] shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('edit')}
+                      className={`px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all ${
+                        activeTab === 'edit'
+                          ? 'bg-[#522B80] text-white shadow-sm ring-1 ring-[#E2B86E]/50'
+                          : 'text-gray-400 hover:text-gray-200'
+                      }`}
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>Editar</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('preview')}
+                      className={`px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition-all ${
+                        activeTab === 'preview'
+                          ? 'bg-[#7c3aed] text-white shadow-sm ring-1 ring-[#E2B86E]/50'
+                          : 'text-gray-400 hover:text-gray-200'
+                      }`}
+                    >
+                      <Eye className="w-3 h-3 text-[#E2B86E]" />
+                      <span>Vista Previa</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 /* Read-Only Notice Badge for Non-Assignee */
-                <div className="flex items-center space-x-2 px-3.5 py-1.5 bg-[#140b21] border border-[#522B80]/70 rounded-xl text-xs sm:text-sm text-gray-200 shadow-sm">
-                  <Eye className="w-4 h-4 text-[#E2B86E]" />
-                  <span>Vista Previa en vivo • Asignado a: <strong className="text-white font-bold">{assigneeDisplay}</strong></span>
+                <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-[#140b21] border border-[#522B80]/70 rounded-lg text-xs text-gray-200 shadow-sm">
+                  <Eye className="w-3.5 h-3.5 text-[#E2B86E]" />
+                  <span>Vista Previa • Asignado a: <strong className="text-white font-bold">{assigneeDisplay}</strong></span>
                 </div>
               )}
             </div>
 
-            {/* Main Editor (if canEditAnnotations and edit tab) OR Live Markdown Preview */}
-            {canEditAnnotations && activeTab === 'edit' ? (
-              <textarea
-                value={annotations}
-                onChange={(e) => setAnnotations(e.target.value)}
-                placeholder="Escribe aquí el análisis completo de la VOD o tarea... (Soporta múltiples líneas, saltos, listas y formato markdown)."
-                className="flex-1 w-full p-4 sm:p-5 bg-[#140b21] border border-[#522B80]/70 rounded-xl text-sm sm:text-base text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#E2B86E] focus:ring-1 focus:ring-[#E2B86E]/40 font-sans leading-relaxed resize-none overflow-y-auto"
-              />
-            ) : (
-              <div className="flex-1 w-full p-4 sm:p-5 bg-[#140b21] border border-[#522B80]/70 rounded-xl overflow-y-auto select-text">
-                {annotations.trim().length > 0 ? (
-                  <div className="text-sm sm:text-base text-gray-100 leading-relaxed">
-                    <MarkdownContent content={annotations} />
-                  </div>
-                ) : (
-                  <div className="text-center py-12 space-y-2">
-                    <p className="text-sm sm:text-base text-gray-300 italic font-medium">
-                      {canEditAnnotations
-                        ? 'No has escrito anotaciones todavía. Cambia a la pestaña "Editar" para redactar tu análisis.'
-                        : `El usuario asignado (${assigneeDisplay}) aún no ha redactado las anotaciones.`}
-                    </p>
-                    <p className="text-xs sm:text-sm text-gray-400">
-                      Cualquier apunte que se guarde se actualizará aquí automáticamente en tiempo real.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Main Full-Height Editor OR Live Markdown Preview */}
+            <div className="flex-1 relative flex flex-col min-h-0 bg-[#12091c] p-3 sm:p-4">
+              {canEditAnnotations && activeTab === 'edit' ? (
+                <textarea
+                  value={annotations}
+                  onChange={(e) => setAnnotations(e.target.value)}
+                  placeholder="Escribe aquí las notas y análisis de la tarea o VOD... (Soporta múltiples líneas, listas, formato markdown como **negrita**, > citas, y [00:00] marcas de tiempo)."
+                  className="w-full h-full p-3.5 sm:p-4 bg-[#0d0614] border border-[#3c1e5e]/80 rounded-xl text-xs sm:text-sm md:text-base text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#E2B86E] focus:ring-1 focus:ring-[#E2B86E]/40 font-sans leading-relaxed resize-none overflow-y-auto"
+                />
+              ) : (
+                <div className="w-full h-full p-3.5 sm:p-4 bg-[#0d0614] border border-[#3c1e5e]/80 rounded-xl overflow-y-auto select-text">
+                  {annotations.trim().length > 0 ? (
+                    <div className="text-xs sm:text-sm md:text-base text-gray-100 leading-relaxed">
+                      <MarkdownContent content={annotations} className="text-xs sm:text-sm md:text-base leading-relaxed" />
+                    </div>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-center py-10 space-y-2">
+                      <FileText className="w-8 h-8 text-gray-600 mb-1" />
+                      <p className="text-xs sm:text-sm text-gray-300 italic font-medium">
+                        {canEditAnnotations
+                          ? 'No has escrito anotaciones todavía. Haz clic en "Editar" arriba para empezar a escribir.'
+                          : `El usuario asignado (${assigneeDisplay}) aún no ha redactado las anotaciones.`}
+                      </p>
+                      <p className="text-[11px] sm:text-xs text-gray-500">
+                        Cualquier cambio guardado se sincronizará automáticamente para ambos integrantes.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Footer Actions (Fixed) */}
-        <div className="p-4 sm:p-5 bg-[#0D0914] border-t border-[#26143E] flex flex-wrap items-center justify-between gap-4 shrink-0">
+        {/* Compact Footer */}
+        <div className="px-4 py-3 sm:px-6 sm:py-3.5 bg-[#09040e] border-t border-[#26143E] flex flex-wrap items-center justify-between gap-3 shrink-0">
           <div className="flex items-center space-x-3">
             {onDeleteTask && (
               <button
@@ -561,32 +605,33 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     onClose();
                   }
                 }}
-                className="text-xs sm:text-sm font-bold text-red-400 hover:text-red-300 hover:underline px-3 py-2 rounded-lg transition-colors"
+                className="text-xs font-bold text-red-400/80 hover:text-red-300 hover:underline flex items-center gap-1.5 px-2 py-1 rounded transition-colors"
               >
-                Eliminar Tarea
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Eliminar Tarea</span>
               </button>
             )}
             {showSavedFeedback && (
-              <span className="text-xs sm:text-sm text-emerald-400 font-bold flex items-center gap-1.5 animate-fade-in">
-                <Check className="w-4 h-4" />
-                ¡Anotaciones guardadas correctamente!
+              <span className="text-xs text-emerald-400 font-bold flex items-center gap-1 animate-fade-in bg-emerald-950/40 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+                <Check className="w-3.5 h-3.5" />
+                ¡Anotaciones guardadas!
               </span>
             )}
           </div>
 
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" size="md" onClick={onClose} className="px-5 py-2.5 text-xs sm:text-sm font-bold">
+          <div className="flex items-center space-x-2.5">
+            <Button variant="outline" size="sm" onClick={onClose} className="px-4 py-1.5 text-xs font-bold">
               Cerrar
             </Button>
             {canEditAnnotations && (
               <Button
                 variant="secondary"
-                size="md"
+                size="sm"
                 isLoading={isSaving}
                 onClick={handleSaveAnnotations}
-                className="flex items-center space-x-2 px-6 py-2.5 text-xs sm:text-sm font-black shadow-lg"
+                className="flex items-center space-x-1.5 px-5 py-1.5 text-xs sm:text-sm font-black shadow-lg"
               >
-                <Save className="w-4 h-4 sm:w-5 sm:h-5" />
+                <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span>Guardar Anotaciones</span>
               </Button>
             )}
@@ -596,3 +641,4 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     </div>
   );
 };
+

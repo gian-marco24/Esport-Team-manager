@@ -63,6 +63,7 @@ interface UserMapStat {
 interface UserMatchParticipation {
   matchId: string;
   date: string;
+  createdAt?: string;
   opponentName: string;
   type: string;
   overallScore: string;
@@ -299,6 +300,7 @@ export const ProfilePage: React.FC = () => {
           participationList.push({
             matchId: m.id,
             date: m.date,
+            createdAt: m.createdAt,
             opponentName: m.opponentName,
             type: m.type,
             overallScore: `${map.teamScore} - ${map.opponentScore}`,
@@ -379,6 +381,20 @@ export const ProfilePage: React.FC = () => {
       .sort((a, b) => b.kdaRatio - a.kdaRatio || b.winRate - a.winRate || b.timesPlayed - a.timesPlayed)
       .slice(0, 5);
 
+    // Sort recent matches chronologically descending: most recent on top, oldest below (maximum 10)
+    const recent10Participation = [...participationList]
+      .sort((a, b) => {
+        const timeA = new Date(a.date).getTime() || 0;
+        const timeB = new Date(b.date).getTime() || 0;
+        if (timeB !== timeA) {
+          return timeB - timeA;
+        }
+        const createdA = a.createdAt ? new Date(a.createdAt).getTime() || 0 : 0;
+        const createdB = b.createdAt ? new Date(b.createdAt).getTime() || 0 : 0;
+        return createdB - createdA;
+      })
+      .slice(0, 10);
+
     return {
       totalMatches,
       wins,
@@ -397,7 +413,7 @@ export const ProfilePage: React.FC = () => {
       formattedKda: `${avgKills} / ${avgDeaths} / ${avgAssists}`,
       agentList,
       mapList,
-      participationList: participationList.reverse(),
+      participationList: recent10Participation,
     };
   }, [matches, user, memberData, agents, mapsData]);
 
@@ -940,7 +956,7 @@ export const ProfilePage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#26143E]/60 text-gray-300">
-                  {detailedUserStats.participationList.slice(0, 10).map((item, idx) => (
+                  {detailedUserStats.participationList.map((item, idx) => (
                     <tr key={idx} className="hover:bg-[#1f1035]/60 transition-colors">
                       <td className="py-3.5 px-4">
                         <p className="font-bold text-white text-sm">{item.opponentName}</p>
