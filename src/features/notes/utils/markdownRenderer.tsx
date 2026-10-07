@@ -141,11 +141,15 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
     }
 
     // Standard line
-    renderedElements.push(
-      <div key={`line-${i}`} className="min-h-[1.25rem]">
-        {parseInlineMarkdown(line, `l-${i}`)}
-      </div>
-    );
+    if (!line.trim()) {
+      renderedElements.push(<div key={`line-${i}`} className="h-1" />);
+    } else {
+      renderedElements.push(
+        <div key={`line-${i}`} className="leading-snug py-[1px]">
+          {parseInlineMarkdown(line, `l-${i}`)}
+        </div>
+      );
+    }
   }
 
   // Flush any unclosed code block
@@ -160,5 +164,5 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
     );
   }
 
-  return <div className={`space-y-0.5 text-xs sm:text-[13px] ${className}`}>{renderedElements}</div>;
+  return <div className={`space-y-0 text-[13.5px] sm:text-[14.5px] leading-snug ${className}`}>{renderedElements}</div>;
 };

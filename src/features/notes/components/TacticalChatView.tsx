@@ -408,7 +408,7 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
         {/* Messages Scroll Area */}
         <div
           ref={chatContainerRef}
-          className="flex-1 p-2.5 sm:p-3.5 overflow-y-auto space-y-2.5 select-text"
+          className="flex-1 p-2 sm:p-3 overflow-y-auto space-y-2 select-text"
         >
           {isMessagesLoading ? (
             <div className="py-12 text-center text-xs text-gray-400 space-y-2">
@@ -431,7 +431,7 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
               return (
                 <div
                   key={group.id}
-                  className={`relative rounded-xl border transition-all p-3.5 space-y-2.5 ${
+                  className={`relative rounded-xl border transition-all p-2.5 sm:p-3 space-y-1.5 ${
                     group.isPinned
                       ? 'bg-gradient-to-r from-amber-950/20 to-[#180d29] border-amber-500/40 shadow-sm'
                       : isMe
@@ -439,13 +439,13 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
                       : 'bg-[#180d29]/90 border-[#26143E]'
                   }`}
                 >
-                  {/* Author Header */}
-                  <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-[#8B44F7] to-[#522B80] flex items-center justify-center text-xs font-bold text-white shadow shrink-0">
+                  {/* Author Header (Compact) */}
+                  <div className="flex items-center justify-between pb-1 border-b border-white/[0.04]">
+                    <div className="flex items-center space-x-1.5">
+                      <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-[#8B44F7] to-[#522B80] flex items-center justify-center text-[10px] sm:text-xs font-bold text-white shadow shrink-0">
                         {group.authorName.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-xs sm:text-sm font-bold text-white">{group.authorName}</span>
+                      <span className="text-xs font-bold text-white tracking-wide">{group.authorName}</span>
                       {group.authorRole && (
                         <Badge
                           variant={
@@ -457,14 +457,14 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
                               ? 'gold'
                               : 'dark'
                           }
-                          className="text-[9px] sm:text-[10px] px-1.5 py-0 font-bold"
+                          className="text-[8px] sm:text-[9px] px-1.5 py-0 font-bold tracking-tight uppercase"
                         >
                           {group.authorRole}
                         </Badge>
                       )}
                     </div>
 
-                    <span className="text-xs text-gray-500 font-mono">
+                    <span className="text-[10px] sm:text-[11px] text-gray-400 font-mono">
                       {new Date(group.createdAt).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -473,7 +473,7 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
                   </div>
 
                   {/* Messages List Inside Group */}
-                  <div className="space-y-2 select-text">
+                  <div className="space-y-1 select-text">
                     {group.messages.map((msg) => {
                       const linkedTask = msg.taskId
                         ? tasks.find((t) => t.id === msg.taskId)
@@ -795,68 +795,68 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
       {/* Interactive Input Form */}
       <form
         onSubmit={handleSend}
-        className="p-3 bg-[#0D0914] border-t border-[#26143E] space-y-2 shrink-0"
+        className="p-2 sm:p-2.5 bg-[#0D0914] border-t border-[#26143E] space-y-1.5 shrink-0"
       >
         {/* Formatting & Tags Top Mini-Toolbar */}
-        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-0.5 text-xs no-scrollbar">
           {/* Markdown Quick Format Buttons */}
-          <div className="flex items-center space-x-1.5 shrink-0">
+          <div className="flex items-center space-x-1 shrink-0">
             <button
               type="button"
               onClick={() => insertFormatting('**', '**')}
-              className="p-1.5 rounded-lg bg-[#180d29] hover:bg-[#26143E] text-gray-300 hover:text-white border border-[#522B80]/40 transition-colors"
+              className="p-1 rounded-md bg-[#180d29] hover:bg-[#26143E] text-gray-300 hover:text-white border border-[#522B80]/40 transition-colors"
               title="Negrita (**texto**)"
             >
-              <Bold className="w-3.5 h-3.5" />
+              <Bold className="w-3 h-3" />
             </button>
             <button
               type="button"
               onClick={() => insertFormatting('*', '*')}
-              className="p-1.5 rounded-lg bg-[#180d29] hover:bg-[#26143E] text-gray-300 hover:text-white border border-[#522B80]/40 transition-colors"
+              className="p-1 rounded-md bg-[#180d29] hover:bg-[#26143E] text-gray-300 hover:text-white border border-[#522B80]/40 transition-colors"
               title="Cursiva (*texto*)"
             >
-              <Italic className="w-3.5 h-3.5" />
+              <Italic className="w-3 h-3" />
             </button>
             <button
               type="button"
               onClick={() => insertFormatting('~~', '~~')}
-              className="p-1.5 rounded-lg bg-[#180d29] hover:bg-[#26143E] text-gray-300 hover:text-white border border-[#522B80]/40 transition-colors"
+              className="p-1 rounded-md bg-[#180d29] hover:bg-[#26143E] text-gray-300 hover:text-white border border-[#522B80]/40 transition-colors"
               title="Tachado (~~texto~~)"
             >
-              <Strikethrough className="w-3.5 h-3.5" />
+              <Strikethrough className="w-3 h-3" />
             </button>
             <button
               type="button"
               onClick={() => insertFormatting('> ')}
-              className="p-1.5 rounded-lg bg-[#180d29] hover:bg-[#26143E] text-[#E2B86E] hover:text-white border border-[#522B80]/40 transition-colors"
+              className="p-1 rounded-md bg-[#180d29] hover:bg-[#26143E] text-[#E2B86E] hover:text-white border border-[#522B80]/40 transition-colors"
               title="Cita con barra vertical estilo Discord (> texto)"
             >
-              <Quote className="w-3.5 h-3.5" />
+              <Quote className="w-3 h-3" />
             </button>
             <button
               type="button"
               onClick={() => insertFormatting('`', '`')}
-              className="p-1.5 rounded-lg bg-[#180d29] hover:bg-[#26143E] text-gray-300 hover:text-white border border-[#522B80]/40 transition-colors"
+              className="p-1 rounded-md bg-[#180d29] hover:bg-[#26143E] text-gray-300 hover:text-white border border-[#522B80]/40 transition-colors"
               title="Código (`código`)"
             >
-              <Code className="w-3.5 h-3.5" />
+              <Code className="w-3 h-3" />
             </button>
 
             {allowTasks && (
               <button
                 type="button"
                 onClick={() => setIsCreateTaskModalOpen(true)}
-                className="px-2 py-1 rounded-lg bg-gradient-to-r from-[#522B80] to-[#26143E] hover:from-[#8B44F7] hover:to-[#522B80] text-[#E2B86E] border border-[#E2B86E]/40 text-xs font-bold flex items-center gap-1.5 transition-all"
+                className="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-[#522B80] to-[#26143E] hover:from-[#8B44F7] hover:to-[#522B80] text-[#E2B86E] border border-[#E2B86E]/40 text-[11px] font-bold flex items-center gap-1 transition-all"
                 title="Asignar tarea en este chat"
               >
-                <CheckSquare className="w-3 h-3" />
+                <CheckSquare className="w-2.5 h-2.5" />
                 <span>+ Tarea</span>
               </button>
             )}
           </div>
 
           {/* Tactical Quick Tags Bar */}
-          <div className="flex items-center space-x-1.5 shrink-0">
+          <div className="flex items-center space-x-1 shrink-0">
             {DEFAULT_TACTICAL_TAGS.slice(0, 6).map((tag) => {
               const isSelected = selectedTags.includes(tag.label);
               return (
@@ -864,7 +864,7 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
                   key={tag.id}
                   type="button"
                   onClick={() => toggleTagSelection(tag.label)}
-                  className={`px-2 py-1 rounded-lg text-[10px] sm:text-xs font-bold shrink-0 transition-all border ${
+                  className={`px-1.5 py-0.5 rounded-md text-[9.5px] sm:text-[10.5px] font-bold shrink-0 transition-all border ${
                     isSelected
                       ? 'bg-[#8B44F7] text-white border-[#E2B86E]'
                       : 'bg-[#180d29] text-gray-400 border-[#26143E] hover:border-[#8B44F7] hover:text-gray-200'
@@ -879,19 +879,19 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
 
         {/* Selected Images Previews */}
         {selectedImages.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto p-2 bg-[#180d29] rounded-xl border border-[#522B80]/40">
+          <div className="flex items-center gap-2 overflow-x-auto p-1.5 bg-[#180d29] rounded-xl border border-[#522B80]/40">
             {selectedImages.map((imgUrl, idx) => (
               <div
                 key={idx}
-                className="relative w-14 h-14 rounded-xl overflow-hidden border border-[#8B44F7] shrink-0"
+                className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#8B44F7] shrink-0"
               >
                 <img src={imgUrl} alt="Preview" className="w-full h-full object-cover" />
                 <button
                   type="button"
                   onClick={() => setSelectedImages((prev) => prev.filter((_, i) => i !== idx))}
-                  className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-600 rounded-full flex items-center justify-center text-white"
+                  className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-600 rounded-full flex items-center justify-center text-white"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-2.5 h-2.5" />
                 </button>
               </div>
             ))}
@@ -899,7 +899,7 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
         )}
 
         {/* Input Controls Bar: File Upload + Auto-Expanding Textarea + Send */}
-        <div className="flex items-end space-x-2">
+        <div className="flex items-end space-x-1.5">
           {/* Hidden File Input */}
           <input
             ref={fileInputRef}
@@ -915,13 +915,13 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploadingImage}
-            className="p-2.5 bg-[#180d29] hover:bg-[#26143E] border border-[#522B80]/60 rounded-xl text-gray-300 hover:text-[#E2B86E] transition-colors shrink-0 disabled:opacity-50 mb-0.5"
+            className="p-2 bg-[#180d29] hover:bg-[#26143E] border border-[#522B80]/60 rounded-xl text-gray-300 hover:text-[#E2B86E] transition-colors shrink-0 disabled:opacity-50 mb-0.5"
             title="Adjuntar imagen táctica (o pega con Ctrl+V)"
           >
             {isUploadingImage ? (
-              <div className="w-4 h-4 border-2 border-[#E2B86E] border-t-transparent rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-2 border-[#E2B86E] border-t-transparent rounded-full animate-spin" />
             ) : (
-              <ImageIcon className="w-4 h-4" />
+              <ImageIcon className="w-3.5 h-3.5" />
             )}
           </button>
 
@@ -934,8 +934,8 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Escribe un apunte (Shift+Enter para nueva línea, > para citas)..."
-              className="w-full bg-[#180d29] border border-[#522B80]/60 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#8B44F7] resize-none overflow-hidden leading-relaxed block"
-              style={{ minHeight: '42px', maxHeight: '160px' }}
+              className="w-full bg-[#180d29] border border-[#522B80]/60 rounded-xl px-3 py-2 text-xs sm:text-[13px] text-white placeholder-gray-500 focus:outline-none focus:border-[#8B44F7] resize-none overflow-hidden leading-snug block"
+              style={{ minHeight: '38px', maxHeight: '160px' }}
             />
           </div>
 
@@ -946,9 +946,9 @@ export const TacticalChatView: React.FC<TacticalChatViewProps> = ({
             size="md"
             isLoading={isSending}
             disabled={!inputText.trim() && selectedImages.length === 0}
-            className="px-4 py-2.5 shrink-0 mb-0.5"
+            className="px-3.5 py-2 shrink-0 mb-0.5 h-[38px]"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-3.5 h-3.5" />
           </Button>
         </div>
       </form>

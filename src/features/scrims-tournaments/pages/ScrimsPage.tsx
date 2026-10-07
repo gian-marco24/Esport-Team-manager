@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, RefreshCw, Swords } from 'lucide-react';
+import { Plus, Search, RefreshCw, Swords, ChevronDown } from 'lucide-react';
 import { useMatches } from '../hooks/useMatches';
 import { MatchCard } from '../components/MatchCard';
 import type { MatchResultOutcome } from '../types';
@@ -24,6 +24,15 @@ export const ScrimsPage: React.FC = () => {
     refetch,
     removeMatch,
   } = useMatches();
+
+  const [visibleCount, setVisibleCount] = useState<number>(12);
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [selectedType, selectedOutcome, searchQuery]);
+
+  const displayedMatches = matches.slice(0, visibleCount);
 
   return (
     <div className="space-y-6 w-full pb-10">
@@ -162,10 +171,27 @@ export const ScrimsPage: React.FC = () => {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {matches.map((m) => (
-            <MatchCard key={m.id} match={m} onDelete={removeMatch} />
-          ))}
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedMatches.map((m) => (
+              <MatchCard key={m.id} match={m} onDelete={removeMatch} />
+            ))}
+          </div>
+
+          {/* Load More Button (12 more matches per click) */}
+          {visibleCount < matches.length && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setVisibleCount((prev) => prev + 12)}
+                className="font-bold shadow-lg shadow-[#8B44F7]/25 px-8 flex items-center space-x-2"
+                leftIcon={<ChevronDown className="w-4 h-4" />}
+              >
+                <span>Ver más encuentros ({matches.length - visibleCount} restantes)</span>
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

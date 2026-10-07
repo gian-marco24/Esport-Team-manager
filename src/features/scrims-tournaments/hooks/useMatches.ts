@@ -12,12 +12,20 @@ export const useMatches = () => {
   const [selectedOutcome, setSelectedOutcome] = useState<MatchResultOutcome | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  const sortMatchesByCreated = (list: Match[]) => {
+    return [...list].sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.date || 0).getTime();
+      const timeB = new Date(b.createdAt || b.date || 0).getTime();
+      return timeB - timeA;
+    });
+  };
+
   const fetchMatches = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const data = await matchService.getMatches();
-      setMatches(data);
+      setMatches(sortMatchesByCreated(data));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error al cargar los resultados de partidas.';
       setError(message);
@@ -32,7 +40,7 @@ export const useMatches = () => {
       .getMatches()
       .then((data) => {
         if (isSubscribed) {
-          setMatches(data);
+          setMatches(sortMatchesByCreated(data));
           setIsLoading(false);
         }
       })

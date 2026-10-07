@@ -254,7 +254,7 @@ export const NotesPage: React.FC = () => {
           {/* Roster General & Coaches-Managers Side-by-Side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Roster General Chat */}
-            <div className="h-[460px]">
+            <div className="h-[680px] sm:h-[740px] lg:h-[780px]">
               <TacticalChatView
                 channelId={`roster-${activeRosterId}-general`}
                 title={`Anotaciones de Escuadra: ${activeRoster?.name || 'Roster General'}`}
@@ -266,7 +266,7 @@ export const NotesPage: React.FC = () => {
             </div>
 
             {/* Coaches <-> Managers */}
-            <div className="h-[460px]">
+            <div className="h-[680px] sm:h-[740px] lg:h-[780px]">
               <TacticalChatView
                 channelId={`roster-${activeRosterId}-coaches-managers`}
                 title={`Coaches & Gerencia: ${activeRoster?.name || 'Escuadra'}`}

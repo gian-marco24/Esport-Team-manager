@@ -59,6 +59,7 @@ export interface Match {
   vods?: MatchVod[];
   screenshotUrls?: string[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 export const createMatchSchema = z

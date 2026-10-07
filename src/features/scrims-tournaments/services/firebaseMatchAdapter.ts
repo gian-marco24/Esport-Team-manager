@@ -13,7 +13,12 @@ export class FirebaseMatchAdapter implements IMatchPort {
       if (snapshot.empty) {
         return [];
       }
-      return snapshot.docs.map((d) => d.data() as Match);
+      const list = snapshot.docs.map((d) => d.data() as Match);
+      return list.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.date || 0).getTime();
+        const timeB = new Date(b.createdAt || b.date || 0).getTime();
+        return timeB - timeA;
+      });
     } catch (error) {
       console.error('Firestore getMatches error:', error);
       return [];
@@ -65,6 +70,7 @@ export class FirebaseMatchAdapter implements IMatchPort {
 
   async updateMatch(id: string, data: CreateMatchFormData): Promise<Match> {
     const { outcome, overallScore } = calculateMatchSummary(data.type, data.maps);
+    const existing = await this.getMatchById(id);
 
     const updatedMatch: Match = {
       id,
@@ -80,7 +86,8 @@ export class FirebaseMatchAdapter implements IMatchPort {
       playerStats: data.playerStats || (data.maps && data.maps[0]?.playerStats ? data.maps[0].playerStats : []),
       vods: data.vods || [],
       screenshotUrls: data.screenshotUrls || [],
-      createdAt: new Date().toISOString(),
+      createdAt: existing?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     if (db) {

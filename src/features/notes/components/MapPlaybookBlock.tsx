@@ -79,7 +79,7 @@ export const MapPlaybookBlock: React.FC<MapPlaybookBlockProps> = ({ roster, rost
       </div>
 
       {/* 2-Column Layout: Mini Sidebar + Active Map Chat */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-[620px] lg:h-[680px]">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-[700px] lg:h-[780px]">
         {/* Left Mini Sidebar: Maps */}
         <div className="md:col-span-4 lg:col-span-3 bg-[#0D0914] border border-[#26143E] rounded-2xl p-3 flex flex-col space-y-2 overflow-y-auto">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2 py-1">

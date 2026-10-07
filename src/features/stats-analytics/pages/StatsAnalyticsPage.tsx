@@ -11,6 +11,8 @@ import {
   Crosshair,
   MapPin,
   Sparkles,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
@@ -90,6 +92,8 @@ export const StatsAnalyticsPage: React.FC = () => {
     );
   }, [members, selectedRosterId]);
 
+  const [showAllMaps, setShowAllMaps] = useState(false);
+
   // Derived Statistics
   const generalStats: GeneralTeamStats = useMemo(() => {
     return statsCalculationService.calculateGeneralStats(filteredMatches);
@@ -98,6 +102,20 @@ export const StatsAnalyticsPage: React.FC = () => {
   const mapStats: MapStatsSummary[] = useMemo(() => {
     return statsCalculationService.calculateMapStats(filteredMatches, mapsData);
   }, [filteredMatches, mapsData]);
+
+  // The "Mejor Mapa" is the map with highest winRate, and on tie, the most timesPlayed
+  const bestMapName = useMemo(() => {
+    if (mapStats.length === 0) return null;
+    const sortedByWinrate = [...mapStats].sort((a, b) => {
+      if (b.winRate !== a.winRate) return b.winRate - a.winRate;
+      return b.timesPlayed - a.timesPlayed;
+    });
+    return sortedByWinrate[0]?.mapName || null;
+  }, [mapStats]);
+
+  const visibleMaps = useMemo(() => {
+    return showAllMaps ? mapStats : mapStats.slice(0, 4);
+  }, [mapStats, showAllMaps]);
 
   const playerStats: PlayerStatsSummary[] = useMemo(() => {
     const raw = statsCalculationService.calculatePlayerStats(filteredMatches, filteredMembers, agents);
@@ -315,87 +333,107 @@ export const StatsAnalyticsPage: React.FC = () => {
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
-            {mapStats.map((m, idx) => {
-              const isBestMap = idx === 0 && m.winRate >= 50;
-              return (
-                <div
-                  key={m.mapName}
-                  className={`relative rounded-2xl overflow-hidden border transition-all duration-300 group ${
-                    isBestMap
-                      ? 'border-[#E2B86E] bg-gradient-to-b from-[#26143E] to-[#140b21] shadow-xl shadow-[#E2B86E]/10'
-                      : 'border-[#522B80]/40 bg-[#180d29]/90 hover:border-[#8B44F7]'
-                  }`}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {visibleMaps.map((m) => {
+                const isBestMap = m.mapName === bestMapName;
+                return (
+                  <div
+                    key={m.mapName}
+                    className={`relative rounded-2xl overflow-hidden border transition-all duration-300 group ${
+                      isBestMap
+                        ? 'border-[#E2B86E] bg-gradient-to-b from-[#26143E] to-[#140b21] shadow-xl shadow-[#E2B86E]/10'
+                        : 'border-[#522B80]/40 bg-[#180d29]/90 hover:border-[#8B44F7]'
+                    }`}
+                  >
+                    {/* Map Background Splash Banner */}
+                    <div className="h-36 sm:h-40 relative overflow-hidden bg-[#0D0914]">
+                      {m.splashUrl ? (
+                        <img
+                          src={m.splashUrl}
+                          alt={m.mapName}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-r from-[#522B80] to-[#26143E] opacity-40" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#140b21] via-transparent to-black/40" />
+
+                      {/* Badge on top */}
+                      <div className="absolute top-3 left-3.5 right-3.5 flex items-center justify-between">
+                        <span className="text-sm sm:text-base font-black text-white tracking-wider uppercase drop-shadow-md">
+                          {m.mapName}
+                        </span>
+                        {isBestMap && (
+                          <Badge variant="gold" className="text-xs font-bold shadow-lg flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Mejor Mapa</span>
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="absolute bottom-2.5 left-3.5 flex items-center space-x-2">
+                        <span className="px-2.5 py-1 bg-black/70 rounded-lg text-xs text-gray-300 font-semibold border border-white/10">
+                          {m.timesPlayed} {m.timesPlayed === 1 ? 'mapa' : 'mapas'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Map Stats Details */}
+                    <div className="p-4 sm:p-5 space-y-3.5">
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="p-2.5 bg-[#140b21] rounded-xl border border-[#522B80]/30">
+                          <span className="text-[10px] uppercase font-bold text-gray-400 block">Winrate</span>
+                          <span className="text-sm sm:text-base font-extrabold text-[#E2B86E]">{m.winRate}%</span>
+                        </div>
+                        <div className="p-2.5 bg-[#140b21] rounded-xl border border-[#522B80]/30">
+                          <span className="text-[10px] uppercase font-bold text-gray-400 block">Record</span>
+                          <span className="text-xs sm:text-sm font-bold text-white">
+                            <span className="text-emerald-400">{m.wins}W</span> - <span className="text-red-400">{m.losses}L</span>
+                          </span>
+                        </div>
+                        <div className="p-2.5 bg-[#140b21] rounded-xl border border-[#522B80]/30">
+                          <span className="text-[10px] uppercase font-bold text-gray-400 block">K/D Equipo</span>
+                          <span className="text-xs sm:text-sm font-bold text-purple-300">{m.teamAvgKda}</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-[#26143E] flex items-center justify-between text-xs text-gray-400">
+                        <span>
+                          Rondas: <strong className="text-white">{m.roundsWon}</strong> - <strong className="text-gray-300">{m.roundsLost}</strong>{' '}
+                          <span className={m.roundDiff >= 0 ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}>
+                            ({m.roundDiff >= 0 ? `+${m.roundDiff}` : m.roundDiff})
+                          </span>
+                        </span>
+                        {m.bestPlayerNick && (
+                          <span className="text-right truncate max-w-[140px]">
+                            MVP: <strong className="text-[#E2B86E]">{m.bestPlayerNick}</strong>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Ver Más / Ver Menos Button (if more than 4 maps) */}
+            {mapStats.length > 4 && (
+              <div className="flex justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAllMaps((prev) => !prev)}
+                  className="px-6 py-2.5 rounded-xl bg-[#180d29] hover:bg-[#26143E] border border-[#522B80]/70 hover:border-[#E2B86E] text-xs sm:text-sm font-bold text-gray-200 hover:text-white flex items-center space-x-2 transition-all shadow-lg hover:shadow-[#8B44F7]/25 cursor-pointer"
                 >
-                  {/* Map Background Splash Banner */}
-                  <div className="h-36 sm:h-40 relative overflow-hidden bg-[#0D0914]">
-                    {m.splashUrl ? (
-                      <img
-                        src={m.splashUrl}
-                        alt={m.mapName}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-r from-[#522B80] to-[#26143E] opacity-40" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#140b21] via-transparent to-black/40" />
-
-                    {/* Badge on top */}
-                    <div className="absolute top-3 left-3.5 right-3.5 flex items-center justify-between">
-                      <span className="text-sm sm:text-base font-black text-white tracking-wider uppercase drop-shadow-md">
-                        {m.mapName}
-                      </span>
-                      {isBestMap && (
-                        <Badge variant="gold" className="text-xs font-bold shadow-lg flex items-center gap-1">
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>Mejor Mapa</span>
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="absolute bottom-2.5 left-3.5 flex items-center space-x-2">
-                      <span className="px-2.5 py-1 bg-black/70 rounded-lg text-xs text-gray-300 font-semibold border border-white/10">
-                        {m.timesPlayed} {m.timesPlayed === 1 ? 'mapa' : 'mapas'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Map Stats Details */}
-                  <div className="p-4 sm:p-5 space-y-3.5">
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-2.5 bg-[#140b21] rounded-xl border border-[#522B80]/30">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block">Winrate</span>
-                        <span className="text-sm sm:text-base font-extrabold text-[#E2B86E]">{m.winRate}%</span>
-                      </div>
-                      <div className="p-2.5 bg-[#140b21] rounded-xl border border-[#522B80]/30">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block">Record</span>
-                        <span className="text-xs sm:text-sm font-bold text-white">
-                          <span className="text-emerald-400">{m.wins}W</span> - <span className="text-red-400">{m.losses}L</span>
-                        </span>
-                      </div>
-                      <div className="p-2.5 bg-[#140b21] rounded-xl border border-[#522B80]/30">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block">K/D Equipo</span>
-                        <span className="text-xs sm:text-sm font-bold text-purple-300">{m.teamAvgKda}</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-[#26143E] flex items-center justify-between text-xs text-gray-400">
-                      <span>
-                        Rondas: <strong className="text-white">{m.roundsWon}</strong> - <strong className="text-gray-300">{m.roundsLost}</strong>{' '}
-                        <span className={m.roundDiff >= 0 ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}>
-                          ({m.roundDiff >= 0 ? `+${m.roundDiff}` : m.roundDiff})
-                        </span>
-                      </span>
-                      {m.bestPlayerNick && (
-                        <span className="text-right truncate max-w-[140px]">
-                          MVP: <strong className="text-[#E2B86E]">{m.bestPlayerNick}</strong>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                  <span>{showAllMaps ? 'Ver menos' : `Ver más (${mapStats.length - 4} mapas restantes)`}</span>
+                  {showAllMaps ? (
+                    <ChevronUp className="w-4 h-4 text-[#E2B86E]" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-[#E2B86E]" />
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
