@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calendar as CalendarIcon,
   Plus,
@@ -15,6 +15,8 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { URS_GAMARA_TEAM } from '../../teams/config/currentTeam.config';
+import { teamService } from '../../teams/services/teamService';
+import type { TeamMember, Roster } from '../../teams/types';
 
 export const SchedulePage: React.FC = () => {
   const {
@@ -29,8 +31,26 @@ export const SchedulePage: React.FC = () => {
     removeEvent,
   } = useScheduleEvents();
 
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [rosters, setRosters] = useState<Roster[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalDefaultDate, setModalDefaultDate] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [membersData, rostersData] = await Promise.all([
+          teamService.getMembers(URS_GAMARA_TEAM.id),
+          teamService.getRosters(URS_GAMARA_TEAM.id),
+        ]);
+        setMembers(membersData);
+        setRosters(rostersData);
+      } catch (err) {
+        console.error('Error loading team data in schedule page:', err);
+      }
+    }
+    loadData();
+  }, []);
 
   const handleOpenModal = (date?: string) => {
     setModalDefaultDate(date || selectedDate);
@@ -162,6 +182,8 @@ export const SchedulePage: React.FC = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         defaultDate={modalDefaultDate}
+        members={members}
+        rosters={rosters}
         onSave={async (evtData) => {
           await addEvent(evtData);
         }}

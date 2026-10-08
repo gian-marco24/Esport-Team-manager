@@ -107,7 +107,11 @@ export const DayEventsPanel: React.FC<DayEventsPanelProps> = ({
                     <div className="flex items-center space-x-1.5 text-xs sm:text-sm text-[#E2B86E] mt-1 font-semibold">
                       <Clock className="w-4 h-4" />
                       <span>
-                        {evt.startTime || '00:00'} - {evt.endTime || 'Por definir'}
+                        {evt.startTime && evt.endTime
+                          ? `${evt.startTime} - ${evt.endTime}`
+                          : evt.startTime
+                          ? `${evt.startTime} hrs`
+                          : `Hasta las ${evt.endTime}`}
                       </span>
                     </div>
                   )}
