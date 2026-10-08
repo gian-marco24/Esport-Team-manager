@@ -7,6 +7,7 @@ import {
   Undo2,
   Trash2,
   Brush,
+  RotateCw,
 } from 'lucide-react';
 import type { TacticalTool } from '../../types/tacticalBoard';
 
@@ -21,6 +22,8 @@ interface DrawingToolbarProps {
   onClearLines: () => void;
   onClearAll: () => void;
   canUndo: boolean;
+  onToggleFlip180?: () => void;
+  isFlipped180?: boolean;
 }
 
 const COLORS = [
@@ -49,6 +52,8 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
   onClearLines,
   onClearAll,
   canUndo,
+  onToggleFlip180,
+  isFlipped180,
 }) => {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-[#0D0914] border border-[#26143E] rounded-xl shadow-lg text-xs">
@@ -151,14 +156,30 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         ))}
       </div>
 
-      {/* Botones de Acción (Deshacer, Limpiar Trazos, Reiniciar) */}
+      {/* Botones de Acción (Girar 180°, Deshacer, Limpiar Trazos, Reiniciar) */}
       <div className="flex items-center space-x-1.5">
+        {onToggleFlip180 && (
+          <button
+            type="button"
+            onClick={onToggleFlip180}
+            title="Girar perspectiva 180° (invierte vista entre atacantes y defensores)"
+            className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
+              isFlipped180
+                ? 'bg-[#522B80] border-[#E2B86E] text-[#E2B86E] shadow-sm'
+                : 'bg-[#140b21] border-[#26143E] text-gray-300 hover:text-white hover:border-[#8B44F7]'
+            }`}
+          >
+            <RotateCw className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Girar 180°</span>
+          </button>
+        )}
+
         <button
           type="button"
           onClick={onUndo}
           disabled={!canUndo}
           title="Deshacer último trazo"
-          className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-[#140b21] border border-[#26143E] text-gray-300 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all"
+          className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-[#140b21] border border-[#26143E] text-gray-300 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
         >
           <Undo2 className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Deshacer</span>

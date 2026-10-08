@@ -62,6 +62,7 @@ export interface TacticalBoardState {
   vodId: string;
   mapName: string;
   mapIconUrl: string;
+  isFlipped180?: boolean;
   tokens: TacticalToken[];
   lines: TacticalLine[];
   updatedBy?: string;

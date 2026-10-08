@@ -11,6 +11,7 @@ import type {
 interface TacticalBoardCanvasProps {
   mapIconUrl: string;
   mapName: string;
+  mapRotation?: number;
   tokens: TacticalToken[];
   lines: TacticalLine[];
   currentTool: TacticalTool;
@@ -68,7 +69,8 @@ const TacticalTokenNode: React.FC<{
   const posX = (token.x / 100) * stageWidth;
   const posY = (token.y / 100) * stageHeight;
 
-  const baseRadius = token.size ? token.size / 2 : 18;
+  const isAbility = token.type === 'ability';
+  const baseRadius = token.size ? token.size / 2 : isAbility ? 16 : 18;
   const teamColor = getTeamColor(token.team);
 
   // Escala para ajustar la imagen dentro del círculo
@@ -118,32 +120,24 @@ const TacticalTokenNode: React.FC<{
         onUpdatePosition(token.id, boundedX, boundedY);
       }}
     >
-      {/* Círculo de Fondo y Borde con Luz */}
+      {/* Círculo de Fondo y Borde: para habilidades es sutil sin borde molesto, para agentes tiene anillo del equipo */}
       <Circle
         radius={baseRadius}
         fill={tokenImage ? undefined : '#140b21'}
         fillPatternImage={tokenImage || undefined}
         fillPatternScale={patternScale}
         fillPatternOffset={patternOffset}
-        stroke={teamColor}
-        strokeWidth={isHovered ? 3.5 : 2.5}
-        shadowColor={teamColor}
-        shadowBlur={isHovered ? 12 : 6}
+        stroke={
+          isAbility
+            ? isHovered
+              ? 'rgba(255, 255, 255, 0.5)'
+              : undefined
+            : teamColor
+        }
+        strokeWidth={isAbility ? 1 : isHovered ? 3.5 : 2.5}
+        shadowColor={isAbility ? undefined : teamColor}
+        shadowBlur={isAbility ? 0 : isHovered ? 12 : 6}
         shadowOpacity={0.85}
-      />
-
-      {/* Nombre del Agente / Ítem debajo */}
-      <Text
-        text={token.name}
-        fontSize={10}
-        fontStyle="bold"
-        fill="#FFFFFF"
-        stroke="#05020a"
-        strokeWidth={2}
-        align="center"
-        y={baseRadius + 3}
-        offsetX={(token.name.length * 5.2) / 2}
-        listening={false}
       />
 
       {/* Botón de eliminar rápido al pasar el cursor */}
@@ -167,6 +161,7 @@ const TacticalTokenNode: React.FC<{
 export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
   mapIconUrl,
   mapName,
+  mapRotation = 0,
   tokens,
   lines,
   currentTool,
@@ -187,6 +182,7 @@ export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
 
   const [activeLine, setActiveLine] = useState<TacticalLine | null>(null);
   const isDrawingRef = useRef(false);
+  const isErasingRef = useRef(false);
 
   const mapImage = useImageLoader(mapIconUrl);
 
@@ -195,7 +191,7 @@ export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
     const updateSize = () => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const size = Math.floor(Math.min(rect.width, window.innerHeight * 0.75, 750));
+      const size = Math.floor(Math.min(rect.width, window.innerHeight * 0.75, 780));
       if (size > 0 && (size !== dimensions.width || size !== dimensions.height)) {
         setDimensions({ width: size, height: size });
       }
@@ -214,14 +210,47 @@ export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
     };
   }, [dimensions.width, dimensions.height]);
 
-  // Manejo de dibujo con Mouse / Touch
+  // Borrado continuo al mantener presionado el borrador
+  const eraseUnderPointer = (pos: { x: number; y: number }) => {
+    // 1. Borrar fichas debajo del cursor
+    tokens.forEach((token) => {
+      const tokenPxX = (token.x / 100) * dimensions.width;
+      const tokenPxY = (token.y / 100) * dimensions.height;
+      const radius = (token.size ? token.size / 2 : 18) + 12;
+      const dist = Math.hypot(pos.x - tokenPxX, pos.y - tokenPxY);
+      if (dist <= radius) {
+        onRemoveToken(token.id);
+      }
+    });
+
+    // 2. Borrar líneas o flechas debajo del cursor
+    lines.forEach((line) => {
+      for (let i = 0; i < line.points.length - 1; i += 2) {
+        const ptX = (line.points[i] / 100) * dimensions.width;
+        const ptY = (line.points[i + 1] / 100) * dimensions.height;
+        const dist = Math.hypot(pos.x - ptX, pos.y - ptY);
+        if (dist <= 18) {
+          onRemoveLine(line.id);
+          break;
+        }
+      }
+    });
+  };
+
+  // Manejo de dibujo y borrador continuo con Mouse / Touch
   const handlePointerDown = (_e: KonvaEventObject<MouseEvent | TouchEvent>) => {
-    if (currentTool !== 'pen' && currentTool !== 'arrow') return;
     const stage = stageRef.current;
     if (!stage) return;
-
     const pos = stage.getPointerPosition();
     if (!pos) return;
+
+    if (currentTool === 'eraser') {
+      isErasingRef.current = true;
+      eraseUnderPointer(pos);
+      return;
+    }
+
+    if (currentTool !== 'pen' && currentTool !== 'arrow') return;
 
     const xPct = (pos.x / dimensions.width) * 100;
     const yPct = (pos.y / dimensions.height) * 100;
@@ -248,12 +277,17 @@ export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
   };
 
   const handlePointerMove = (_e: KonvaEventObject<MouseEvent | TouchEvent>) => {
-    if (!isDrawingRef.current || !activeLine) return;
     const stage = stageRef.current;
     if (!stage) return;
-
     const pos = stage.getPointerPosition();
     if (!pos) return;
+
+    if (currentTool === 'eraser' && isErasingRef.current) {
+      eraseUnderPointer(pos);
+      return;
+    }
+
+    if (!isDrawingRef.current || !activeLine) return;
 
     const xPct = Math.max(0, Math.min(100, (pos.x / dimensions.width) * 100));
     const yPct = Math.max(0, Math.min(100, (pos.y / dimensions.height) * 100));
@@ -278,6 +312,8 @@ export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
   };
 
   const handlePointerUp = () => {
+    isErasingRef.current = false;
+
     if (!isDrawingRef.current || !activeLine) {
       isDrawingRef.current = false;
       return;
@@ -325,7 +361,7 @@ export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full aspect-square max-w-[750px] mx-auto rounded-2xl overflow-hidden border border-[#26143E] bg-[#07040D] shadow-2xl flex items-center justify-center ${cursorClass}`}
+      className={`relative w-full aspect-square max-w-[780px] mx-auto rounded-2xl overflow-hidden border border-[#26143E] bg-[#07040D] shadow-2xl flex items-center justify-center ${cursorClass}`}
     >
       <Stage
         ref={stageRef}
@@ -338,7 +374,7 @@ export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
         onTouchMove={handlePointerMove}
         onTouchEnd={handlePointerUp}
       >
-        {/* Capa 1: Fondo y Mapa de Valorant */}
+        {/* Capa 1: Fondo y Mapa de Valorant con Rotación Oficial (Spawns Arriba y Abajo) */}
         <Layer listening={false}>
           <Rect
             x={0}
@@ -349,14 +385,22 @@ export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
           />
 
           {mapImage && (
-            <KonvaImage
-              image={mapImage}
-              x={0}
-              y={0}
-              width={dimensions.width}
-              height={dimensions.height}
-              opacity={0.92}
-            />
+            <Group
+              x={dimensions.width / 2}
+              y={dimensions.height / 2}
+              rotation={mapRotation}
+              offsetX={dimensions.width / 2}
+              offsetY={dimensions.height / 2}
+            >
+              <KonvaImage
+                image={mapImage}
+                x={0}
+                y={0}
+                width={dimensions.width}
+                height={dimensions.height}
+                opacity={0.92}
+              />
+            </Group>
           )}
         </Layer>
 
@@ -436,7 +480,7 @@ export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
           )}
         </Layer>
 
-        {/* Capa 3: Agentes, Habilidades y Utilidades */}
+        {/* Capa 3: Agentes, Habilidades y Utilidades (Sin textos molestos) */}
         <Layer>
           {tokens.map((token) => (
             <TacticalTokenNode
@@ -460,10 +504,10 @@ export const TacticalBoardCanvas: React.FC<TacticalBoardCanvasProps> = ({
         </span>
       </div>
 
-      {/* Mensaje de ayuda rápida para borrado o interacción */}
+      {/* Mensaje de ayuda rápida para borrado continuo */}
       {currentTool === 'eraser' && (
         <div className="absolute bottom-2.5 inset-x-auto pointer-events-none bg-red-950/80 border border-red-500/50 text-red-200 text-[11px] px-3 py-1 rounded-full backdrop-blur-md shadow-lg">
-          Haz clic en cualquier trazo o agente para eliminarlo
+          Mantén presionado y arrastra para borrar trazos o fichas debajo del cursor
         </div>
       )}
     </div>

@@ -131,13 +131,10 @@ export const VodDetailPage: React.FC = () => {
               setIsAddModalOpen(true);
             }}
           />
-
-          {/* Pizarra Táctica de Análisis (Valoplant propio centrado debajo de la línea de tiempo) */}
-          <TacticalBoardSection vodId={vod.id} initialMapName={vod.mapName} />
         </div>
 
         {/* Right Side Panel Container (35% width): Annotations List or Live Thread Chat */}
-        <div className="lg:col-span-4 h-[650px] lg:h-[720px] 2xl:h-[820px] sticky top-20">
+        <div className="lg:col-span-4 h-[560px] lg:h-[620px] sticky top-20">
           {activeAnnotation ? (
             <AnnotationThreadChat
               annotation={activeAnnotation}
@@ -159,6 +156,9 @@ export const VodDetailPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Pizarra Táctica de Análisis (Valoplant propio a todo el ancho centrado debajo) */}
+      <TacticalBoardSection vodId={vod.id} initialMapName={vod.mapName} />
 
       {/* Custom Modal for Adding Annotation Marker */}
       <AddAnnotationModal

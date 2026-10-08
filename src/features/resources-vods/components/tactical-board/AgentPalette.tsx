@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { Search, ShieldAlert, Sparkles, Plus, Swords, Shield, Crosshair, Eye } from 'lucide-react';
 import type { ValorantAgent, TacticalTeam, TacticalToken, ValorantAbility } from '../../types/tacticalBoard';
 
+// Íconos oficiales vectoriales para Spike, Peligro y Visión
+const SPECIAL_ICONS = {
+  spike: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="%23FFE066"/><stop offset="60%" stop-color="%23F59E0B"/><stop offset="100%" stop-color="%23B45309"/></radialGradient></defs><circle cx="50" cy="50" r="46" fill="%23181320" stroke="%23F59E0B" stroke-width="4"/><polygon points="50,16 80,76 20,76" fill="url(%23g)" stroke="%23FFF" stroke-width="2"/><polygon points="50,32 70,72 30,72" fill="%230D0914"/><circle cx="50" cy="56" r="7" fill="%23F59E0B"/><line x1="50" y1="20" x2="50" y2="34" stroke="%23FFF" stroke-width="3" stroke-linecap="round"/></svg>`,
+  danger: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="%232A0B0E" stroke="%23EF4444" stroke-width="4"/><polygon points="50,18 84,78 16,78" fill="%23EF4444"/><polygon points="50,28 76,74 24,74" fill="%23180507"/><rect x="46" y="38" width="8" height="20" rx="4" fill="%23EF4444"/><circle cx="50" cy="66" r="4.5" fill="%23EF4444"/></svg>`,
+  vision: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="%231B0E2E" stroke="%23A855F7" stroke-width="4"/><path d="M18,50 C30,30 70,30 82,50 C70,70 30,70 18,50 Z" fill="none" stroke="%23C084FC" stroke-width="6" stroke-linejoin="round"/><circle cx="50" cy="50" r="14" fill="%23A855F7"/><circle cx="50" cy="50" r="7" fill="%23FFFFFF"/></svg>`,
+};
+
 interface AgentPaletteProps {
   agents: ValorantAgent[];
   onAddToken: (token: Omit<TacticalToken, 'id'>) => void;
@@ -65,80 +72,62 @@ export const AgentPalette: React.FC<AgentPaletteProps> = ({ agents, onAddToken }
   };
 
   return (
-    <div className="bg-[#0D0914] border border-[#26143E] rounded-xl p-3.5 space-y-3.5 shadow-xl">
+    <div className="bg-[#0D0914] border border-[#26143E] rounded-xl p-3.5 space-y-3.5 shadow-xl flex flex-col h-full">
       {/* Selector de Bando: Ataque vs Defensa */}
-      <div className="flex items-center space-x-2 border-b border-[#26143E] pb-3">
+      <div className="grid grid-cols-2 gap-2 border-b border-[#26143E] pb-3">
         <button
           type="button"
           onClick={() => setSelectedTeam('attack')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 ${
+          className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap overflow-hidden ${
             selectedTeam === 'attack'
               ? 'bg-red-950/80 border border-red-500/80 text-red-200 shadow-md shadow-red-950/50 ring-1 ring-red-500/40'
               : 'bg-[#140b21] border border-[#26143E] text-gray-400 hover:text-white'
           }`}
         >
-          <Swords className="w-3.5 h-3.5 text-red-400" />
-          <span>Ataque (Rojo)</span>
+          <Swords className="w-3.5 h-3.5 text-red-400 shrink-0" />
+          <span className="truncate">Ataque (Rojo)</span>
         </button>
 
         <button
           type="button"
           onClick={() => setSelectedTeam('defense')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 ${
+          className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap overflow-hidden ${
             selectedTeam === 'defense'
               ? 'bg-cyan-950/80 border border-cyan-500/80 text-cyan-200 shadow-md shadow-cyan-950/50 ring-1 ring-cyan-500/40'
               : 'bg-[#140b21] border border-[#26143E] text-gray-400 hover:text-white'
           }`}
         >
-          <Shield className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Defensa (Cyan)</span>
+          <Shield className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          <span className="truncate">Defensa (Cyan)</span>
         </button>
       </div>
 
-      {/* Utilidades Especiales Rápidas (Spike, Pings, Humo) */}
+      {/* Utilidades Especiales Rápidas (Spike Oficial, Peligro, Visión) */}
       <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
         <button
           type="button"
-          onClick={() =>
-            handleSpawnSpecialItem(
-              'Spike',
-              'spike',
-              'https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/0/largeicon.png'
-            )
-          }
-          className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-amber-950/60 border border-amber-500/50 text-[11px] font-bold text-[#E2B86E] hover:bg-amber-900/60 shrink-0 transition-all"
+          onClick={() => handleSpawnSpecialItem('Spike', 'spike', SPECIAL_ICONS.spike)}
+          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-500/50 text-[11px] font-bold text-[#E2B86E] hover:bg-amber-900/60 shrink-0 transition-all cursor-pointer"
         >
-          <Sparkles className="w-3 h-3 text-[#E2B86E]" />
+          <Sparkles className="w-3.5 h-3.5 text-[#E2B86E]" />
           <span>+ Spike</span>
         </button>
 
         <button
           type="button"
-          onClick={() =>
-            handleSpawnSpecialItem(
-              'Peligro',
-              'ping',
-              'https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/24/smallicon.png'
-            )
-          }
-          className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-red-950/60 border border-red-500/50 text-[11px] font-bold text-red-300 hover:bg-red-900/60 shrink-0 transition-all"
+          onClick={() => handleSpawnSpecialItem('Peligro', 'ping', SPECIAL_ICONS.danger)}
+          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-red-950/60 border border-red-500/50 text-[11px] font-bold text-red-300 hover:bg-red-900/60 shrink-0 transition-all cursor-pointer"
         >
-          <ShieldAlert className="w-3 h-3 text-red-400" />
+          <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
           <span>+ Alerta</span>
         </button>
 
         <button
           type="button"
-          onClick={() =>
-            handleSpawnSpecialItem(
-              'Visión',
-              'ping',
-              'https://media.valorant-api.com/competitivetiers/03621f52-342b-cf4e-4f86-9350a49c6d04/18/smallicon.png'
-            )
-          }
-          className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-purple-950/60 border border-purple-500/50 text-[11px] font-bold text-purple-300 hover:bg-purple-900/60 shrink-0 transition-all"
+          onClick={() => handleSpawnSpecialItem('Visión', 'ping', SPECIAL_ICONS.vision)}
+          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-purple-950/60 border border-purple-500/50 text-[11px] font-bold text-purple-300 hover:bg-purple-900/60 shrink-0 transition-all cursor-pointer"
         >
-          <Eye className="w-3 h-3 text-purple-400" />
+          <Eye className="w-3.5 h-3.5 text-purple-400" />
           <span>+ Ojo/Visión</span>
         </button>
       </div>
@@ -170,7 +159,7 @@ export const AgentPalette: React.FC<AgentPaletteProps> = ({ agents, onAddToken }
       </div>
 
       {/* Catálogo de Agentes con Despliegue de Habilidades */}
-      <div className="max-h-[220px] overflow-y-auto pr-1 space-y-1.5 scrollbar-thin scrollbar-thumb-[#522B80]">
+      <div className="max-h-[500px] flex-1 overflow-y-auto pr-1 space-y-1.5 scrollbar-thin scrollbar-thumb-[#522B80]">
         {filteredAgents.length === 0 ? (
           <p className="text-center text-xs text-gray-500 py-4">No se encontraron agentes.</p>
         ) : (

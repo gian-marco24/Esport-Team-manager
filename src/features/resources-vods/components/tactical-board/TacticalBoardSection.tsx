@@ -11,7 +11,7 @@ import {
 import { DrawingToolbar } from './DrawingToolbar';
 import { AgentPalette } from './AgentPalette';
 import { TacticalBoardCanvas } from './TacticalBoardCanvas';
-import { valorantApiService } from '../../services/valorantApiService';
+import { valorantApiService, BASE_MAP_ROTATION } from '../../services/valorantApiService';
 import { tacticalBoardService } from '../../services/tacticalBoardService';
 import type {
   ValorantMap,
@@ -224,6 +224,27 @@ export const TacticalBoardSection: React.FC<TacticalBoardSectionProps> = ({
     }));
   };
 
+  // Girar perspectiva 180° respetando exactamente la posición relativa en el mapa
+  const handleToggleFlip180 = () => {
+    broadcastChange((prev) => ({
+      ...prev,
+      isFlipped180: !prev.isFlipped180,
+      tokens: prev.tokens.map((t) => ({
+        ...t,
+        x: 100 - t.x,
+        y: 100 - t.y,
+      })),
+      lines: prev.lines.map((l) => ({
+        ...l,
+        points: l.points.map((p) => 100 - p),
+      })),
+    }));
+  };
+
+  const currentMapDisplayName = selectedMap?.displayName || boardState.mapName || 'Ascent';
+  const baseMapRotation = BASE_MAP_ROTATION[currentMapDisplayName] ?? 0;
+  const totalMapRotation = baseMapRotation + (boardState.isFlipped180 ? 180 : 0);
+
   return (
     <div className="w-full mt-6 mb-8">
       {!isOpen ? (
@@ -339,15 +360,18 @@ export const TacticalBoardSection: React.FC<TacticalBoardSectionProps> = ({
             onClearLines={handleClearLines}
             onClearAll={handleClearAll}
             canUndo={boardState.lines.length > 0}
+            onToggleFlip180={handleToggleFlip180}
+            isFlipped180={boardState.isFlipped180}
           />
 
           {/* Layout Principal: Lienzo Táctico Central + Catálogo Lateral de Agentes */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-            {/* Columna Izquierda: Lienzo Táctico Centrado (8 columnas en lg) */}
-            <div className="lg:col-span-8 flex flex-col items-center justify-center">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-stretch">
+            {/* Columna Izquierda: Lienzo Táctico Centrado (7 u 8 columnas en pantallas grandes) */}
+            <div className="xl:col-span-7 2xl:col-span-8 flex flex-col items-center justify-center">
               <TacticalBoardCanvas
                 mapIconUrl={selectedMap?.displayIcon || boardState.mapIconUrl}
-                mapName={selectedMap?.displayName || boardState.mapName}
+                mapName={currentMapDisplayName}
+                mapRotation={totalMapRotation}
                 tokens={boardState.tokens}
                 lines={boardState.lines}
                 currentTool={currentTool}
@@ -360,8 +384,8 @@ export const TacticalBoardSection: React.FC<TacticalBoardSectionProps> = ({
               />
             </div>
 
-            {/* Columna Derecha: Selector de Agentes y Habilidades Oficiales (4 columnas en lg) */}
-            <div className="lg:col-span-4 w-full">
+            {/* Columna Derecha: Selector de Agentes y Habilidades Oficiales */}
+            <div className="xl:col-span-5 2xl:col-span-4 w-full flex flex-col h-full">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-bold text-gray-300 flex items-center space-x-1">
                   <Layers className="w-3.5 h-3.5 text-[#E2B86E]" />

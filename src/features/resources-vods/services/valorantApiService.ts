@@ -1,7 +1,36 @@
 import type { ValorantMap, ValorantAgent } from '../types/tacticalBoard';
 
-const MAPS_STORAGE_KEY = 'urs_gamara_valorant_maps_v1';
+const MAPS_STORAGE_KEY = 'urs_gamara_valorant_maps_v2';
 const AGENTS_STORAGE_KEY = 'urs_gamara_valorant_agents_v1';
+
+export const COMPETITIVE_MAP_NAMES = new Set([
+  'ascent',
+  'bind',
+  'breeze',
+  'fracture',
+  'haven',
+  'icebox',
+  'lotus',
+  'pearl',
+  'split',
+  'sunset',
+  'abyss',
+]);
+
+// Rotación base en grados para que los spawns queden alineados verticalmente (Arriba y Abajo)
+export const BASE_MAP_ROTATION: Record<string, number> = {
+  Ascent: -90,
+  Split: -90,
+  Haven: -90,
+  Abyss: -90,
+  Icebox: 90,
+  Bind: 180,
+  Lotus: 180,
+  Sunset: 180,
+  Breeze: 180,
+  Fracture: 180,
+  Pearl: 180,
+};
 
 // Mapas de fallback por si la red falla o está offline
 const FALLBACK_MAPS: ValorantMap[] = [
@@ -79,9 +108,14 @@ class ValorantApiService {
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
       const json = await response.json();
       if (json?.data && Array.isArray(json.data)) {
-        // Filtrar mapas competitivos que tengan displayIcon (minimapa overhead)
+        // Filtrar exclusivamente mapas oficiales del competitivo
         const validMaps: ValorantMap[] = json.data
-          .filter((m: any) => m.displayIcon && m.displayName)
+          .filter(
+            (m: any) =>
+              m.displayIcon &&
+              m.displayName &&
+              COMPETITIVE_MAP_NAMES.has(m.displayName.toLowerCase().trim())
+          )
           .map((m: any) => ({
             uuid: m.uuid,
             displayName: m.displayName,
