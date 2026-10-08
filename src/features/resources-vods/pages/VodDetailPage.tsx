@@ -8,6 +8,7 @@ import { AnnotationList } from '../components/AnnotationList';
 import { AnnotationThreadChat } from '../components/AnnotationThreadChat';
 import { UniversalVideoPlayer } from '../components/UniversalVideoPlayer';
 import { AddAnnotationModal } from '../components/AddAnnotationModal';
+import { TacticalBoardSection } from '../components/tactical-board/TacticalBoardSection';
 import { Badge } from '../../../components/ui/Badge';
 import { LoadingSpinner } from '../../../components/feedback/LoadingSpinner';
 
@@ -130,6 +131,9 @@ export const VodDetailPage: React.FC = () => {
               setIsAddModalOpen(true);
             }}
           />
+
+          {/* Pizarra Táctica de Análisis (Valoplant propio centrado debajo de la línea de tiempo) */}
+          <TacticalBoardSection vodId={vod.id} initialMapName={vod.mapName} />
         </div>
 
         {/* Right Side Panel Container (35% width): Annotations List or Live Thread Chat */}
