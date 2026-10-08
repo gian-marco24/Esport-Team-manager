@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Plus,
   Clock,
@@ -9,6 +9,7 @@ import {
   Trash2,
   Calendar as CalendarIcon,
   UserX,
+  AlertTriangle,
 } from 'lucide-react';
 import type { CalendarEvent } from '../types';
 import { EVENT_TYPES_CONFIG } from '../types';
@@ -28,6 +29,8 @@ export const DayEventsPanel: React.FC<DayEventsPanelProps> = ({
   onOpenAddModal,
   onDeleteEvent,
 }) => {
+  const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
+
   const formatDateTitle = (dateStr: string) => {
     if (!dateStr) return 'Fecha seleccionada';
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -46,7 +49,7 @@ export const DayEventsPanel: React.FC<DayEventsPanelProps> = ({
   const formattedDate = formatDateTitle(selectedDate);
 
   return (
-    <div className="bg-[#140b21] border border-[#26143E] rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col h-full space-y-4">
+    <div className="bg-[#140b21] border border-[#26143E] rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col h-full space-y-4 relative">
       {/* PANEL HEADER */}
       <div className="flex items-center justify-between border-b border-[#26143E] pb-4">
         <div>
@@ -92,7 +95,7 @@ export const DayEventsPanel: React.FC<DayEventsPanelProps> = ({
                   </div>
 
                   <button
-                    onClick={() => onDeleteEvent(evt.id)}
+                    onClick={() => setEventToDelete(evt)}
                     title="Eliminar evento"
                     className="text-gray-500 hover:text-red-400 p-1.5 rounded hover:bg-red-950/40 transition-colors"
                   >
@@ -103,7 +106,7 @@ export const DayEventsPanel: React.FC<DayEventsPanelProps> = ({
                 {/* Título & Horario */}
                 <div>
                   <h4 className="text-sm sm:text-base font-bold text-white leading-snug">{evt.title}</h4>
-                  {(evt.startTime || evt.endTime) && (
+                  {evt.type !== 'absence' && (evt.startTime || evt.endTime) && (
                     <div className="flex items-center space-x-1.5 text-xs sm:text-sm text-[#E2B86E] mt-1 font-semibold">
                       <Clock className="w-4 h-4" />
                       <span>
@@ -212,6 +215,53 @@ export const DayEventsPanel: React.FC<DayEventsPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+      {eventToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md bg-[#140b21] border border-[#522B80] rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-red-950/80 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white">¿Eliminar este evento?</h3>
+                <p className="text-xs text-gray-400">Esta acción eliminará el evento del calendario.</p>
+              </div>
+            </div>
+
+            <div className="bg-[#0D0914] p-3.5 rounded-xl border border-[#26143E] space-y-1 text-xs">
+              <p className="font-bold text-white truncate">{eventToDelete.title}</p>
+              <p className="text-[#E2B86E] font-medium text-[11px]">
+                {EVENT_TYPES_CONFIG[eventToDelete.type]?.label || 'Evento'} • {eventToDelete.date}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setEventToDelete(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                className="bg-red-600 hover:bg-red-700 text-white border-red-500 shadow-lg shadow-red-900/40"
+                onClick={() => {
+                  onDeleteEvent(eventToDelete.id);
+                  setEventToDelete(null);
+                }}
+              >
+                Sí, eliminar evento
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

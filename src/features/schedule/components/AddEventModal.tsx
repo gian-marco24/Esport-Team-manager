@@ -321,10 +321,9 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
     }
   }, [type, absentPlayer]);
 
-  if (!isOpen) return null;
-
-  // Las 3 primeras opciones (tournament, showmatch, absence) no llevan Hora Fin
-  const hideEndTime = type === 'tournament' || type === 'showmatch' || type === 'absence';
+  // Torneo y Showmatch no llevan Hora Fin. Falta Prevista no lleva Horarios.
+  const hideEndTime = type === 'tournament' || type === 'showmatch';
+  const isAbsence = type === 'absence';
 
   const toggleMemberSelection = (memberLabel: string) => {
     setSelectedMembers((prev) =>
@@ -360,8 +359,8 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
         title: title.trim(),
         type,
         date,
-        startTime: startTime.trim() || undefined,
-        endTime: hideEndTime ? undefined : (endTime.trim() || undefined),
+        startTime: isAbsence ? undefined : (startTime.trim() || undefined),
+        endTime: isAbsence || hideEndTime ? undefined : (endTime.trim() || undefined),
         scope: type === 'absence' ? 'specific' : scope,
         targetMembers: targetMembersList,
         location: location.trim(),
@@ -685,11 +684,11 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
             </div>
           )}
 
-          {/* Fecha y Horarios (Sin Hora Fin para Torneo, Showmatch y Falta Prevista) */}
-          <div className={`grid grid-cols-1 ${hideEndTime ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3`}>
+          {/* Fecha y Horarios (Sin Horarios para Falta Prevista, Sin Hora Fin para Torneo y Showmatch) */}
+          {isAbsence ? (
             <div>
               <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
-                Fecha *
+                Fecha de la Falta / Ausencia *
               </label>
               <Input
                 type="date"
@@ -698,31 +697,45 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
                 required
               />
             </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
-                {hideEndTime ? 'Hora del Evento' : 'Hora Inicio'}
-              </label>
-              <Input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              />
-            </div>
-
-            {!hideEndTime && (
+          ) : (
+            <div className={`grid grid-cols-1 ${hideEndTime ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3`}>
               <div>
                 <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
-                  Hora Fin
+                  Fecha *
+                </label>
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
+                  {hideEndTime ? 'Hora del Evento' : 'Hora Inicio'}
                 </label>
                 <Input
                   type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
                 />
               </div>
-            )}
-          </div>
+
+              {!hideEndTime && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
+                    Hora Fin
+                  </label>
+                  <Input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Ubicación y Enlace */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
