@@ -700,7 +700,19 @@ export const statsCalculationService = {
       }
     });
 
-    const result: PlayerStatsSummary[] = Object.values(playerMap).map((p) => {
+    const result: PlayerStatsSummary[] = Object.values(playerMap)
+      .filter((p) => {
+        // En estadísticas individuales solo deben aparecer los players.
+        // Los coaches (y roles que no sean player) únicamente van a aparecer si jugaron
+        // y tienen estadísticas en por lo menos 1 partida.
+        const role = (p.teamRole || '').toLowerCase().trim();
+        const isPlayer = role === 'player' || role.includes('player');
+        if (!isPlayer && p.matchesPlayed === 0) {
+          return false;
+        }
+        return true;
+      })
+      .map((p) => {
       const count = Math.max(1, p.matchesPlayed);
       const winRate = p.matchesPlayed > 0 ? Math.round((p.wins / p.matchesPlayed) * 100) : 0;
 

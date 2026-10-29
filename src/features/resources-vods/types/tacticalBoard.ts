@@ -35,8 +35,8 @@ export interface ValorantAgent {
 }
 
 export type TacticalTeam = 'attack' | 'defense' | 'neutral';
-export type TacticalTokenType = 'agent' | 'ability' | 'spike' | 'ping';
-export type TacticalTool = 'select' | 'pen' | 'arrow' | 'eraser';
+export type TacticalTokenType = 'agent' | 'ability' | 'spike' | 'ping' | 'text';
+export type TacticalTool = 'select' | 'pen' | 'arrow' | 'eraser' | 'text';
 
 export interface TacticalToken {
   id: string;
@@ -48,6 +48,13 @@ export interface TacticalToken {
   team: TacticalTeam;
   subtext?: string;
   size?: number; // Radio o diámetro aproximado
+  // Propiedades para cuadros de texto tácticos
+  text?: string;
+  textLevel?: 'H1' | 'H2' | 'H3';
+  isBold?: boolean;
+  isItalic?: boolean;
+  isUnderline?: boolean;
+  boxWidth?: number;
 }
 
 export interface TacticalLine {

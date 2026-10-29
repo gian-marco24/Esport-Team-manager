@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Video, Plus, Search, Sparkles } from 'lucide-react';
 import { useVods } from '../hooks/useVods';
 import { VodCard } from '../components/VodCard';
@@ -12,15 +12,23 @@ export const VodsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredVods = vods.filter((v) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      v.title.toLowerCase().includes(q) ||
-      v.opponentName?.toLowerCase().includes(q) ||
-      v.mapName?.toLowerCase().includes(q)
-    );
-  });
+  const filteredVods = useMemo(() => {
+    const list = vods.filter((v) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        v.title.toLowerCase().includes(q) ||
+        v.opponentName?.toLowerCase().includes(q) ||
+        v.mapName?.toLowerCase().includes(q)
+      );
+    });
+
+    return [...list].sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.matchDate || 0).getTime();
+      const timeB = new Date(b.createdAt || b.matchDate || 0).getTime();
+      return timeB - timeA;
+    });
+  }, [vods, searchQuery]);
 
   return (
     <div className="space-y-6">

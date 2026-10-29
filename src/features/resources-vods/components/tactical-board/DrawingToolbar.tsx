@@ -4,6 +4,7 @@ import {
   Pencil,
   ArrowUpRight,
   Eraser,
+  Type,
   Undo2,
   Trash2,
   Brush,
@@ -62,7 +63,7 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         <button
           type="button"
           onClick={() => onSelectTool('select')}
-          title="Mover Agentes y Tokens (Selección)"
+          title="Mover Agentes y Fichas (Modo por defecto)"
           className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all ${
             currentTool === 'select'
               ? 'bg-[#8B44F7] text-white shadow-md shadow-[#8B44F7]/40 ring-1 ring-[#E2B86E]/50'
@@ -75,8 +76,8 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
 
         <button
           type="button"
-          onClick={() => onSelectTool('pen')}
-          title="Lápiz de Trazo Libre"
+          onClick={() => onSelectTool(currentTool === 'pen' ? 'select' : 'pen')}
+          title="Lápiz de Trazo Libre [Q] (Presiona Q de nuevo para volver a Mover)"
           className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all ${
             currentTool === 'pen'
               ? 'bg-[#8B44F7] text-white shadow-md shadow-[#8B44F7]/40 ring-1 ring-[#E2B86E]/50'
@@ -85,12 +86,13 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         >
           <Pencil className="w-3.5 h-3.5" />
           <span>Lápiz</span>
+          <kbd className="ml-1 px-1.5 py-0.5 bg-black/40 rounded text-[9px] text-gray-300 font-mono border border-white/10">Q</kbd>
         </button>
 
         <button
           type="button"
-          onClick={() => onSelectTool('arrow')}
-          title="Flecha Táctica de Trayectoria"
+          onClick={() => onSelectTool(currentTool === 'arrow' ? 'select' : 'arrow')}
+          title="Flecha Táctica de Trayectoria [T] (Presiona T de nuevo para volver a Mover)"
           className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all ${
             currentTool === 'arrow'
               ? 'bg-[#8B44F7] text-white shadow-md shadow-[#8B44F7]/40 ring-1 ring-[#E2B86E]/50'
@@ -99,12 +101,13 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         >
           <ArrowUpRight className="w-3.5 h-3.5" />
           <span>Flecha</span>
+          <kbd className="ml-1 px-1.5 py-0.5 bg-black/40 rounded text-[9px] text-gray-300 font-mono border border-white/10">T</kbd>
         </button>
 
         <button
           type="button"
-          onClick={() => onSelectTool('eraser')}
-          title="Borrador de Trazos y Tokens"
+          onClick={() => onSelectTool(currentTool === 'eraser' ? 'select' : 'eraser')}
+          title="Modo Borrador [W] (Presiona W de nuevo para volver a Mover)"
           className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all ${
             currentTool === 'eraser'
               ? 'bg-[#8B44F7] text-white shadow-md shadow-[#8B44F7]/40 ring-1 ring-[#E2B86E]/50'
@@ -113,6 +116,21 @@ export const DrawingToolbar: React.FC<DrawingToolbarProps> = ({
         >
           <Eraser className="w-3.5 h-3.5" />
           <span>Borrar</span>
+          <kbd className="ml-1 px-1.5 py-0.5 bg-black/40 rounded text-[9px] text-gray-300 font-mono border border-white/10">W</kbd>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onSelectTool(currentTool === 'text' ? 'select' : 'text')}
+          title="Crear Cuadro de Texto Táctico (Haz click en el mapa para escribir)"
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all ${
+            currentTool === 'text'
+              ? 'bg-[#8B44F7] text-white shadow-md shadow-[#8B44F7]/40 ring-1 ring-[#E2B86E]/50'
+              : 'text-gray-400 hover:text-white hover:bg-[#26143E]'
+          }`}
+        >
+          <Type className="w-3.5 h-3.5" />
+          <span>Texto</span>
         </button>
       </div>
 

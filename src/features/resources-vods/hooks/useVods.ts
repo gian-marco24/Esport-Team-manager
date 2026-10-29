@@ -29,7 +29,14 @@ export const useVods = () => {
   const addVod = async (data: CreateVodFormData) => {
     try {
       const created = await vodService.createVod(data, user || undefined);
-      setVods((prev) => [created, ...prev]);
+      setVods((prev) => {
+        const next = [created, ...prev];
+        return next.sort((a, b) => {
+          const timeA = new Date(a.createdAt || a.matchDate || 0).getTime();
+          const timeB = new Date(b.createdAt || b.matchDate || 0).getTime();
+          return timeB - timeA;
+        });
+      });
       return created;
     } catch (err: any) {
       throw new Error(err.message || 'Error al guardar la VOD.');

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Compass,
   Radio,
@@ -39,9 +39,28 @@ export const TacticalBoardSection: React.FC<TacticalBoardSectionProps> = ({
   const [agents, setAgents] = useState<ValorantAgent[]>([]);
   const [selectedMap, setSelectedMap] = useState<ValorantMap | null>(null);
 
+  // Ordenar mapas alfabéticamente
+  const sortedMaps = useMemo(() => {
+    return [...maps].sort((a, b) => a.displayName.localeCompare(b.displayName));
+  }, [maps]);
+
+  const [canvasDimensions, setCanvasDimensions] = useState<{ width: number; height: number }>({
+    width: 720,
+    height: 720,
+  });
+
+  const handleDimensionsChange = useCallback((dims: { width: number; height: number }) => {
+    setCanvasDimensions(dims);
+  }, []);
+
   const [currentTool, setCurrentTool] = useState<TacticalTool>('select');
   const [currentColor, setCurrentColor] = useState<string>('#E2B86E');
   const [currentWidth, setCurrentWidth] = useState<number>(3);
+  const [onlyInMap, setOnlyInMap] = useState<boolean>(false);
+
+  const handleToggleFilterInMap = useCallback(() => {
+    setOnlyInMap((prev) => !prev);
+  }, []);
 
   const [boardState, setBoardState] = useState<TacticalBoardState>({
     vodId,
@@ -161,15 +180,23 @@ export const TacticalBoardSection: React.FC<TacticalBoardSectionProps> = ({
     }));
   };
 
-  const handleAddToken = (token: Omit<TacticalToken, 'id'>) => {
+  const handleAddToken = (token: Omit<TacticalToken, 'id'> & { id?: string }): TacticalToken => {
     const newToken: TacticalToken = {
       ...token,
-      id: `token_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id: token.id || `token_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     };
 
     broadcastChange((prev) => ({
       ...prev,
       tokens: [...prev.tokens, newToken],
+    }));
+    return newToken;
+  };
+
+  const handleUpdateToken = (id: string, updates: Partial<TacticalToken>) => {
+    broadcastChange((prev) => ({
+      ...prev,
+      tokens: prev.tokens.map((t) => (t.id === id ? { ...t, ...updates } : t)),
     }));
   };
 
@@ -321,12 +348,12 @@ export const TacticalBoardSection: React.FC<TacticalBoardSectionProps> = ({
                 <select
                   value={selectedMap?.uuid || ''}
                   onChange={(e) => {
-                    const m = maps.find((x) => x.uuid === e.target.value);
+                    const m = sortedMaps.find((x) => x.uuid === e.target.value);
                     if (m) handleSelectMap(m);
                   }}
                   className="bg-[#140b21] border border-[#26143E] text-xs font-semibold text-white pl-3 pr-8 py-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none focus:border-[#8B44F7]"
                 >
-                  {maps.map((m) => (
+                  {sortedMaps.map((m) => (
                     <option key={m.uuid} value={m.uuid}>
                       Mapa: {m.displayName}
                     </option>
@@ -364,10 +391,10 @@ export const TacticalBoardSection: React.FC<TacticalBoardSectionProps> = ({
             isFlipped180={boardState.isFlipped180}
           />
 
-          {/* Layout Principal: Lienzo Táctico Central + Catálogo Lateral de Agentes */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-stretch">
-            {/* Columna Izquierda: Lienzo Táctico Centrado (7 u 8 columnas en pantallas grandes) */}
-            <div className="xl:col-span-7 2xl:col-span-8 flex flex-col items-center justify-center">
+          {/* Layout Principal: Altura estrictamente dictada por el mapa táctico */}
+          <div className="flex flex-col xl:flex-row items-start gap-5 w-full">
+            {/* Columna Izquierda: Lienzo Táctico Máximo (Aprovecha casi todo el ancho disponible) */}
+            <div className="flex-1 w-full min-w-0 flex flex-col items-center justify-center">
               <TacticalBoardCanvas
                 mapIconUrl={selectedMap?.displayIcon || boardState.mapIconUrl}
                 mapName={currentMapDisplayName}
@@ -379,14 +406,25 @@ export const TacticalBoardSection: React.FC<TacticalBoardSectionProps> = ({
                 currentWidth={currentWidth}
                 onAddLine={handleAddLine}
                 onRemoveLine={handleRemoveLine}
+                onAddToken={handleAddToken}
+                onUpdateToken={handleUpdateToken}
                 onUpdateTokenPosition={handleUpdateTokenPosition}
                 onRemoveToken={handleRemoveToken}
+                onSelectTool={setCurrentTool}
+                onToggleFilterInMap={handleToggleFilterInMap}
+                onDimensionsChange={handleDimensionsChange}
               />
             </div>
 
-            {/* Columna Derecha: Selector de Agentes y Habilidades Oficiales */}
-            <div className="xl:col-span-5 2xl:col-span-4 w-full flex flex-col h-full">
-              <div className="mb-2 flex items-center justify-between">
+            {/* Columna Derecha: Catálogo de Agentes con Altura Idéntica a la del Mapa (No crece sin control) */}
+            <div
+              className="w-full xl:w-[380px] 2xl:w-[420px] shrink-0 flex flex-col"
+              style={{
+                height: `${canvasDimensions.height}px`,
+                maxHeight: `${canvasDimensions.height}px`,
+              }}
+            >
+              <div className="mb-2 flex items-center justify-between shrink-0">
                 <span className="text-xs font-bold text-gray-300 flex items-center space-x-1">
                   <Layers className="w-3.5 h-3.5 text-[#E2B86E]" />
                   <span>Roster y Despliegue</span>
@@ -395,7 +433,15 @@ export const TacticalBoardSection: React.FC<TacticalBoardSectionProps> = ({
                   {boardState.tokens.length} fichas en campo
                 </span>
               </div>
-              <AgentPalette agents={agents} onAddToken={handleAddToken} />
+              <div className="flex-1 min-h-0 flex flex-col relative">
+                <AgentPalette
+                  agents={agents}
+                  tokens={boardState.tokens}
+                  onlyInMap={onlyInMap}
+                  onToggleOnlyInMap={handleToggleFilterInMap}
+                  onAddToken={handleAddToken}
+                />
+              </div>
             </div>
           </div>
         </div>

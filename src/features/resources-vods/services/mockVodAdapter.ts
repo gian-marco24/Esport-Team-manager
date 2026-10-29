@@ -171,14 +171,22 @@ export class MockVodAdapter implements IVodPort {
   async getVods(): Promise<VodItem[]> {
     await new Promise((res) => setTimeout(res, 150));
     const standaloneVods = this.getStoredVods();
+    const sortVodsByDate = (list: VodItem[]) => {
+      return list.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.matchDate || 0).getTime();
+        const timeB = new Date(b.createdAt || b.matchDate || 0).getTime();
+        return timeB - timeA;
+      });
+    };
+
     try {
       const matches = await matchService.getMatches();
       const matchVods = extractVodsFromMatches(matches);
       const existingUrls = new Set(standaloneVods.map((v) => v.videoUrl));
       const filteredMatchVods = matchVods.filter((v) => !existingUrls.has(v.videoUrl));
-      return [...standaloneVods, ...filteredMatchVods];
+      return sortVodsByDate([...standaloneVods, ...filteredMatchVods]);
     } catch {
-      return standaloneVods;
+      return sortVodsByDate(standaloneVods);
     }
   }
 

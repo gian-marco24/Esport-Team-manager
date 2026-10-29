@@ -56,7 +56,7 @@ export function extractVodsFromMatches(matches: Match[]): VodItem[] {
         matchDate: match.date,
         durationSeconds: 1200,
         annotationsCount: 0,
-        createdAt: match.createdAt || new Date().toISOString(),
+        createdAt: match.createdAt || (match.date ? new Date(match.date).toISOString() : new Date().toISOString()),
         matchType: match.type,
         tournamentName: match.tournamentName,
         outcome,

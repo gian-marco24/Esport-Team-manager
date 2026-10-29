@@ -1,39 +1,49 @@
 import type { ValorantMap, ValorantAgent } from '../types/tacticalBoard';
 
-const MAPS_STORAGE_KEY = 'urs_gamara_valorant_maps_v2';
+const MAPS_STORAGE_KEY = 'urs_gamara_valorant_maps_v3';
 const AGENTS_STORAGE_KEY = 'urs_gamara_valorant_agents_v1';
 
 export const COMPETITIVE_MAP_NAMES = new Set([
+  'abyss',
   'ascent',
   'bind',
   'breeze',
+  'corrode',
   'fracture',
   'haven',
   'icebox',
   'lotus',
   'pearl',
   'split',
+  'summit',
   'sunset',
-  'abyss',
 ]);
 
 // Rotación base en grados para que los spawns queden alineados verticalmente (Arriba y Abajo)
 export const BASE_MAP_ROTATION: Record<string, number> = {
-  Ascent: -90,
-  Split: -90,
-  Haven: -90,
   Abyss: -90,
-  Icebox: 90,
+  Ascent: -90,
   Bind: 180,
-  Lotus: 180,
-  Sunset: 180,
   Breeze: 180,
+  Corrode: -90,
   Fracture: 180,
+  Haven: -90,
+  Icebox: 90,
+  Lotus: 180,
   Pearl: 180,
+  Split: -90,
+  Summit: 0,
+  Sunset: 180,
 };
 
-// Mapas de fallback por si la red falla o está offline
+// Mapas de fallback oficiales ordenados alfabéticamente
 const FALLBACK_MAPS: ValorantMap[] = [
+  {
+    uuid: '224b0a95-48b9-f703-1bd8-67aca101a61f',
+    displayName: 'Abyss',
+    displayIcon: 'https://media.valorant-api.com/maps/224b0a95-48b9-f703-1bd8-67aca101a61f/displayicon.png',
+    splash: 'https://media.valorant-api.com/maps/224b0a95-48b9-f703-1bd8-67aca101a61f/splash.png',
+  },
   {
     uuid: '7eaecc1b-4337-bbf6-6ab9-04b8f06b3319',
     displayName: 'Ascent',
@@ -47,16 +57,28 @@ const FALLBACK_MAPS: ValorantMap[] = [
     splash: 'https://media.valorant-api.com/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba/splash.png',
   },
   {
+    uuid: '2fb9a4fd-47b8-4e7d-a969-74b4046ebd53',
+    displayName: 'Breeze',
+    displayIcon: 'https://media.valorant-api.com/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53/displayicon.png',
+    splash: 'https://media.valorant-api.com/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53/splash.png',
+  },
+  {
+    uuid: '1c18ab1f-420d-0d8b-71d0-77ad3c439115',
+    displayName: 'Corrode',
+    displayIcon: 'https://media.valorant-api.com/maps/1c18ab1f-420d-0d8b-71d0-77ad3c439115/displayicon.png',
+    splash: 'https://media.valorant-api.com/maps/1c18ab1f-420d-0d8b-71d0-77ad3c439115/splash.png',
+  },
+  {
+    uuid: 'b529448b-4d60-346e-e89e-00a4c527a405',
+    displayName: 'Fracture',
+    displayIcon: 'https://media.valorant-api.com/maps/b529448b-4d60-346e-e89e-00a4c527a405/displayicon.png',
+    splash: 'https://media.valorant-api.com/maps/b529448b-4d60-346e-e89e-00a4c527a405/splash.png',
+  },
+  {
     uuid: '2bee0c78-4309-9c16-0202-c4b77b595dac',
     displayName: 'Haven',
     displayIcon: 'https://media.valorant-api.com/maps/2bee0c78-4309-9c16-0202-c4b77b595dac/displayicon.png',
     splash: 'https://media.valorant-api.com/maps/2bee0c78-4309-9c16-0202-c4b77b595dac/splash.png',
-  },
-  {
-    uuid: 'd960549e-485c-68e3-6170-71823b463657',
-    displayName: 'Split',
-    displayIcon: 'https://media.valorant-api.com/maps/d960549e-485c-68e3-6170-71823b463657/displayicon.png',
-    splash: 'https://media.valorant-api.com/maps/d960549e-485c-68e3-6170-71823b463657/splash.png',
   },
   {
     uuid: 'e2ad5c54-4114-a870-9641-8ea21279579a',
@@ -65,22 +87,34 @@ const FALLBACK_MAPS: ValorantMap[] = [
     splash: 'https://media.valorant-api.com/maps/e2ad5c54-4114-a870-9641-8ea21279579a/splash.png',
   },
   {
-    uuid: '92584fbe-486a-b1b2-9faa-39b0f486b498',
-    displayName: 'Sunset',
-    displayIcon: 'https://media.valorant-api.com/maps/92584fbe-486a-b1b2-9faa-39b0f486b498/displayicon.png',
-    splash: 'https://media.valorant-api.com/maps/92584fbe-486a-b1b2-9faa-39b0f486b498/splash.png',
-  },
-  {
     uuid: '2fe4ed3a-450a-948b-6d6b-e89a78e680a9',
     displayName: 'Lotus',
     displayIcon: 'https://media.valorant-api.com/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9/displayicon.png',
     splash: 'https://media.valorant-api.com/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9/splash.png',
   },
   {
-    uuid: '224b0a95-48b9-f703-1bd8-67aca101a61f',
-    displayName: 'Abyss',
-    displayIcon: 'https://media.valorant-api.com/maps/224b0a95-48b9-f703-1bd8-67aca101a61f/displayicon.png',
-    splash: 'https://media.valorant-api.com/maps/224b0a95-48b9-f703-1bd8-67aca101a61f/splash.png',
+    uuid: 'fd267378-4d1d-484f-ff52-77821ed10dc2',
+    displayName: 'Pearl',
+    displayIcon: 'https://media.valorant-api.com/maps/fd267378-4d1d-484f-ff52-77821ed10dc2/displayicon.png',
+    splash: 'https://media.valorant-api.com/maps/fd267378-4d1d-484f-ff52-77821ed10dc2/splash.png',
+  },
+  {
+    uuid: 'd960549e-485c-68e3-6170-71823b463657',
+    displayName: 'Split',
+    displayIcon: 'https://media.valorant-api.com/maps/d960549e-485c-68e3-6170-71823b463657/displayicon.png',
+    splash: 'https://media.valorant-api.com/maps/d960549e-485c-68e3-6170-71823b463657/splash.png',
+  },
+  {
+    uuid: '756da597-416b-c0f2-f47b-afbdf28670bc',
+    displayName: 'Summit',
+    displayIcon: 'https://media.valorant-api.com/maps/756da597-416b-c0f2-f47b-afbdf28670bc/displayicon.png',
+    splash: 'https://media.valorant-api.com/maps/756da597-416b-c0f2-f47b-afbdf28670bc/splash.png',
+  },
+  {
+    uuid: '92584fbe-486a-b1b2-9faa-39b0f486b498',
+    displayName: 'Sunset',
+    displayIcon: 'https://media.valorant-api.com/maps/92584fbe-486a-b1b2-9faa-39b0f486b498/displayicon.png',
+    splash: 'https://media.valorant-api.com/maps/92584fbe-486a-b1b2-9faa-39b0f486b498/splash.png',
   },
 ];
 
@@ -131,6 +165,7 @@ class ValorantApiService {
           }));
 
         if (validMaps.length > 0) {
+          validMaps.sort((a, b) => a.displayName.localeCompare(b.displayName));
           this.cachedMaps = validMaps;
           try {
             localStorage.setItem(MAPS_STORAGE_KEY, JSON.stringify(validMaps));
