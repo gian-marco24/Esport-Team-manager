@@ -14,7 +14,7 @@ export interface VodItem {
   thumbnailUrl?: string;
   annotationsCount: number;
   createdAt: string;
-  matchType?: 'scrim' | 'tournament';
+  matchType?: 'scrim' | 'tournament' | 'tryout';
   tournamentName?: string;
   outcome?: 'win' | 'loss' | 'draw';
   overallScore?: string;

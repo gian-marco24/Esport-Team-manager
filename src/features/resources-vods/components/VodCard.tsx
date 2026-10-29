@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Video, Calendar, MapPin, Trash2, Swords, Trophy } from 'lucide-react';
+import { Play, Video, Calendar, MapPin, Trash2, Swords, Trophy, Users } from 'lucide-react';
 import type { VodItem } from '../types';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
@@ -59,6 +59,10 @@ export const VodCard: React.FC<VodCardProps> = ({ vod, onDelete }) => {
                 {vod.matchType === 'tournament' ? (
                   <>
                     <Trophy className="w-3.5 h-3.5 text-[#E2B86E]" /> {vod.tournamentName || 'Torneo'}
+                  </>
+                ) : vod.matchType === 'tryout' ? (
+                  <>
+                    <Users className="w-3.5 h-3.5 text-sky-400" /> Tryouts
                   </>
                 ) : (
                   <>

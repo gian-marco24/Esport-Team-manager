@@ -38,10 +38,11 @@ export function extractVodsFromMatches(matches: Match[]): VodItem[] {
       }
 
       const isTournament = match.type === 'tournament';
-      const typeLabel = isTournament ? (match.tournamentName || 'Torneo') : 'Scrim';
+      const isTryout = match.type === 'tryout';
+      const typeLabel = isTournament ? (match.tournamentName || 'Torneo') : isTryout ? 'Tryouts' : 'Scrim';
       const mapLabel = v.mapName
         ? ` (${v.mapName})`
-        : match.type === 'scrim' && match.maps[0]?.mapName
+        : (match.type === 'scrim' || match.type === 'tryout') && match.maps[0]?.mapName
         ? ` (${match.maps[0].mapName})`
         : '';
       const title = `${typeLabel} vs ${match.opponentName}${mapLabel}`;
@@ -52,7 +53,7 @@ export function extractVodsFromMatches(matches: Match[]): VodItem[] {
         videoUrl: v.url,
         provider: detectVodProvider(v.url),
         opponentName: match.opponentName,
-        mapName: v.mapName || (match.type === 'scrim' ? match.maps[0]?.mapName : undefined),
+        mapName: v.mapName || ((match.type === 'scrim' || match.type === 'tryout') ? match.maps[0]?.mapName : undefined),
         matchDate: match.date,
         durationSeconds: 1200,
         annotationsCount: 0,

@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
-export type MatchType = 'scrim' | 'tournament';
+export type MatchType = 'scrim' | 'tournament' | 'tryout';
 export type MatchResultOutcome = 'win' | 'loss' | 'draw';
 
 export const VALORANT_MAP_ROTATION = [
   'Abyss',
-  'Ascent',
+  'Bind',
+  'Corrode',
   'Haven',
   'Lotus',
-  'Split',
   'Summit',
   'Sunset',
 ] as const;
@@ -66,7 +66,7 @@ export const createMatchSchema = z
   .object({
     rosterId: z.string().optional(),
     game: z.string().optional(),
-    type: z.enum(['scrim', 'tournament'] as const),
+    type: z.enum(['scrim', 'tournament', 'tryout'] as const),
     tournamentName: z.string().optional(),
     opponentName: z.string().min(2, 'Ingresa el nombre del equipo rival'),
     date: z.string().min(1, 'Selecciona la fecha del encuentro'),
@@ -150,7 +150,7 @@ export const calculateMatchSummary = (type: MatchType, maps: MatchMapResult[]) =
     return { outcome: 'draw' as MatchResultOutcome, overallScore: '0 - 0' };
   }
 
-  if (type === 'scrim') {
+  if (type === 'scrim' || type === 'tryout') {
     const singleMap = maps[0];
     const outcome: MatchResultOutcome =
       singleMap.teamScore > singleMap.opponentScore

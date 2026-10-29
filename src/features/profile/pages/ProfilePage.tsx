@@ -227,6 +227,7 @@ export const ProfilePage: React.FC = () => {
     const participationList: UserMatchParticipation[] = [];
 
     matches.forEach((m) => {
+      if (m.type === 'tryout') return;
       const matchMaps = m.maps && m.maps.length > 0 ? m.maps : [];
 
       matchMaps.forEach((map) => {
@@ -960,7 +961,7 @@ export const ProfilePage: React.FC = () => {
                     <tr key={idx} className="hover:bg-[#1f1035]/60 transition-colors">
                       <td className="py-3.5 px-4">
                         <p className="font-bold text-white text-sm">{item.opponentName}</p>
-                        <p className="text-xs text-gray-400">{item.date} • {item.type === 'tournament' ? 'Torneo' : 'Scrim'}</p>
+                        <p className="text-xs text-gray-400">{item.date} • {item.type === 'tournament' ? 'Torneo' : item.type === 'tryout' ? 'Tryouts' : 'Scrim'}</p>
                       </td>
                       <td className="py-3.5 px-4 font-semibold text-gray-200">{item.mapName}</td>
                       <td className="py-3.5 px-4">

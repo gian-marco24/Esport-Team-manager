@@ -15,6 +15,7 @@ import {
   Save,
   Gamepad2,
   Sparkles,
+  Users,
 } from 'lucide-react';
 import { useCreateMatch } from '../hooks/useCreateMatch';
 import { VALORANT_MAP_ROTATION } from '../types';
@@ -167,7 +168,7 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
           <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
             Tipo de Encuentro
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               type="button"
               onClick={() => setMatchType('scrim')}
@@ -191,7 +192,20 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
               }`}
             >
               <Trophy className={`w-4 h-4 ${matchType === 'tournament' ? 'text-[#E2B86E]' : ''}`} />
-              <span>Torneo Oficial (Serie / Multi-mapa)</span>
+              <span>Torneo Oficial (Serie)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMatchType('tryout')}
+              className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-xl border font-bold text-xs transition-all ${
+                matchType === 'tryout'
+                  ? 'bg-sky-950/80 border-sky-400 text-white shadow-lg shadow-sky-500/30 ring-1 ring-sky-400'
+                  : 'bg-[#180d29] border-[#26143E] text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <Users className={`w-4 h-4 ${matchType === 'tryout' ? 'text-sky-400' : ''}`} />
+              <span>Tryouts (1 Mapa)</span>
             </button>
           </div>
         </div>
@@ -248,7 +262,7 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
           {addedMaps.length > 0 && (
             <div className="space-y-2 border-b border-[#26143E] pb-3">
               <p className="text-[11px] text-gray-400 uppercase font-semibold">
-                {matchType === 'tournament' ? 'Mapas guardados en esta serie:' : 'Rondas guardadas para la Scrim:'}
+                {matchType === 'tournament' ? 'Mapas guardados en esta serie:' : matchType === 'tryout' ? 'Rondas guardadas para el Tryout:' : 'Rondas guardadas para la Scrim:'}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {addedMaps.map((m, idx) => {
@@ -431,7 +445,7 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
         <ScreenshotUploader
           screenshotUrls={screenshotUrls}
           isUploading={isUploadingImage}
-          maxAllowed={Math.max(1, matchType === 'scrim' ? 1 : addedMaps.length || 1)}
+          maxAllowed={Math.max(1, matchType === 'tournament' ? addedMaps.length || 1 : 1)}
           isValorant={isValorantRoster}
           onFileChange={handleImageFileChange}
           onRemoveScreenshot={handleRemoveScreenshot}
@@ -479,8 +493,8 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
             </div>
           )}
 
-          {/* Si es Scrim: VOD simplificada */}
-          {matchType === 'scrim' ? (
+          {/* Si es Scrim o Tryout: VOD simplificada */}
+          {matchType !== 'tournament' ? (
             <div className="flex gap-2 items-end">
               <div className="flex-1">
                 <Input
@@ -593,6 +607,7 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
         currentTeamScore={currentTeamScore}
         currentOpponentScore={currentOpponentScore}
         existingMaps={addedMaps}
+        matchType={matchType}
         onApplyResults={handleApplyOcrResults}
       />
     </>

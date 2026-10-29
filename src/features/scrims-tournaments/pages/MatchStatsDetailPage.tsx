@@ -82,7 +82,7 @@ export const MatchStatsDetailPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="py-20 flex justify-center">
-        <LoadingSpinner label="Analizando estadísticas y rendimiento del partido..." />
+        <LoadingSpinner label="Analizando estadÃƒÂ­sticas y rendimiento del partido..." />
       </div>
     );
   }
@@ -139,6 +139,14 @@ export const MatchStatsDetailPage: React.FC = () => {
 
   const isWin = match.outcome === 'win';
   const isLoss = match.outcome === 'loss';
+  const isTryout = match.type === 'tryout';
+
+  const formatPlayerNick = (nick: string) => {
+    if (isTryout) {
+      return nick.replace(/^Invitado\s*\((.*?)\)$/i, '$1').replace(/^Invitado\s*#?\d*[:\s-]*/i, '').trim() || nick;
+    }
+    return nick;
+  };
 
   // Current Map MVP (Highest kills; if tied, highest KDA ratio)
   let mapMvp: PlayerMapComparison | undefined;
@@ -175,12 +183,14 @@ export const MatchStatsDetailPage: React.FC = () => {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <h1 className="text-2xl sm:text-3xl 2xl:text-4xl font-black text-white tracking-wide flex items-center gap-2.5">
-              <span>Análisis de Estadísticas del Partido</span>
+              <span>AnÃƒÂ¡lisis de EstadÃƒÂ­sticas del Partido</span>
               <Sparkles className="w-6 h-6 2xl:w-7 2xl:h-7 text-[#E2B86E]" />
             </h1>
           </div>
           <p className="text-sm 2xl:text-base text-gray-300">
-            Comparativa detallada del rendimiento individual de cada jugador contra su histórico en cada mapa jugado.
+            {isTryout
+              ? 'EstadÃƒÂ­sticas individuales y mÃƒÂ©tricas de combate de la sesiÃƒÂ³n de Tryouts.'
+              : 'Comparativa detallada del rendimiento individual de cada jugador contra su histÃƒÂ³rico en cada mapa jugado.'}
           </p>
         </div>
 
@@ -201,8 +211,8 @@ export const MatchStatsDetailPage: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
           <div className="space-y-2.5">
             <div className="flex items-center space-x-3 flex-wrap gap-y-2">
-              <Badge variant={match.type === 'tournament' ? 'gold' : 'purple'} className="text-xs 2xl:text-sm uppercase font-black px-3 py-1 rounded-lg">
-                {match.type === 'tournament' ? 'Torneo Oficial' : 'Scrim'}
+              <Badge variant={match.type === 'tournament' ? 'gold' : isTryout ? 'blue' : 'purple'} className="text-xs 2xl:text-sm uppercase font-black px-3 py-1 rounded-lg">
+                {match.type === 'tournament' ? 'Torneo Oficial' : isTryout ? 'Tryouts' : 'Scrim'}
               </Badge>
               <span className="text-sm 2xl:text-base text-gray-300 flex items-center gap-1.5 font-medium">
                 <Calendar className="w-4 h-4 2xl:w-5 2xl:h-5 text-[#E2B86E]" /> {match.date}
@@ -295,7 +305,7 @@ export const MatchStatsDetailPage: React.FC = () => {
                     {m.teamScore} - {m.opponentScore}
                   </span>
                   {hasStats && (
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" title="Estadísticas de jugadores cargadas" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" title="EstadÃƒÂ­sticas de jugadores cargadas" />
                   )}
                 </button>
               );
@@ -344,7 +354,9 @@ export const MatchStatsDetailPage: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs 2xl:text-sm text-gray-300 mt-1">
-                Resumen de combate y comparativa histórica de jugadores en este escenario.
+                {isTryout
+                  ? 'Resumen de combate y rendimiento individual de los participantes en este escenario.'
+                  : 'Resumen de combate y comparativa histÃƒÂ³rica de jugadores en este escenario.'}
               </p>
             </div>
           </div>
@@ -357,7 +369,7 @@ export const MatchStatsDetailPage: React.FC = () => {
                 <div>
                   <p className="text-[11px] 2xl:text-xs text-gray-400 font-bold uppercase tracking-wider">MVP del Mapa</p>
                   <p className="font-extrabold text-white text-sm 2xl:text-base">
-                    {mapMvp.playerNick} <span className="text-[#E2B86E]">({mapMvp.matchKills} Kills)</span>
+                    {formatPlayerNick(mapMvp.playerNick)} <span className="text-[#E2B86E]">({mapMvp.matchKills} Kills)</span>
                   </p>
                 </div>
               </div>
@@ -383,9 +395,9 @@ export const MatchStatsDetailPage: React.FC = () => {
             <HelpCircle className="w-7 h-7 2xl:w-8 2xl:h-8" />
           </div>
           <div className="space-y-1.5 max-w-lg mx-auto">
-            <h3 className="text-lg 2xl:text-xl font-black text-white">Sin Estadísticas Individuales para {currentMap.mapName}</h3>
+            <h3 className="text-lg 2xl:text-xl font-black text-white">Sin EstadÃƒÂ­sticas Individuales para {currentMap.mapName}</h3>
             <p className="text-xs 2xl:text-sm text-gray-300 leading-relaxed">
-              No se han cargado las estadísticas individuales de los jugadores (KDA, Agente, First Kills) para este mapa.
+              No se han cargado las estadÃƒÂ­sticas individuales de los jugadores (KDA, Agente, First Kills) para este mapa.
               Puedes editar el partido y escanear la captura del resultado con OCR para extraerlas al instante.
             </p>
           </div>
@@ -400,10 +412,16 @@ export const MatchStatsDetailPage: React.FC = () => {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="text-xs 2xl:text-sm font-black uppercase tracking-wider text-[#E2B86E] flex items-center gap-2">
               <Sparkles className="w-4 h-4 2xl:w-5 2xl:h-5 text-[#8B44F7]" />
-              <span>Tabla Comparativa: Rendimiento en el Partido vs Histórico en {currentMap.mapName}</span>
+              <span>
+                {isTryout
+                  ? `Tabla de Rendimiento en Tryouts: ${currentMap.mapName}`
+                  : `Tabla Comparativa: Rendimiento en el Partido vs Histórico en ${currentMap.mapName}`}
+              </span>
             </h3>
             <span className="text-xs 2xl:text-sm text-gray-400 font-medium">
-              Mostrando {comparisons.length} jugadores de nuestro equipo
+              {isTryout
+                ? `Mostrando ${comparisons.length} participantes del tryout`
+                : `Mostrando ${comparisons.length} jugadores de nuestro equipo`}
             </span>
           </div>
 
@@ -414,13 +432,18 @@ export const MatchStatsDetailPage: React.FC = () => {
                   <th className="py-4 px-4 2xl:py-4.5 2xl:px-5">Jugador</th>
                   <th className="py-4 px-4 2xl:py-4.5 2xl:px-5">Agente en Partido</th>
                   <th className="py-4 px-4 2xl:py-4.5 2xl:px-5 text-center">Stats en Partido</th>
-                  <th className="py-4 px-4 2xl:py-4.5 2xl:px-5">Agente Principal Histórico en {currentMap.mapName}</th>
+                  {!isTryout && (
+                    <>
+                      <th className="py-4 px-4 2xl:py-4.5 2xl:px-5">Agente Principal Histórico en {currentMap.mapName}</th>
                   <th className="py-4 px-4 2xl:py-4.5 2xl:px-5 text-center">Histórico en {currentMap.mapName}</th>
-                  <th className="py-4 px-4 2xl:py-4.5 2xl:px-5 text-center">Diferencial (+ / -)</th>
+                      <th className="py-4 px-4 2xl:py-4.5 2xl:px-5 text-center">Diferencial (+ / -)</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#26143E]/80 text-gray-300">
                 {comparisons.map((c, idx) => {
+                  const cleanNick = formatPlayerNick(c.playerNick);
                   const isPositiveKda = c.kdaDelta > 0;
                   const isNegativeKda = c.kdaDelta < 0;
 
@@ -431,23 +454,25 @@ export const MatchStatsDetailPage: React.FC = () => {
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 2xl:w-11 2xl:h-11 rounded-xl bg-[#26143E] border border-[#522B80]/50 flex items-center justify-center font-black text-xs 2xl:text-sm text-[#E2B86E] overflow-hidden shrink-0 shadow-sm">
                             {c.avatarUrl ? (
-                              <img src={c.avatarUrl} alt={c.playerNick} className="w-full h-full object-cover" />
+                              <img src={c.avatarUrl} alt={cleanNick} className="w-full h-full object-cover" />
                             ) : (
-                              c.playerNick.slice(0, 2).toUpperCase()
+                              cleanNick.slice(0, 2).toUpperCase()
                             )}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center space-x-1.5">
-                              <span className="font-extrabold text-white text-sm 2xl:text-base truncate">{c.playerNick}</span>
-                              {c.isGuest && (
+                              <span className="font-extrabold text-white text-sm 2xl:text-base truncate">{cleanNick}</span>
+                              {c.isGuest && !isTryout && (
                                 <span className="text-[10px] 2xl:text-xs bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded font-bold border border-amber-500/40">
                                   Inv.
                                 </span>
                               )}
                             </div>
-                            <span className="text-xs 2xl:text-sm text-gray-400 block truncate font-medium">
-                              {c.historical.timesPlayed} {c.historical.timesPlayed === 1 ? 'mapa histórico' : 'mapas históricos'}
-                            </span>
+                            {!isTryout && (
+                              <span className="text-xs 2xl:text-sm text-gray-400 block truncate font-medium">
+                                {c.historical.timesPlayed} {c.historical.timesPlayed === 1 ? 'mapa histórico' : 'mapas históricos'}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -468,11 +493,11 @@ export const MatchStatsDetailPage: React.FC = () => {
                           )}
                           <div>
                             <p className="font-extrabold text-white text-sm 2xl:text-base">{c.matchAgent || 'No especificado'}</p>
-                            {c.isMainAgentOnMap ? (
+                            {!isTryout && c.isMainAgentOnMap ? (
                               <span className="text-[11px] 2xl:text-xs text-emerald-400 font-bold flex items-center gap-1">
                                 <CheckCircle2 className="w-3 h-3 2xl:w-3.5 2xl:h-3.5" /> Pick Habitual
                               </span>
-                            ) : c.historical.mostPlayedAgent ? (
+                            ) : !isTryout && c.historical.mostPlayedAgent ? (
                               <span className="text-[11px] 2xl:text-xs text-purple-400 font-medium">Pick Secundario</span>
                             ) : null}
                           </div>
@@ -492,7 +517,9 @@ export const MatchStatsDetailPage: React.FC = () => {
                         </p>
                       </td>
 
-                      {/* 4. Agente Principal Histórico en este mapa */}
+                      {!isTryout && (
+                        <>
+                          {/* 4. Agente Principal Histórico en este mapa */}
                       <td className="py-4 px-4 2xl:py-4.5 2xl:px-5">
                         {c.historical.mostPlayedAgent ? (
                           <div className="flex items-center space-x-3">
@@ -565,6 +592,8 @@ export const MatchStatsDetailPage: React.FC = () => {
                           </span>
                         )}
                       </td>
+                    </>
+                  )}
                     </tr>
                   );
                 })}

@@ -53,8 +53,8 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
         <div className="flex items-start justify-between border-b border-[#26143E] pb-3">
           <div className="space-y-1 min-w-0">
             <div className="flex items-center space-x-2 flex-wrap">
-              <Badge variant={match.type === 'tournament' ? 'gold' : 'purple'} className="text-xs px-2.5 py-0.5">
-                {match.type === 'tournament' ? 'Torneo' : 'Scrim'}
+              <Badge variant={match.type === 'tournament' ? 'gold' : match.type === 'tryout' ? 'blue' : 'purple'} className="text-xs px-2.5 py-0.5">
+                {match.type === 'tournament' ? 'Torneo' : match.type === 'tryout' ? 'Tryouts' : 'Scrim'}
               </Badge>
               <span className="text-xs sm:text-sm text-gray-400 flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-[#E2B86E]" /> {match.date}

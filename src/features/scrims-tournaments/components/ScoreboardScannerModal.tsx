@@ -18,7 +18,7 @@ import { LoadingSpinner } from '../../../components/feedback/LoadingSpinner';
 import { scoreboardOcrService } from '../services/scoreboardOcrService';
 import { valorantApiService, type ValorantAgent, type ValorantMapData, FALLBACK_VALORANT_MAPS, FALLBACK_VALORANT_AGENTS } from '../../../services/valorantApiService';
 import type { TeamMember } from '../../teams/types';
-import type { MatchPlayerStats } from '../types';
+import type { MatchPlayerStats, MatchType } from '../types';
 
 interface ScoreboardScannerModalProps {
   isOpen: boolean;
@@ -30,6 +30,7 @@ interface ScoreboardScannerModalProps {
   currentTeamScore?: number | '';
   currentOpponentScore?: number | '';
   existingMaps?: Array<{ mapName: string; teamScore: number; opponentScore: number }>;
+  matchType?: MatchType;
   onApplyResults: (data: {
     mapName?: string;
     teamScore?: number | '';
@@ -48,6 +49,7 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
   currentTeamScore,
   currentOpponentScore,
   existingMaps = [],
+  matchType = 'scrim',
   onApplyResults,
 }) => {
   const [isScanning, setIsScanning] = useState(false);
@@ -133,8 +135,12 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
           const currentAgents = agents.length > 0 ? agents : FALLBACK_VALORANT_AGENTS;
           const enriched = result.players.map((p) => {
             const ag = currentAgents.find((a) => a.displayName.toLowerCase() === p.agent?.toLowerCase());
+            const cleanNick = matchType === 'tryout'
+              ? p.playerNick.replace(/^Invitado\s*\((.*?)\)$/i, '$1').replace(/^Invitado\s*/i, '').trim() || p.playerNick
+              : p.playerNick;
             return {
               ...p,
+              playerNick: cleanNick,
               agent: ag ? ag.displayName : p.agent,
               agentIcon: ag ? ag.displayIcon : p.agentIcon,
             };
@@ -178,8 +184,12 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
         if (value === 'guest') {
           updated[index].isGuest = true;
           updated[index].playerId = undefined;
-          if (!updated[index].playerNick.startsWith('Invitado')) {
-            updated[index].playerNick = `Invitado (${updated[index].playerNick})`;
+          if (matchType === 'tryout') {
+            updated[index].playerNick = updated[index].playerNick.replace(/^Invitado\s*\((.*?)\)$/i, '$1').replace(/^Invitado\s*/i, '').trim() || updated[index].playerNick;
+          } else {
+            if (!updated[index].playerNick.startsWith('Invitado')) {
+              updated[index].playerNick = `Invitado (${updated[index].playerNick})`;
+            }
           }
           updated[index].gameTag = undefined;
         } else if (value) {
@@ -219,7 +229,7 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
 
   const handleAddPlayerRow = () => {
     const newPlayer: MatchPlayerStats = {
-      playerNick: `Invitado (${players.length + 1})`,
+      playerNick: matchType === 'tryout' ? `Jugador ${players.length + 1}` : `Invitado (${players.length + 1})`,
       kills: 0,
       deaths: 0,
       assists: 0,
@@ -409,7 +419,9 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
                                           {m.displayName} {m.gameTag ? `(${m.gameTag})` : ''}
                                         </option>
                                       ))}
-                                      <option value="guest">👤 Jugador Invitado (No en roster)</option>
+                                      <option value="guest">
+                                        {matchType === 'tryout' ? '👤 Candidato Tryout (No en roster)' : '👤 Jugador Invitado (No en roster)'}
+                                      </option>
                                     </select>
                                   ) : (
                                     <input
@@ -422,12 +434,16 @@ export const ScoreboardScannerModal: React.FC<ScoreboardScannerModalProps> = ({
 
                                   {isGuest && (
                                     <div className="flex items-center space-x-1.5 pt-0.5">
-                                      <span className="text-[9px] bg-amber-950/70 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded font-bold">
-                                        Invitado
+                                      <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold border ${
+                                        matchType === 'tryout'
+                                          ? 'bg-sky-950/70 text-sky-300 border-sky-500/40'
+                                          : 'bg-amber-950/70 text-amber-300 border-amber-500/40'
+                                      }`}>
+                                        {matchType === 'tryout' ? 'Tryout' : 'Invitado'}
                                       </span>
                                       <input
                                         type="text"
-                                        placeholder="Nombre del invitado"
+                                        placeholder={matchType === 'tryout' ? 'Nombre del candidato' : 'Nombre del invitado'}
                                         value={player.playerNick}
                                         onChange={(e) => handlePlayerChange(idx, 'playerNick', e.target.value)}
                                         className="bg-transparent text-[11px] text-gray-300 underline focus:outline-none w-32"

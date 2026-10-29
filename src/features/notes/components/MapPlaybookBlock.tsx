@@ -20,7 +20,7 @@ export const MapPlaybookBlock: React.FC<MapPlaybookBlockProps> = ({ roster, rost
     ? VALORANT_MAPS
     : DEFAULT_GENERIC_MAPS;
 
-  const [selectedMapId, setSelectedMapId] = useState<string>(availableMaps[0]?.id || 'ascent');
+  const [selectedMapId, setSelectedMapId] = useState<string>(availableMaps[0]?.id || 'abyss');
   const [rotationOnly, setRotationOnly] = useState<boolean>(true);
 
   const filteredMaps = (

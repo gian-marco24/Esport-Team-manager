@@ -26,6 +26,7 @@ export const useTeamStats = () => {
   let losses = 0;
 
   matches.forEach((m) => {
+    if (m.type === 'tryout') return;
     if (m.maps && m.maps.length > 0) {
       m.maps.forEach((map) => {
         totalMaps++;

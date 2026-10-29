@@ -69,8 +69,8 @@ export const VodDetailPage: React.FC = () => {
                 {vod.provider}
               </span>
               {vod.matchType && (
-                <Badge variant="purple" className="text-[10px] px-1.5 py-0">
-                  {vod.matchType === 'tournament' ? (vod.tournamentName || 'Torneo') : 'Scrim'}
+                <Badge variant={vod.matchType === 'tournament' ? 'gold' : vod.matchType === 'tryout' ? 'blue' : 'purple'} className="text-[10px] px-1.5 py-0">
+                  {vod.matchType === 'tournament' ? (vod.tournamentName || 'Torneo') : vod.matchType === 'tryout' ? 'Tryouts' : 'Scrim'}
                 </Badge>
               )}
               {vod.opponentName && <span className="font-semibold text-gray-200">vs {vod.opponentName}</span>}

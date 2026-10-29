@@ -150,6 +150,7 @@ export const statsCalculationService = {
     const agentCounts: Record<string, number> = {};
 
     allMatches.forEach((m) => {
+      if (m.type === 'tryout') return;
       const matchMaps = m.maps && m.maps.length > 0 ? m.maps : [];
       matchMaps.forEach((map) => {
         if (map.mapName.trim().toLowerCase() !== cleanMap) return;
@@ -346,6 +347,7 @@ export const statsCalculationService = {
     let opponentRoundsWon = 0;
 
     matches.forEach((m) => {
+      if (m.type === 'tryout') return;
       const matchMaps = m.maps && m.maps.length > 0 ? m.maps : [];
       const isScrim = m.type === 'scrim';
 
@@ -443,6 +445,7 @@ export const statsCalculationService = {
     > = {};
 
     matches.forEach((m) => {
+      if (m.type === 'tryout') return;
       if (!m.maps) return;
       m.maps.forEach((map) => {
         const name = map.mapName.trim();
@@ -607,6 +610,7 @@ export const statsCalculationService = {
 
     // Process all matches and individual maps
     matches.forEach((m) => {
+      if (m.type === 'tryout') return;
       const matchMaps = m.maps && m.maps.length > 0 ? m.maps : [];
 
       if (matchMaps.length > 0) {

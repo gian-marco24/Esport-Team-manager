@@ -161,7 +161,7 @@ export const useCreateMatch = (matchId?: string) => {
       playerStats: currentPlayerStats.length > 0 ? [...currentPlayerStats] : undefined,
     };
 
-    if (matchType === 'scrim') {
+    if (matchType === 'scrim' || matchType === 'tryout') {
       setAddedMaps([newMap]);
       setFormError(null);
       return;
@@ -220,13 +220,13 @@ export const useCreateMatch = (matchId?: string) => {
       return;
     }
 
-    const isScrim = matchType === 'scrim';
+    const isSingleMap = matchType === 'scrim' || matchType === 'tryout';
 
     const vod: MatchVod = {
       id: `vod-${Date.now()}`,
       url: newVodUrl.trim(),
-      isFullMatch: isScrim ? true : newVodIsFullMatch,
-      mapName: isScrim ? undefined : newVodIsFullMatch ? undefined : newVodMapName,
+      isFullMatch: isSingleMap ? true : newVodIsFullMatch,
+      mapName: isSingleMap ? undefined : newVodIsFullMatch ? undefined : newVodMapName,
     };
 
     setAddedVods((prev) => [...prev, vod]);
@@ -242,7 +242,7 @@ export const useCreateMatch = (matchId?: string) => {
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const maxAllowed = Math.max(1, matchType === 'scrim' ? 1 : addedMaps.length || 1);
+      const maxAllowed = Math.max(1, (matchType === 'scrim' || matchType === 'tryout') ? 1 : addedMaps.length || 1);
       if (screenshotUrls.length >= maxAllowed) {
         setFormError(`El máximo de capturas permitidas para este partido es ${maxAllowed}.`);
         return;
@@ -394,7 +394,7 @@ export const useCreateMatch = (matchId?: string) => {
 
     // Determine final maps list
     let finalMaps: MatchMapResult[];
-    if (matchType === 'scrim') {
+    if (matchType === 'scrim' || matchType === 'tryout') {
       if (currentTeamScore === '' || currentOpponentScore === '') {
         setFormError('Ingresa el resultado de rondas.');
         return;

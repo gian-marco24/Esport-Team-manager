@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, RefreshCw, Swords, ChevronDown } from 'lucide-react';
+import { Plus, Search, RefreshCw, Swords, ChevronDown, Calendar, X } from 'lucide-react';
 import { useMatches } from '../hooks/useMatches';
 import { MatchCard } from '../components/MatchCard';
 import type { MatchResultOutcome } from '../types';
@@ -19,6 +19,8 @@ export const ScrimsPage: React.FC = () => {
     setSelectedType,
     selectedOutcome,
     setSelectedOutcome,
+    selectedDate,
+    setSelectedDate,
     searchQuery,
     setSearchQuery,
     refetch,
@@ -30,7 +32,7 @@ export const ScrimsPage: React.FC = () => {
   // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(12);
-  }, [selectedType, selectedOutcome, searchQuery]);
+  }, [selectedType, selectedOutcome, selectedDate, searchQuery]);
 
   const displayedMatches = matches.slice(0, visibleCount);
 
@@ -66,7 +68,7 @@ export const ScrimsPage: React.FC = () => {
           <p className="text-xs sm:text-sm text-gray-400 font-semibold">Total Encuentros</p>
           <p className="text-2xl sm:text-3xl font-black text-white mt-1">{stats.total}</p>
           <p className="text-xs text-[#8B44F7] font-bold mt-1">
-            {stats.scrimsCount} Scrims | {stats.tournamentsCount} Torneos
+            {stats.scrimsCount} Scrims | {stats.tournamentsCount} Torneos{stats.tryoutsCount > 0 ? ` | ${stats.tryoutsCount} Tryouts` : ''}
           </p>
         </Card>
 
@@ -118,6 +120,14 @@ export const ScrimsPage: React.FC = () => {
             >
               Torneos
             </button>
+            <button
+              onClick={() => setSelectedType('tryout')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                selectedType === 'tryout' ? 'bg-sky-600 text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Tryouts
+            </button>
           </div>
 
           {/* Filter Outcome */}
@@ -129,7 +139,30 @@ export const ScrimsPage: React.FC = () => {
             <option value="all">Cualquier Resultado</option>
             <option value="win">Solo Victorias</option>
             <option value="loss">Solo Derrotas</option>
+            <option value="draw">Solo Empates</option>
           </select>
+
+          {/* Filter Date */}
+          <div className="flex items-center space-x-2 bg-[#0D0914] border border-[#522B80]/60 rounded-xl px-3 py-1.5 focus-within:border-[#8B44F7]">
+            <Calendar className="w-4 h-4 text-[#E2B86E] shrink-0" />
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="bg-transparent text-gray-200 text-xs sm:text-sm focus:outline-none cursor-pointer [color-scheme:dark]"
+              title="Filtrar por fecha específica"
+            />
+            {selectedDate && (
+              <button
+                type="button"
+                onClick={() => setSelectedDate('')}
+                className="text-gray-400 hover:text-white p-0.5 ml-1 transition-colors"
+                title="Limpiar filtro de fecha"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Search Input */}

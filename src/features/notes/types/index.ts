@@ -77,16 +77,16 @@ export interface MapPresetInfo {
 
 export const VALORANT_MAPS: MapPresetInfo[] = [
   { id: 'abyss', name: 'Abyss', game: 'Valorant', isCompetitiveRotation: true, imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80' },
-  { id: 'ascent', name: 'Ascent', game: 'Valorant', isCompetitiveRotation: true, imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80' },
-  { id: 'bind', name: 'Bind', game: 'Valorant', isCompetitiveRotation: false, imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&q=80' },
+  { id: 'ascent', name: 'Ascent', game: 'Valorant', isCompetitiveRotation: false, imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80' },
+  { id: 'bind', name: 'Bind', game: 'Valorant', isCompetitiveRotation: true, imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&q=80' },
   { id: 'breeze', name: 'Breeze', game: 'Valorant', isCompetitiveRotation: false },
-  { id: 'corrode', name: 'Corrode', game: 'Valorant', isCompetitiveRotation: false },
+  { id: 'corrode', name: 'Corrode', game: 'Valorant', isCompetitiveRotation: true, imageUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&q=80' },
   { id: 'fracture', name: 'Fracture', game: 'Valorant', isCompetitiveRotation: false },
   { id: 'haven', name: 'Haven', game: 'Valorant', isCompetitiveRotation: true, imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80' },
   { id: 'icebox', name: 'Icebox', game: 'Valorant', isCompetitiveRotation: false },
   { id: 'lotus', name: 'Lotus', game: 'Valorant', isCompetitiveRotation: true, imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80' },
   { id: 'pearl', name: 'Pearl', game: 'Valorant', isCompetitiveRotation: false },
-  { id: 'split', name: 'Split', game: 'Valorant', isCompetitiveRotation: true, imageUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&q=80' },
+  { id: 'split', name: 'Split', game: 'Valorant', isCompetitiveRotation: false, imageUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&q=80' },
   { id: 'summit', name: 'Summit', game: 'Valorant', isCompetitiveRotation: true, imageUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&q=80' },
   { id: 'sunset', name: 'Sunset', game: 'Valorant', isCompetitiveRotation: true, imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&q=80' },
 ];

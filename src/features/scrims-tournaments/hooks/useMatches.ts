@@ -10,6 +10,7 @@ export const useMatches = () => {
   // Filter States
   const [selectedType, setSelectedType] = useState<MatchType | 'all'>('all');
   const [selectedOutcome, setSelectedOutcome] = useState<MatchResultOutcome | 'all'>('all');
+  const [selectedDate, setSelectedDate] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const sortMatchesByCreated = (list: Match[]) => {
@@ -61,6 +62,7 @@ export const useMatches = () => {
     return matches.filter((m) => {
       if (selectedType !== 'all' && m.type !== selectedType) return false;
       if (selectedOutcome !== 'all' && m.outcome !== selectedOutcome) return false;
+      if (selectedDate && m.date !== selectedDate) return false;
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const rivalMatch = m.opponentName.toLowerCase().includes(query);
@@ -69,22 +71,27 @@ export const useMatches = () => {
       }
       return true;
     });
-  }, [matches, selectedType, selectedOutcome, searchQuery]);
+  }, [matches, selectedType, selectedOutcome, selectedDate, searchQuery]);
 
   const stats = useMemo(() => {
-    const total = matches.length;
-    const wins = matches.filter((m) => m.outcome === 'win').length;
-    const losses = matches.filter((m) => m.outcome === 'loss').length;
-    const scrimsCount = matches.filter((m) => m.type === 'scrim').length;
-    const tournamentsCount = matches.filter((m) => m.type === 'tournament').length;
+    const competitive = matches.filter((m) => m.type !== 'tryout');
+    const total = competitive.length;
+    const wins = competitive.filter((m) => m.outcome === 'win').length;
+    const losses = competitive.filter((m) => m.outcome === 'loss').length;
+    const draws = competitive.filter((m) => m.outcome === 'draw').length;
+    const scrimsCount = competitive.filter((m) => m.type === 'scrim').length;
+    const tournamentsCount = competitive.filter((m) => m.type === 'tournament').length;
+    const tryoutsCount = matches.filter((m) => m.type === 'tryout').length;
     const winrate = total > 0 ? Math.round((wins / total) * 100) : 0;
 
     return {
       total,
       wins,
       losses,
+      draws,
       scrimsCount,
       tournamentsCount,
+      tryoutsCount,
       winrate,
     };
   }, [matches]);
@@ -109,6 +116,8 @@ export const useMatches = () => {
     setSelectedType,
     selectedOutcome,
     setSelectedOutcome,
+    selectedDate,
+    setSelectedDate,
     searchQuery,
     setSearchQuery,
     refetch: fetchMatches,
