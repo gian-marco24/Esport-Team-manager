@@ -1,8 +1,13 @@
 import type { VodItem, VodAnnotation, VodMessage, CreateVodFormData } from '../types';
 import type { User } from '../../auth/types';
 
+export interface GetVodsResult {
+  vods: VodItem[];
+  hasMore: boolean;
+}
+
 export interface IVodPort {
-  getVods(): Promise<VodItem[]>;
+  getVods(limitCount?: number): Promise<GetVodsResult>;
   getVodById(id: string): Promise<VodItem | null>;
   createVod(data: CreateVodFormData, author?: User): Promise<VodItem>;
   deleteVod(id: string): Promise<void>;
@@ -17,7 +22,12 @@ export interface IVodPort {
   ): Promise<VodAnnotation>;
 
   getMessages(annotationId: string): Promise<VodMessage[]>;
-  sendMessage(annotationId: string, text: string, author: User): Promise<VodMessage>;
+  sendMessage(
+    annotationId: string,
+    text: string,
+    author: User,
+    vodId?: string
+  ): Promise<VodMessage>;
   subscribeToMessages(
     annotationId: string,
     callback: (messages: VodMessage[]) => void

@@ -3,7 +3,10 @@ import type { VodAnnotation, VodMessage } from '../types';
 import { vodService } from '../services/vodService';
 import { useAuthContext } from '../../../app/providers/AuthProvider';
 
-export const useAnnotationChat = (activeAnnotation: VodAnnotation | null) => {
+export const useAnnotationChat = (
+  activeAnnotation: VodAnnotation | null,
+  onMessageSent?: (annotationId: string) => void
+) => {
   const { user } = useAuthContext();
   const [messages, setMessages] = useState<VodMessage[]>([]);
   const [isSending, setIsSending] = useState<boolean>(false);
@@ -27,7 +30,10 @@ export const useAnnotationChat = (activeAnnotation: VodAnnotation | null) => {
 
     setIsSending(true);
     try {
-      await vodService.sendMessage(activeAnnotation.id, text.trim(), user);
+      await vodService.sendMessage(activeAnnotation.id, text.trim(), user, activeAnnotation.vodId);
+      if (onMessageSent) {
+        onMessageSent(activeAnnotation.id);
+      }
     } catch (err: any) {
       alert(err.message || 'Error al enviar el comentario.');
     } finally {

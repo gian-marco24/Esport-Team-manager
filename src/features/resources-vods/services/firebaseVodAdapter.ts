@@ -3,15 +3,18 @@ import {
   doc,
   setDoc,
   getDocs,
+  getDoc,
   deleteDoc,
   query,
   orderBy,
+  limit,
   onSnapshot,
   increment,
   updateDoc,
+  getCountFromServer,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import type { IVodPort } from './vodPort';
+import type { IVodPort, GetVodsResult } from './vodPort';
 import {
   type VodItem,
   type VodAnnotation,
@@ -24,14 +27,26 @@ import { matchService } from '../../scrims-tournaments/services/matchService';
 import { extractVodsFromMatches } from '../utils/matchVodExtractor';
 
 export class FirebaseVodAdapter implements IVodPort {
-  async getVods(): Promise<VodItem[]> {
+  async getVods(limitCount: number = 9): Promise<GetVodsResult> {
     let standaloneVods: VodItem[] = [];
+    let standaloneHasMore = false;
+
     if (db) {
       try {
-        const q = query(collection(db, 'vods'), orderBy('createdAt', 'desc'));
+        const q = query(
+          collection(db, 'vods'),
+          orderBy('createdAt', 'desc'),
+          limit(limitCount + 1)
+        );
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
-          standaloneVods = snapshot.docs.map((d) => d.data() as VodItem);
+          const list = snapshot.docs.map((d) => d.data() as VodItem);
+          if (list.length > limitCount) {
+            standaloneHasMore = true;
+            standaloneVods = list.slice(0, limitCount);
+          } else {
+            standaloneVods = list;
+          }
         }
       } catch (error) {
         console.warn('Firestore getVods error:', error);
@@ -46,20 +61,103 @@ export class FirebaseVodAdapter implements IVodPort {
       });
     };
 
+    let matchVods: VodItem[] = [];
+    let matchHasMore = false;
     try {
-      const matches = await matchService.getMatches();
-      const matchVods = extractVodsFromMatches(matches);
+      const matches = await matchService.getMatches(limitCount + 1);
+      if (matches.length > limitCount) {
+        matchHasMore = true;
+      }
+      const rawMatchVods = extractVodsFromMatches(matches);
       const existingUrls = new Set(standaloneVods.map((v) => v.videoUrl));
-      const filteredMatchVods = matchVods.filter((v) => !existingUrls.has(v.videoUrl));
-      return sortVodsByDate([...standaloneVods, ...filteredMatchVods]);
-    } catch {
-      return sortVodsByDate(standaloneVods);
+      matchVods = rawMatchVods.filter((v) => !existingUrls.has(v.videoUrl));
+    } catch (err) {
+      console.warn('getMatches for vods error:', err);
     }
+
+    const combinedAll = sortVodsByDate([...standaloneVods, ...matchVods]);
+    const hasMore = standaloneHasMore || matchHasMore || combinedAll.length > limitCount;
+    const paginated = combinedAll.slice(0, limitCount);
+
+    // Only count annotations for the VODs currently displayed, using fast getCountFromServer
+    const countsByVod: Record<string, number> = {};
+    if (db) {
+      const database = db;
+      await Promise.all(
+        paginated.map(async (v) => {
+          try {
+            const countSnap = await getCountFromServer(
+              collection(database, 'vods', v.id, 'annotations')
+            );
+            countsByVod[v.id] = countSnap.data().count;
+          } catch {}
+        })
+      );
+    }
+
+    const finalVods = paginated.map((v) => ({
+      ...v,
+      annotationsCount: countsByVod[v.id] ?? v.annotationsCount ?? 0,
+    }));
+
+    return {
+      vods: finalVods,
+      hasMore,
+    };
   }
 
   async getVodById(id: string): Promise<VodItem | null> {
-    const all = await this.getVods();
-    return all.find((v) => v.id === id) || null;
+    if (!db) {
+      const res = await this.getVods(50);
+      return res.vods.find((v) => v.id === id) || null;
+    }
+
+    const database = db;
+    try {
+      // 1. Direct standalone lookup
+      if (!id.startsWith('match-vod-')) {
+        const docRef = doc(database, 'vods', id);
+        const snapshot = await getDoc(docRef);
+        if (snapshot.exists()) {
+          const v = snapshot.data() as VodItem;
+          try {
+            const countSnap = await getCountFromServer(
+              collection(database, 'vods', v.id, 'annotations')
+            );
+            return { ...v, annotationsCount: countSnap.data().count };
+          } catch {
+            return v;
+          }
+        }
+      }
+
+      // 2. Match VOD lookup
+      const matches = await matchService.getMatches();
+      const matchVods = extractVodsFromMatches(matches);
+      const target = matchVods.find((v) => v.id === id);
+      if (target) {
+        try {
+          const countSnap = await getCountFromServer(
+            collection(database, 'vods', target.id, 'annotations')
+          );
+          return { ...target, annotationsCount: countSnap.data().count };
+        } catch {
+          return target;
+        }
+      }
+
+      // 3. Fallback standalone lookup
+      const docRef = doc(database, 'vods', id);
+      const snapshot = await getDoc(docRef);
+      if (snapshot.exists()) {
+        return snapshot.data() as VodItem;
+      }
+
+      return null;
+    } catch (err) {
+      console.warn('getVodById error:', err);
+      return null;
+    }
   }
 
   async createVod(data: CreateVodFormData, _author?: User): Promise<VodItem> {
@@ -80,6 +178,7 @@ export class FirebaseVodAdapter implements IVodPort {
       provider,
       opponentName: data.opponentName,
       mapName: data.mapName,
+      matchType: data.matchType || 'analysis',
       matchDate: new Date().toISOString().split('T')[0],
       durationSeconds: 1200,
       annotationsCount: 0,
@@ -100,14 +199,34 @@ export class FirebaseVodAdapter implements IVodPort {
 
   async getAnnotations(vodId: string): Promise<VodAnnotation[]> {
     if (!db) return [];
+    const database = db;
 
     try {
       const q = query(
-        collection(db, 'vods', vodId, 'annotations'),
+        collection(database, 'vods', vodId, 'annotations'),
         orderBy('timestampSeconds', 'asc')
       );
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((d) => d.data() as VodAnnotation);
+      const rawAnns = snapshot.docs.map((d) => d.data() as VodAnnotation);
+
+      // Dynamically fetch accurate reply counts for each annotation
+      const enrichedAnns = await Promise.all(
+        rawAnns.map(async (ann) => {
+          try {
+            const countSnap = await getCountFromServer(
+              collection(database, 'annotation_messages', ann.id, 'messages')
+            );
+            return {
+              ...ann,
+              repliesCount: countSnap.data().count,
+            };
+          } catch {
+            return ann;
+          }
+        })
+      );
+
+      return enrichedAnns;
     } catch (e) {
       console.warn('Firestore getAnnotations error:', e);
       return [];
@@ -140,9 +259,11 @@ export class FirebaseVodAdapter implements IVodPort {
     if (db) {
       await setDoc(doc(db, 'vods', vodId, 'annotations', annId), newAnn);
       try {
-        await updateDoc(doc(db, 'vods', vodId), {
-          annotationsCount: increment(1),
-        });
+        await setDoc(
+          doc(db, 'vods', vodId),
+          { annotationsCount: increment(1) },
+          { merge: true }
+        );
       } catch {}
     }
 
@@ -164,7 +285,12 @@ export class FirebaseVodAdapter implements IVodPort {
     }
   }
 
-  async sendMessage(annotationId: string, text: string, author: User): Promise<VodMessage> {
+  async sendMessage(
+    annotationId: string,
+    text: string,
+    author: User,
+    vodId?: string
+  ): Promise<VodMessage> {
     const msgId = `msg-${Date.now()}`;
     const newMsg: VodMessage = {
       id: msgId,
@@ -179,6 +305,13 @@ export class FirebaseVodAdapter implements IVodPort {
 
     if (db) {
       await setDoc(doc(db, 'annotation_messages', annotationId, 'messages', msgId), newMsg);
+      if (vodId) {
+        try {
+          await updateDoc(doc(db, 'vods', vodId, 'annotations', annotationId), {
+            repliesCount: increment(1),
+          });
+        } catch {}
+      }
     }
     return newMsg;
   }

@@ -23,9 +23,13 @@ export class MockMatchAdapter implements IMatchPort {
     }
   }
 
-  async getMatches(): Promise<Match[]> {
+  async getMatches(limitCount?: number): Promise<Match[]> {
     await new Promise((res) => setTimeout(res, 150));
-    return this.getStoredMatches();
+    const all = this.getStoredMatches();
+    if (limitCount && limitCount > 0) {
+      return all.slice(0, limitCount);
+    }
+    return all;
   }
 
   async getMatchById(id: string): Promise<Match | null> {

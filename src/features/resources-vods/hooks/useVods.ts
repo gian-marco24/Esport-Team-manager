@@ -3,28 +3,43 @@ import type { VodItem, CreateVodFormData } from '../types';
 import { vodService } from '../services/vodService';
 import { useAuthContext } from '../../../app/providers/AuthProvider';
 
-export const useVods = () => {
+export const useVods = (pageSize: number = 9) => {
   const [vods, setVods] = useState<VodItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [hasMore, setHasMore] = useState<boolean>(false);
+  const [limitCount, setLimitCount] = useState<number>(pageSize);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthContext();
 
-  const fetchVods = async () => {
-    setIsLoading(true);
+  const fetchVods = async (count: number, isInitial = false) => {
+    if (isInitial) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
     setError(null);
     try {
-      const data = await vodService.getVods();
-      setVods(data);
+      const res = await vodService.getVods(count);
+      setVods(res.vods);
+      setHasMore(res.hasMore);
     } catch (err: any) {
       setError(err.message || 'Error al cargar las VODs.');
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchVods();
+    fetchVods(limitCount, true);
   }, []);
+
+  const loadMore = () => {
+    const next = limitCount + pageSize;
+    setLimitCount(next);
+    fetchVods(next, false);
+  };
 
   const addVod = async (data: CreateVodFormData) => {
     try {
@@ -55,8 +70,11 @@ export const useVods = () => {
   return {
     vods,
     isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
     error,
-    refetch: fetchVods,
+    refetch: () => fetchVods(limitCount, true),
     addVod,
     removeVod,
   };

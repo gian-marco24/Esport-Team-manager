@@ -1,4 +1,4 @@
-import type { IVodPort } from './vodPort';
+import type { IVodPort, GetVodsResult } from './vodPort';
 import {
   type VodItem,
   type VodAnnotation,
@@ -168,7 +168,7 @@ export class MockVodAdapter implements IVodPort {
     }
   }
 
-  async getVods(): Promise<VodItem[]> {
+  async getVods(limitCount: number = 9): Promise<GetVodsResult> {
     await new Promise((res) => setTimeout(res, 150));
     const standaloneVods = this.getStoredVods();
     const sortVodsByDate = (list: VodItem[]) => {
@@ -179,20 +179,34 @@ export class MockVodAdapter implements IVodPort {
       });
     };
 
+    let all: VodItem[] = [];
     try {
-      const matches = await matchService.getMatches();
+      const matches = await matchService.getMatches(limitCount + 1);
       const matchVods = extractVodsFromMatches(matches);
       const existingUrls = new Set(standaloneVods.map((v) => v.videoUrl));
       const filteredMatchVods = matchVods.filter((v) => !existingUrls.has(v.videoUrl));
-      return sortVodsByDate([...standaloneVods, ...filteredMatchVods]);
+      const storedAnnotations = this.getStoredAnnotations();
+      all = [...standaloneVods, ...filteredMatchVods].map((v) => ({
+        ...v,
+        annotationsCount: storedAnnotations[v.id]?.length ?? v.annotationsCount ?? 0,
+      }));
     } catch {
-      return sortVodsByDate(standaloneVods);
+      const storedAnnotations = this.getStoredAnnotations();
+      all = standaloneVods.map((v) => ({
+        ...v,
+        annotationsCount: storedAnnotations[v.id]?.length ?? v.annotationsCount ?? 0,
+      }));
     }
+
+    const sorted = sortVodsByDate(all);
+    const hasMore = sorted.length > limitCount;
+    const paginated = sorted.slice(0, limitCount);
+    return { vods: paginated, hasMore };
   }
 
   async getVodById(id: string): Promise<VodItem | null> {
-    const all = await this.getVods();
-    return all.find((v) => v.id === id) || null;
+    const res = await this.getVods(500);
+    return res.vods.find((v) => v.id === id) || null;
   }
 
   async createVod(data: CreateVodFormData, _author?: User): Promise<VodItem> {
@@ -215,6 +229,7 @@ export class MockVodAdapter implements IVodPort {
       provider,
       opponentName: data.opponentName,
       mapName: data.mapName,
+      matchType: data.matchType || 'analysis',
       matchDate: new Date().toISOString().split('T')[0],
       durationSeconds: 1200,
       annotationsCount: 0,
@@ -282,7 +297,7 @@ export class MockVodAdapter implements IVodPort {
     return all[annotationId] || [];
   }
 
-  async sendMessage(annotationId: string, text: string, author: User): Promise<VodMessage> {
+  async sendMessage(annotationId: string, text: string, author: User, _vodId?: string): Promise<VodMessage> {
     const all = this.getStoredMessages();
     const list = all[annotationId] || [];
 

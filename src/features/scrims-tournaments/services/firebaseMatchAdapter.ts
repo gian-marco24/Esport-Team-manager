@@ -1,14 +1,18 @@
-import { collection, doc, setDoc, getDocs, getDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, getDoc, deleteDoc, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import type { IMatchPort } from './matchPort';
 import { type Match, type CreateMatchFormData, calculateMatchSummary } from '../types';
 
 export class FirebaseMatchAdapter implements IMatchPort {
-  async getMatches(): Promise<Match[]> {
+  async getMatches(limitCount?: number): Promise<Match[]> {
     if (!db) return [];
 
     try {
-      const q = query(collection(db, 'matches'), orderBy('createdAt', 'desc'));
+      const constraints: any[] = [orderBy('createdAt', 'desc')];
+      if (limitCount && limitCount > 0) {
+        constraints.push(limit(limitCount));
+      }
+      const q = query(collection(db, 'matches'), ...constraints);
       const snapshot = await getDocs(q);
       if (snapshot.empty) {
         return [];

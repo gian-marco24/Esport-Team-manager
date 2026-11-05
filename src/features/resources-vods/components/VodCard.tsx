@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Video, Calendar, MapPin, Trash2, Swords, Trophy, Users } from 'lucide-react';
+import { Play, Video, Calendar, MapPin, Trash2, Swords, Trophy, Users, Sparkles } from 'lucide-react';
 import type { VodItem } from '../types';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
+import { getVodThumbnail, getMapSplash } from '../utils/vodThumbnail';
 
 interface VodCardProps {
   vod: VodItem;
@@ -11,6 +12,18 @@ interface VodCardProps {
 }
 
 export const VodCard: React.FC<VodCardProps> = ({ vod, onDelete }) => {
+  const primaryThumbnail = getVodThumbnail(vod.videoUrl, vod.mapName, vod.thumbnailUrl);
+  const fallbackSplash = getMapSplash(vod.mapName);
+  const [thumbSrc, setThumbSrc] = useState<string | null>(primaryThumbnail);
+
+  const handleThumbError = () => {
+    if (thumbSrc !== fallbackSplash && fallbackSplash) {
+      setThumbSrc(fallbackSplash);
+    } else {
+      setThumbSrc(null);
+    }
+  };
+
   const providerColors = {
     youtube: 'bg-red-950/80 text-red-400 border-red-500/40',
     twitch: 'bg-purple-950/80 text-purple-400 border-purple-500/40',
@@ -64,6 +77,10 @@ export const VodCard: React.FC<VodCardProps> = ({ vod, onDelete }) => {
                   <>
                     <Users className="w-3.5 h-3.5 text-sky-400" /> Tryouts
                   </>
+                ) : vod.matchType === 'analysis' ? (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Análisis
+                  </>
                 ) : (
                   <>
                     <Swords className="w-3.5 h-3.5 text-[#8B44F7]" /> Scrim
@@ -91,17 +108,32 @@ export const VodCard: React.FC<VodCardProps> = ({ vod, onDelete }) => {
           </div>
         </div>
 
-        {/* Video Preview Box */}
+        {/* Video Preview Box with Real Thumbnail */}
         <Link to={`/dashboard/vods/${vod.id}`} className="block relative rounded-2xl overflow-hidden group/player">
-          <div className="w-full h-44 sm:h-48 2xl:h-52 bg-[#0D0914] border border-[#26143E] flex items-center justify-center relative">
-            <div className="w-14 h-14 rounded-full bg-[#522B80]/80 border border-[#E2B86E]/50 flex items-center justify-center text-[#E2B86E] shadow-xl group-hover/player:scale-110 group-hover/player:bg-[#8B44F7] transition-all">
+          <div className="w-full h-44 sm:h-48 2xl:h-52 bg-[#0D0914] border border-[#26143E] flex items-center justify-center relative overflow-hidden">
+            {thumbSrc ? (
+              <>
+                <img
+                  src={thumbSrc}
+                  alt={vod.title}
+                  className="absolute inset-0 w-full h-full object-cover group-hover/player:scale-105 transition-transform duration-300"
+                  onError={handleThumbError}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/30 group-hover/player:via-black/20 transition-colors" />
+              </>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-[#140b21] via-[#1b102b] to-[#0D0914]" />
+            )}
+
+            <div className="w-14 h-14 rounded-full bg-[#522B80]/85 border border-[#E2B86E]/60 flex items-center justify-center text-[#E2B86E] shadow-2xl group-hover/player:scale-110 group-hover/player:bg-[#8B44F7] transition-all relative z-10 backdrop-blur-sm">
               <Play className="w-7 h-7 ml-1 fill-current" />
             </div>
-            <span className="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-black/80 text-xs text-[#E2B86E] font-bold rounded-lg border border-white/10">
-              {vod.annotationsCount} Marcadores
+
+            <span className="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-black/80 text-xs text-[#E2B86E] font-bold rounded-lg border border-white/10 z-10 backdrop-blur-md">
+              {vod.annotationsCount} {vod.annotationsCount === 1 ? 'Anotación' : 'Anotaciones'}
             </span>
             {vod.mapName && (
-              <span className="absolute top-2.5 left-2.5 px-2.5 py-1 bg-black/80 text-xs text-white font-bold rounded-lg flex items-center gap-1.5 border border-white/10">
+              <span className="absolute top-2.5 left-2.5 px-2.5 py-1 bg-black/80 text-xs text-white font-bold rounded-lg flex items-center gap-1.5 border border-white/10 z-10 backdrop-blur-md">
                 <MapPin className="w-3.5 h-3.5 text-[#E2B86E]" /> {vod.mapName}
               </span>
             )}

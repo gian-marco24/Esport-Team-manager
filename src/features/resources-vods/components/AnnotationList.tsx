@@ -38,7 +38,7 @@ export const AnnotationList: React.FC<AnnotationListProps> = ({
       </div>
 
       {/* Scrollable Annotations List */}
-      <div className="flex-1 p-3 overflow-y-auto space-y-2.5">
+      <div className="flex-1 p-3 overflow-y-auto space-y-2.5 min-h-0">
         {threadAnnotations.length === 0 ? (
           <div className="text-center py-12 space-y-2 text-gray-500">
             <MessageSquare className="w-8 h-8 mx-auto text-gray-600" />

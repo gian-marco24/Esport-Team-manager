@@ -68,6 +68,14 @@ export const useVodPlayer = (vodId?: string) => {
     }
   };
 
+  const incrementAnnotationReplies = (annotationId: string) => {
+    setAnnotations((prev) =>
+      prev.map((a) =>
+        a.id === annotationId ? { ...a, repliesCount: (a.repliesCount || 0) + 1 } : a
+      )
+    );
+  };
+
   return {
     vod,
     annotations,
@@ -82,5 +90,6 @@ export const useVodPlayer = (vodId?: string) => {
     setIsPlaying,
     seekToTimestamp,
     createAnnotationMarker,
+    incrementAnnotationReplies,
   };
 };

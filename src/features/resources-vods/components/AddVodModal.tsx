@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Video, X, Plus } from 'lucide-react';
 import { VALORANT_MAP_ROTATION } from '../../scrims-tournaments/types';
-import type { CreateVodFormData } from '../types';
+import type { CreateVodFormData, VodType } from '../types';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Button } from '../../../components/ui/Button';
@@ -15,6 +15,7 @@ interface AddVodModalProps {
 export const AddVodModal: React.FC<AddVodModalProps> = ({ isOpen, onClose, onSubmit }) => {
   const [title, setTitle] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [matchType, setMatchType] = useState<VodType>('analysis');
   const [opponentName, setOpponentName] = useState('');
   const [mapName, setMapName] = useState<string>(VALORANT_MAP_ROTATION[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,12 +43,14 @@ export const AddVodModal: React.FC<AddVodModalProps> = ({ isOpen, onClose, onSub
       await onSubmit({
         title: title.trim(),
         videoUrl: videoUrl.trim(),
+        matchType,
         opponentName: opponentName.trim() || undefined,
         mapName,
       });
       setTitle('');
       setVideoUrl('');
       setOpponentName('');
+      setMatchType('analysis');
       onClose();
     } catch (err: any) {
       setError(err.message || 'Error al guardar la VOD.');
@@ -97,12 +100,16 @@ export const AddVodModal: React.FC<AddVodModalProps> = ({ isOpen, onClose, onSub
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input
-            label="Equipo Rival (Opcional)"
-            placeholder="ej. KRÜ Esports"
-            value={opponentName}
-            onChange={(e) => setOpponentName(e.target.value)}
-          />
+          <Select
+            label="Tipo de VOD"
+            value={matchType}
+            onChange={(e) => setMatchType(e.target.value as VodType)}
+          >
+            <option value="analysis">Análisis</option>
+            <option value="scrim">Scrim</option>
+            <option value="tournament">Torneo</option>
+            <option value="tryout">Tryouts</option>
+          </Select>
 
           <Select
             label="Mapa (Opcional)"
@@ -116,6 +123,13 @@ export const AddVodModal: React.FC<AddVodModalProps> = ({ isOpen, onClose, onSub
             ))}
           </Select>
         </div>
+
+        <Input
+          label="Equipo Rival (Opcional)"
+          placeholder="ej. KRÜ Esports"
+          value={opponentName}
+          onChange={(e) => setOpponentName(e.target.value)}
+        />
 
         <div className="flex justify-end space-x-3 pt-3 border-t border-[#26143E]">
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>

@@ -8,13 +8,15 @@ import { Button } from '../../../components/ui/Button';
 interface AnnotationThreadChatProps {
   annotation: VodAnnotation;
   onBack: () => void;
+  onCommentSent?: (annotationId: string) => void;
 }
 
 export const AnnotationThreadChat: React.FC<AnnotationThreadChatProps> = ({
   annotation,
   onBack,
+  onCommentSent,
 }) => {
-  const { messages, isSending, sendMessage } = useAnnotationChat(annotation);
+  const { messages, isSending, sendMessage } = useAnnotationChat(annotation, onCommentSent);
   const [inputText, setInputText] = useState('');
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
@@ -60,7 +62,7 @@ export const AnnotationThreadChat: React.FC<AnnotationThreadChatProps> = ({
       </div>
 
       {/* Live Chat Messages Scroll Container */}
-      <div className="flex-1 p-3 overflow-y-auto space-y-3">
+      <div className="flex-1 p-3 overflow-y-auto space-y-3 min-h-0">
         {messages.length === 0 ? (
           <div className="text-center py-8 text-gray-500 space-y-1">
             <MessageSquare className="w-6 h-6 mx-auto text-gray-600" />

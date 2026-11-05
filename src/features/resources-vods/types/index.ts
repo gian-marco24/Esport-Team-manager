@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export type VodProvider = 'youtube' | 'twitch' | 'drive' | 'custom';
+export type VodType = 'scrim' | 'tournament' | 'tryout' | 'analysis';
 
 export interface VodItem {
   id: string;
@@ -14,7 +15,7 @@ export interface VodItem {
   thumbnailUrl?: string;
   annotationsCount: number;
   createdAt: string;
-  matchType?: 'scrim' | 'tournament' | 'tryout';
+  matchType?: VodType;
   tournamentName?: string;
   outcome?: 'win' | 'loss' | 'draw';
   overallScore?: string;
@@ -77,6 +78,7 @@ export const createVodSchema = z.object({
   videoUrl: z.string().url('Ingresa una URL de video válida (YouTube, Twitch, Drive, MP4)'),
   opponentName: z.string().optional(),
   mapName: z.string().optional(),
+  matchType: z.enum(['scrim', 'tournament', 'tryout', 'analysis']).default('analysis'),
 });
 
 export type CreateVodFormData = z.infer<typeof createVodSchema>;

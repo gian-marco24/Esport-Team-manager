@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Video, Plus, Search, Sparkles, Calendar, X } from 'lucide-react';
-import type { MatchType, MatchResultOutcome } from '../../scrims-tournaments/types';
+import { Video, Plus, Search, Sparkles, Calendar, X, ChevronDown } from 'lucide-react';
+import type { MatchResultOutcome } from '../../scrims-tournaments/types';
+import type { VodType } from '../types';
 import { useVods } from '../hooks/useVods';
 import { VodCard } from '../components/VodCard';
 import { AddVodModal } from '../components/AddVodModal';
@@ -9,10 +10,10 @@ import { Badge } from '../../../components/ui/Badge';
 import { LoadingSpinner } from '../../../components/feedback/LoadingSpinner';
 
 export const VodsPage: React.FC = () => {
-  const { vods, isLoading, error, addVod, removeVod } = useVods();
+  const { vods, isLoading, isLoadingMore, hasMore, loadMore, error, addVod, removeVod } = useVods(9);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<MatchType | 'all'>('all');
+  const [selectedType, setSelectedType] = useState<VodType | 'all'>('all');
   const [selectedOutcome, setSelectedOutcome] = useState<MatchResultOutcome | 'all'>('all');
   const [selectedDate, setSelectedDate] = useState<string>('');
 
@@ -69,8 +70,9 @@ export const VodsPage: React.FC = () => {
       <div className="bg-[#140b21] border border-[#26143E] rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {/* Filter Type */}
-          <div className="flex items-center space-x-1.5 bg-[#0D0914] border border-[#522B80]/60 rounded-xl p-1.5">
+          <div className="flex items-center space-x-1.5 bg-[#0D0914] border border-[#522B80]/60 rounded-xl p-1.5 flex-wrap">
             <button
+              type="button"
               onClick={() => setSelectedType('all')}
               className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
                 selectedType === 'all' ? 'bg-[#8B44F7] text-white' : 'text-gray-400 hover:text-white'
@@ -79,6 +81,16 @@ export const VodsPage: React.FC = () => {
               Todos
             </button>
             <button
+              type="button"
+              onClick={() => setSelectedType('analysis')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                selectedType === 'analysis' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Análisis
+            </button>
+            <button
+              type="button"
               onClick={() => setSelectedType('scrim')}
               className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
                 selectedType === 'scrim' ? 'bg-[#8B44F7] text-white' : 'text-gray-400 hover:text-white'
@@ -87,6 +99,7 @@ export const VodsPage: React.FC = () => {
               Scrims
             </button>
             <button
+              type="button"
               onClick={() => setSelectedType('tournament')}
               className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
                 selectedType === 'tournament' ? 'bg-[#E2B86E] text-[#0D0914]' : 'text-gray-400 hover:text-white'
@@ -95,6 +108,7 @@ export const VodsPage: React.FC = () => {
               Torneos
             </button>
             <button
+              type="button"
               onClick={() => setSelectedType('tryout')}
               className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
                 selectedType === 'tryout' ? 'bg-sky-600 text-white' : 'text-gray-400 hover:text-white'
@@ -141,19 +155,19 @@ export const VodsPage: React.FC = () => {
 
         {/* Search Input & Total */}
         <div className="flex items-center gap-3 w-full md:w-auto">
-        <div className="relative w-full sm:w-96">
-          <Search className="w-4.5 h-4.5 absolute left-3.5 top-3 text-gray-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Buscar por título, rival o mapa..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#0D0914] border border-[#522B80]/60 rounded-xl py-2.5 pl-10 pr-3.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#8B44F7]"
-          />
-        </div>
-        <span className="text-sm text-gray-400 font-semibold hidden sm:inline">
-          Total VODs: {filteredVods.length}
-        </span>
+          <div className="relative w-full sm:w-96">
+            <Search className="w-4.5 h-4.5 absolute left-3.5 top-3 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar por título, rival o mapa..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#0D0914] border border-[#522B80]/60 rounded-xl py-2.5 pl-10 pr-3.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#8B44F7]"
+            />
+          </div>
+          <span className="text-sm text-gray-400 font-semibold hidden sm:inline">
+            VODs mostradas: {filteredVods.length}{hasMore ? '+' : ''}
+          </span>
         </div>
       </div>
 
@@ -176,10 +190,27 @@ export const VodsPage: React.FC = () => {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredVods.map((v) => (
-            <VodCard key={v.id} vod={v} onDelete={removeVod} />
-          ))}
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredVods.map((v) => (
+              <VodCard key={v.id} vod={v} onDelete={removeVod} />
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="flex justify-center pt-2 pb-6">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={loadMore}
+                isLoading={isLoadingMore}
+                leftIcon={<ChevronDown className="w-4 h-4" />}
+                className="px-6 py-2.5 shadow-lg shadow-[#8B44F7]/20"
+              >
+                Ver más VODs (+9)
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

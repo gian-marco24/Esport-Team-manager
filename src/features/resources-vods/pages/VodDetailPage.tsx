@@ -28,6 +28,7 @@ export const VodDetailPage: React.FC = () => {
     setIsPlaying,
     seekToTimestamp,
     createAnnotationMarker,
+    incrementAnnotationReplies,
   } = useVodPlayer(id);
 
   const [activeAnnotation, setActiveAnnotation] = useState<VodAnnotation | null>(null);
@@ -69,8 +70,25 @@ export const VodDetailPage: React.FC = () => {
                 {vod.provider}
               </span>
               {vod.matchType && (
-                <Badge variant={vod.matchType === 'tournament' ? 'gold' : vod.matchType === 'tryout' ? 'blue' : 'purple'} className="text-[10px] px-1.5 py-0">
-                  {vod.matchType === 'tournament' ? (vod.tournamentName || 'Torneo') : vod.matchType === 'tryout' ? 'Tryouts' : 'Scrim'}
+                <Badge
+                  variant={
+                    vod.matchType === 'tournament'
+                      ? 'gold'
+                      : vod.matchType === 'tryout'
+                      ? 'blue'
+                      : vod.matchType === 'analysis'
+                      ? 'success'
+                      : 'purple'
+                  }
+                  className="text-[10px] px-1.5 py-0"
+                >
+                  {vod.matchType === 'tournament'
+                    ? (vod.tournamentName || 'Torneo')
+                    : vod.matchType === 'tryout'
+                    ? 'Tryouts'
+                    : vod.matchType === 'analysis'
+                    ? 'Análisis'
+                    : 'Scrim'}
                 </Badge>
               )}
               {vod.opponentName && <span className="font-semibold text-gray-200">vs {vod.opponentName}</span>}
@@ -97,10 +115,10 @@ export const VodDetailPage: React.FC = () => {
         </Badge>
       </div>
 
-      {/* Main Grid: Left 65% (Player + Timeline), Right 35% (Annotations List / Live Chat) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Video Player & Timeline Container (65% width) */}
-        <div className="lg:col-span-8 space-y-4">
+      {/* Main Grid: Left 8 cols (exact original width for player + timeline), Right 4 cols (remaining width, stretched to match height) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Left Video Player & Timeline Container (8 cols) */}
+        <div className="lg:col-span-8 flex flex-col gap-4 min-w-0">
           {/* Universal Video Player Box */}
           <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-[#8B44F7]/40 shadow-2xl">
             <UniversalVideoPlayer
@@ -133,27 +151,30 @@ export const VodDetailPage: React.FC = () => {
           />
         </div>
 
-        {/* Right Side Panel Container (35% width): Annotations List or Live Thread Chat */}
-        <div className="lg:col-span-4 h-[560px] lg:h-[620px] sticky top-20">
-          {activeAnnotation ? (
-            <AnnotationThreadChat
-              annotation={activeAnnotation}
-              onBack={() => setActiveAnnotation(null)}
-            />
-          ) : (
-            <AnnotationList
-              annotations={annotations}
-              activeAnnotationId={activeAnnotation ? (activeAnnotation as VodAnnotation).id : undefined}
-              onSelectAnnotation={(ann) => {
-                setActiveAnnotation(ann);
-                seekToTimestamp(ann.timestampSeconds);
-              }}
-              onAddMarkerClick={() => {
-                setModalType('annotation');
-                setIsAddModalOpen(true);
-              }}
-            />
-          )}
+        {/* Right Side Panel Container (4 cols): occupies remaining width, matching left height exactly without ever expanding */}
+        <div className="lg:col-span-4 relative h-[520px] lg:h-auto min-h-0">
+          <div className="h-full lg:h-auto lg:absolute lg:inset-0 flex flex-col min-h-0">
+            {activeAnnotation ? (
+              <AnnotationThreadChat
+                annotation={activeAnnotation}
+                onBack={() => setActiveAnnotation(null)}
+                onCommentSent={incrementAnnotationReplies}
+              />
+            ) : (
+              <AnnotationList
+                annotations={annotations}
+                activeAnnotationId={activeAnnotation ? (activeAnnotation as VodAnnotation).id : undefined}
+                onSelectAnnotation={(ann) => {
+                  setActiveAnnotation(ann);
+                  seekToTimestamp(ann.timestampSeconds);
+                }}
+                onAddMarkerClick={() => {
+                  setModalType('annotation');
+                  setIsAddModalOpen(true);
+                }}
+              />
+            )}
+          </div>
         </div>
       </div>
 
