@@ -15,6 +15,8 @@
   --color-brand-gold: var(--color-illuminated-gold);
   --color-brand-bronze: var(--color-antique-gold);
   --color-brand-bg: var(--color-onyx-black);
+
+  --breakpoint-desktop: 85.625rem;
 }
 
 :root {

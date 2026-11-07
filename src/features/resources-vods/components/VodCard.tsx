@@ -55,62 +55,68 @@ export const VodCard: React.FC<VodCardProps> = ({ vod, onDelete }) => {
   };
 
   return (
-    <Card glow="purple" className="p-4 sm:p-5 space-y-3.5 relative group hover:scale-[1.01] transition-all flex flex-col justify-between">
+    <Card glow="purple" className="p-4 sm:p-5 space-y-3.5 relative group hover:scale-[1.01] transition-all flex flex-col justify-between overflow-hidden">
       <div className="space-y-3.5">
-        {/* Top Bar: Provider Badge & Delete Action */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className={`text-xs font-bold px-2.5 py-0.5 rounded border uppercase tracking-wider ${
-                providerColors[vod.provider]
-              }`}
-            >
-              {vod.provider}
-            </span>
-            {vod.vods && vod.vods.length > 1 && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#8B44F7]/25 text-[#E2B86E] border border-[#8B44F7]/40 flex items-center gap-1">
-                <Video className="w-3.5 h-3.5 text-[#E2B86E]" /> {vod.vods.length} VODs
+        {/* Top Bar: Provider Badge, Count, Date & Tournament */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span
+                className={`text-xs font-bold px-2.5 py-0.5 rounded border uppercase tracking-wider ${
+                  providerColors[vod.provider]
+                }`}
+              >
+                {vod.provider}
               </span>
-            )}
-            {vod.matchType && (
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-[#26143E] text-[#E2B86E] border border-[#8B44F7]/30 flex items-center gap-1.5">
-                {vod.matchType === 'tournament' ? (
-                  <>
-                    <Trophy className="w-3.5 h-3.5 text-[#E2B86E]" /> {vod.tournamentName || 'Torneo'}
-                  </>
-                ) : vod.matchType === 'tryout' ? (
-                  <>
-                    <Users className="w-3.5 h-3.5 text-sky-400" /> Tryouts
-                  </>
-                ) : vod.matchType === 'analysis' ? (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Análisis
-                  </>
-                ) : (
-                  <>
-                    <Swords className="w-3.5 h-3.5 text-[#8B44F7]" /> Scrim
-                  </>
-                )}
-              </span>
-            )}
+              {vod.vods && vod.vods.length > 1 && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#8B44F7]/25 text-[#E2B86E] border border-[#8B44F7]/40 flex items-center gap-1">
+                  <Video className="w-3.5 h-3.5 text-[#E2B86E]" /> {vod.vods.length} VODs
+                </span>
+              )}
+              {vod.matchType && vod.matchType !== 'tournament' && (
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-[#26143E] text-[#E2B86E] border border-[#8B44F7]/30 flex items-center gap-1">
+                  {vod.matchType === 'tryout' ? (
+                    <>
+                      <Users className="w-3.5 h-3.5 text-sky-400" /> Tryouts
+                    </>
+                  ) : vod.matchType === 'analysis' ? (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Análisis
+                    </>
+                  ) : (
+                    <>
+                      <Swords className="w-3.5 h-3.5 text-[#8B44F7]" /> Scrim
+                    </>
+                  )}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-1 shrink-0 ml-auto">
+              {vod.matchDate && (
+                <span className="text-xs text-gray-400 flex items-center gap-1 font-medium whitespace-nowrap shrink-0">
+                  <Calendar className="w-3.5 h-3.5 text-[#E2B86E] shrink-0" /> {vod.matchDate}
+                </span>
+              )}
+              {onDelete && !vod.sourceMatchId && (
+                <button
+                  onClick={() => onDelete(vod.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-400 transition-opacity ml-1"
+                  title="Eliminar VOD"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center space-x-1.5">
-            {vod.matchDate && (
-              <span className="text-xs text-gray-400 flex items-center gap-1 font-medium">
-                <Calendar className="w-3.5 h-3.5 text-[#E2B86E]" /> {vod.matchDate}
-              </span>
-            )}
-            {onDelete && !vod.sourceMatchId && (
-              <button
-                onClick={() => onDelete(vod.id)}
-                className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-400 transition-opacity ml-1"
-                title="Eliminar VOD"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+          {/* Tournament Name Banner: Full width to prevent any cut-off or collision with dates */}
+          {(vod.tournamentName || vod.matchType === 'tournament') && (
+            <div className="flex items-start gap-1.5 px-2.5 py-1 rounded-lg bg-[#26143E]/80 text-[#E2B86E] border border-[#8B44F7]/30 text-xs font-bold leading-snug break-words">
+              <Trophy className="w-3.5 h-3.5 text-[#E2B86E] shrink-0 mt-0.5" />
+              <span className="break-words">{vod.tournamentName || 'Torneo'}</span>
+            </div>
+          )}
         </div>
 
         {/* Video Preview Box with Real Thumbnail */}
@@ -148,16 +154,16 @@ export const VodCard: React.FC<VodCardProps> = ({ vod, onDelete }) => {
         {/* Details */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <Link to={`/dashboard/vods/${vod.id}`} className="flex-1">
-              <h3 className="text-sm sm:text-base font-bold text-white hover:text-[#E2B86E] line-clamp-2 transition-colors">
+            <Link to={`/dashboard/vods/${vod.id}`} className="flex-1 min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-white hover:text-[#E2B86E] transition-colors leading-snug break-words">
                 {vod.title}
               </h3>
             </Link>
           </div>
 
-          <div className="flex items-center justify-between text-xs sm:text-sm pt-0.5 flex-wrap gap-1">
+          <div className="flex items-center justify-between text-xs sm:text-sm pt-0.5 flex-wrap gap-1.5">
             {vod.opponentName && (
-              <span className="font-semibold text-gray-300">vs {vod.opponentName}</span>
+              <span className="font-semibold text-gray-300 break-words">vs {vod.opponentName}</span>
             )}
             {getOutcomeBadge()}
           </div>

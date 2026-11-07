@@ -67,62 +67,67 @@ export const VodsPage: React.FC = () => {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-[#140b21] border border-[#26143E] rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          {/* Filter Type */}
-          <div className="flex items-center space-x-1.5 bg-[#0D0914] border border-[#522B80]/60 rounded-xl p-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setSelectedType('all')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
-                selectedType === 'all' ? 'bg-[#8B44F7] text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Todos
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedType('analysis')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
-                selectedType === 'analysis' ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Análisis
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedType('scrim')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
-                selectedType === 'scrim' ? 'bg-[#8B44F7] text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Scrims
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedType('tournament')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
-                selectedType === 'tournament' ? 'bg-[#E2B86E] text-[#0D0914]' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Torneos
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedType('tryout')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
-                selectedType === 'tryout' ? 'bg-sky-600 text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Tryouts
-            </button>
-          </div>
+      <div className="bg-[#140b21] border border-[#26143E] rounded-2xl p-4 sm:p-5 shadow-xl flex flex-wrap desktop:flex-nowrap items-center justify-between gap-3">
+        {/* Block 1: Filter Type Pills */}
+        <div className="order-1 flex items-center space-x-1 bg-[#0D0914] border border-[#522B80]/60 rounded-xl p-1.5 overflow-x-auto scrollbar-none shrink-0 max-w-full">
+          <button
+            type="button"
+            onClick={() => setSelectedType('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors shrink-0 ${
+              selectedType === 'all' ? 'bg-[#8B44F7] text-white shadow-md' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Todos
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedType('analysis')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors shrink-0 ${
+              selectedType === 'analysis' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Análisis
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedType('scrim')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors shrink-0 ${
+              selectedType === 'scrim' ? 'bg-[#8B44F7] text-white shadow-md' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Scrims
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedType('tournament')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors shrink-0 ${
+              selectedType === 'tournament' ? 'bg-[#E2B86E] text-[#0D0914] shadow-md' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Torneos
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedType('tryout')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors shrink-0 ${
+              selectedType === 'tryout' ? 'bg-sky-600 text-white shadow-md' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Tryouts
+          </button>
+        </div>
+
+        {/* Block 2: Secondary Filters (Outcome & Date) - In 1 row on >= 1370px, drops to row 2 on < 1370px */}
+        <div className="order-3 desktop:order-2 w-full desktop:w-auto flex items-center gap-2.5 flex-wrap pt-2.5 desktop:pt-0 border-t border-[#26143E] desktop:border-t-0 shrink-0">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 shrink-0">
+            Filtros:
+          </span>
 
           {/* Filter Outcome */}
           <select
             value={selectedOutcome}
             onChange={(e) => setSelectedOutcome(e.target.value as MatchResultOutcome | 'all')}
-            className="bg-[#0D0914] border border-[#522B80]/60 text-gray-200 text-xs sm:text-sm rounded-xl py-2 px-3.5 focus:outline-none focus:border-[#8B44F7] cursor-pointer"
+            className="bg-[#0D0914] border border-[#522B80]/60 text-gray-200 text-xs rounded-xl py-1.5 px-3 focus:outline-none focus:border-[#8B44F7] cursor-pointer"
           >
             <option value="all">Cualquier Resultado</option>
             <option value="win">Solo Victorias</option>
@@ -131,13 +136,13 @@ export const VodsPage: React.FC = () => {
           </select>
 
           {/* Filter Date */}
-          <div className="flex items-center space-x-2 bg-[#0D0914] border border-[#522B80]/60 rounded-xl px-3 py-1.5 focus-within:border-[#8B44F7]">
-            <Calendar className="w-4 h-4 text-[#E2B86E] shrink-0" />
+          <div className="flex items-center space-x-2 bg-[#0D0914] border border-[#522B80]/60 rounded-xl px-2.5 py-1 focus-within:border-[#8B44F7]">
+            <Calendar className="w-3.5 h-3.5 text-[#E2B86E] shrink-0" />
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-transparent text-gray-200 text-xs sm:text-sm focus:outline-none cursor-pointer [color-scheme:dark]"
+              className="bg-transparent text-gray-200 text-xs focus:outline-none cursor-pointer [color-scheme:dark]"
               title="Filtrar por fecha específica"
             />
             {selectedDate && (
@@ -145,33 +150,58 @@ export const VodsPage: React.FC = () => {
                 type="button"
                 onClick={() => setSelectedDate('')}
                 className="text-gray-400 hover:text-white p-0.5 ml-1 transition-colors"
-                title="Limpiar filtro de fecha"
+                title="Limpiar fecha"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
+
+          {/* Reset all button if active */}
+          {(selectedType !== 'all' || selectedOutcome !== 'all' || selectedDate || searchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedType('all');
+                setSelectedOutcome('all');
+                setSelectedDate('');
+                setSearchQuery('');
+              }}
+              className="text-[11px] font-bold text-[#E2B86E] hover:underline px-2 py-1 transition-colors flex items-center gap-1"
+            >
+              <X className="w-3 h-3" /> Limpiar filtros
+            </button>
+          )}
         </div>
 
-        {/* Search Input & Total */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative w-full sm:w-96">
-            <Search className="w-4.5 h-4.5 absolute left-3.5 top-3 text-gray-400 pointer-events-none" />
+        {/* Block 3: Search Box & Total Count - Placed on right on >= 1370px, or on row 1 right side on < 1370px */}
+        <div className="order-2 desktop:order-3 flex items-center gap-3 w-full sm:w-auto desktop:ml-auto shrink-0">
+          <div className="relative flex-1 sm:w-72 xl:w-80">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar por título, rival o mapa..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#0D0914] border border-[#522B80]/60 rounded-xl py-2.5 pl-10 pr-3.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#8B44F7]"
+              className="w-full bg-[#0D0914] border border-[#522B80]/60 rounded-xl py-2 pl-9 pr-3.5 text-xs sm:text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#8B44F7]"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
-          <span className="text-sm text-gray-400 font-semibold hidden sm:inline">
-            VODs mostradas: {filteredVods.length}{hasMore ? '+' : ''}
+          <span className="text-xs text-gray-400 font-semibold whitespace-nowrap shrink-0">
+            VODs: {filteredVods.length}{hasMore ? '+' : ''}
           </span>
         </div>
       </div>
 
-      {/* Grid of VOD Cards: 3 columns on 1080p, 4 columns on 1440p+ */}
+      {/* Grid of VOD Cards */}
       {isLoading ? (
         <LoadingSpinner label="Cargando biblioteca de VODs..." />
       ) : error ? (
@@ -191,7 +221,7 @@ export const VodsPage: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 desktop:grid-cols-3 gap-6">
             {filteredVods.map((v) => (
               <VodCard key={v.id} vod={v} onDelete={removeVod} />
             ))}
