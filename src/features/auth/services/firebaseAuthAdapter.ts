@@ -4,6 +4,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged as firebaseOnAuthStateChanged,
   updateProfile,
+  deleteUser,
 } from 'firebase/auth';
 import {
   doc,
@@ -60,6 +61,52 @@ async function fetchUserDocData(uid: string, email: string): Promise<any | null>
   }
 
   return null;
+}
+
+async function isUserRevoked(uid?: string, email?: string): Promise<boolean> {
+  const cleanEmail = (email || '').trim().toLowerCase();
+
+  try {
+    const localRevoked = localStorage.getItem('urs_gamara_revoked_users');
+    if (localRevoked) {
+      const list: string[] = JSON.parse(localRevoked);
+      if (uid && list.includes(uid)) return true;
+      if (cleanEmail && list.includes(cleanEmail)) return true;
+    }
+  } catch {
+    // ignore
+  }
+
+  if (!db) return false;
+
+  try {
+    if (uid) {
+      const snap = await getDoc(doc(db, 'revoked_users', uid));
+      if (snap.exists()) return true;
+    }
+    if (cleanEmail) {
+      const snap = await getDoc(doc(db, 'revoked_users', cleanEmail));
+      if (snap.exists()) return true;
+
+      const q = query(collection(db, 'revoked_users'), where('email', '==', cleanEmail));
+      const qSnap = await getDocs(q);
+      if (!qSnap.empty) return true;
+    }
+  } catch (e) {
+    console.warn('isUserRevoked check error:', e);
+  }
+
+  return false;
+}
+
+async function safeSignOut(): Promise<void> {
+  if (auth) {
+    try {
+      await firebaseSignOut(auth);
+    } catch {
+      // ignore
+    }
+  }
 }
 
 const processUserProfile = (uid: string, email: string, rawData?: any): User => {
@@ -120,6 +167,14 @@ export class FirebaseAuthAdapter implements IAuthPort {
       return this.fallbackAdapter.login(credentials);
     }
 
+    const emailLower = credentials.email.trim().toLowerCase();
+    const isCeo = emailLower === 'gianm2405@gmail.com';
+
+    // 1. Check if user is revoked before login
+    if (!isCeo && (await isUserRevoked(undefined, emailLower))) {
+      throw new Error('Esta cuenta ha sido eliminada del equipo y ya no tiene acceso a la plataforma.');
+    }
+
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -129,9 +184,39 @@ export class FirebaseAuthAdapter implements IAuthPort {
 
       const firebaseUser = userCredential.user;
 
-      const docData = await fetchUserDocData(firebaseUser.uid, credentials.email);
+      // 2. Check if revoked by UID or email
+      if (!isCeo && (await isUserRevoked(firebaseUser.uid, emailLower))) {
+        try {
+          await deleteUser(firebaseUser);
+        } catch {
+          await safeSignOut();
+        }
+        throw new Error('Esta cuenta ha sido eliminada del equipo y ya no tiene acceso a la plataforma.');
+      }
+
+      // 3. Fetch user document from Firestore
+      const docData = await fetchUserDocData(firebaseUser.uid, emailLower);
       if (docData) {
+        if (!isCeo && (docData.deleted || docData.revoked)) {
+          try {
+            await deleteUser(firebaseUser);
+          } catch {
+            await safeSignOut();
+          }
+          throw new Error('Esta cuenta ha sido eliminada del equipo y ya no tiene acceso a la plataforma.');
+        }
         return processUserProfile(firebaseUser.uid, credentials.email, docData);
+      }
+
+      // 4. Missing Firestore doc:
+      // If NOT CEO, user was deleted from the team. Erase auth account, sign out and reject
+      if (!isCeo) {
+        try {
+          await deleteUser(firebaseUser);
+        } catch {
+          await safeSignOut();
+        }
+        throw new Error('Esta cuenta ha sido eliminada del equipo o no pertenece a un integrante activo.');
       }
 
       return processUserProfile(firebaseUser.uid, credentials.email, {
@@ -143,9 +228,11 @@ export class FirebaseAuthAdapter implements IAuthPort {
         return this.fallbackAdapter.login(credentials);
       }
       const message =
-        fbError.code === 'auth/user-not-found' || fbError.code === 'auth/wrong-password' || fbError.code === 'auth/invalid-credential'
+        fbError.code === 'auth/user-not-found' ||
+        fbError.code === 'auth/wrong-password' ||
+        fbError.code === 'auth/invalid-credential'
           ? 'Correo electrónico o contraseña incorrectos.'
-          : fbError.message || 'Error al iniciar sesión';
+          : (error as Error).message || 'Error al iniciar sesión';
       throw new Error(message, { cause: error });
     }
   }
@@ -209,6 +296,24 @@ export class FirebaseAuthAdapter implements IAuthPort {
 
       await teamService.consumeInvitation(data.code);
 
+      // Clean revoked status if re-invited
+      try {
+        if (db) {
+          await deleteDoc(doc(db, 'revoked_users', firebaseUser.uid));
+          await deleteDoc(doc(db, 'revoked_users', data.email.toLowerCase()));
+        }
+        const revokedKey = 'urs_gamara_revoked_users';
+        const stored = localStorage.getItem(revokedKey);
+        if (stored) {
+          const list = JSON.parse(stored).filter(
+            (x: string) => x !== firebaseUser.uid && x !== data.email.toLowerCase()
+          );
+          localStorage.setItem(revokedKey, JSON.stringify(list));
+        }
+      } catch {
+        // ignore
+      }
+
       return newUser;
     } catch (error: unknown) {
       const fbError = error as { code?: string; message?: string };
@@ -239,12 +344,41 @@ export class FirebaseAuthAdapter implements IAuthPort {
     const current = auth.currentUser;
     if (!current) return null;
 
-    const docData = await fetchUserDocData(current.uid, current.email || '');
-    if (docData) {
-      return processUserProfile(current.uid, current.email || '', docData);
+    const email = (current.email || '').toLowerCase();
+    const isCeo = email === 'gianm2405@gmail.com';
+
+    if (!isCeo && (await isUserRevoked(current.uid, email))) {
+      try {
+        await deleteUser(current);
+      } catch {
+        await safeSignOut();
+      }
+      return null;
     }
 
-    return processUserProfile(current.uid, current.email || '', {
+    const docData = await fetchUserDocData(current.uid, email);
+    if (docData) {
+      if (!isCeo && (docData.deleted || docData.revoked)) {
+        try {
+          await deleteUser(current);
+        } catch {
+          await safeSignOut();
+        }
+        return null;
+      }
+      return processUserProfile(current.uid, email, docData);
+    }
+
+    if (!isCeo) {
+      try {
+        await deleteUser(current);
+      } catch {
+        await safeSignOut();
+      }
+      return null;
+    }
+
+    return processUserProfile(current.uid, email, {
       displayName: current.displayName,
     });
   }
@@ -260,13 +394,49 @@ export class FirebaseAuthAdapter implements IAuthPort {
         return;
       }
 
-      const docData = await fetchUserDocData(firebaseUser.uid, firebaseUser.email || '');
-      if (docData) {
-        callback(processUserProfile(firebaseUser.uid, firebaseUser.email || '', docData));
+      const email = (firebaseUser.email || '').toLowerCase();
+      const isCeo = email === 'gianm2405@gmail.com';
+
+      // 1. Check if user is revoked
+      if (!isCeo && (await isUserRevoked(firebaseUser.uid, email))) {
+        try {
+          await deleteUser(firebaseUser);
+        } catch {
+          await safeSignOut();
+        }
+        callback(null);
         return;
       }
 
-      callback(processUserProfile(firebaseUser.uid, firebaseUser.email || '', {
+      // 2. Fetch docData
+      const docData = await fetchUserDocData(firebaseUser.uid, email);
+      if (docData) {
+        if (!isCeo && (docData.deleted || docData.revoked)) {
+          try {
+            await deleteUser(firebaseUser);
+          } catch {
+            await safeSignOut();
+          }
+          callback(null);
+          return;
+        }
+        callback(processUserProfile(firebaseUser.uid, email, docData));
+        return;
+      }
+
+      // 3. User document missing in Firestore:
+      // If NOT CEO, user was deleted from the team. Revoke access, delete auth account and sign out!
+      if (!isCeo) {
+        try {
+          await deleteUser(firebaseUser);
+        } catch {
+          await safeSignOut();
+        }
+        callback(null);
+        return;
+      }
+
+      callback(processUserProfile(firebaseUser.uid, email, {
         displayName: firebaseUser.displayName,
       }));
     });

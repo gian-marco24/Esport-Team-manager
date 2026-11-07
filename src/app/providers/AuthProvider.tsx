@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { onSnapshot, doc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import type { User } from '../../features/auth/types';
 import { authService } from '../../features/auth/services/authService';
 import { teamService } from '../../features/teams/services/teamService';
@@ -29,6 +31,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => unsubscribe();
   }, []);
+
+  // Real-time detection: revoke access and logout immediately if account was deleted by admin
+  useEffect(() => {
+    if (!user) return;
+
+    const isCeo =
+      user.role === 'ceo' ||
+      user.teamRole === 'CEO' ||
+      user.email?.toLowerCase() === 'gianm2405@gmail.com';
+
+    if (isCeo) return;
+
+    let unsubscribeFirestore: (() => void) | null = null;
+    if (db && user.id) {
+      try {
+        unsubscribeFirestore = onSnapshot(
+          doc(db, 'users', user.id),
+          async (snapshot) => {
+            if (!snapshot.exists()) {
+              console.warn('User document was deleted. Revoking access in real-time.');
+              alert(
+                'Tu cuenta ha sido eliminada del equipo por la administración. Tu acceso a la plataforma ha sido revocado.'
+              );
+              try {
+                await authService.logout();
+              } catch (e) {
+                console.warn('Forced logout error:', e);
+              }
+              setUser(null);
+            }
+          },
+          (err) => {
+            console.warn('Real-time user snapshot error:', err);
+          }
+        );
+      } catch (err) {
+        console.warn('Failed to attach real-time user listener:', err);
+      }
+    }
+
+    const handleStorageChange = async (e: StorageEvent) => {
+      if (e.key === 'urs_gamara_revoked_users' || e.key === 'urs_gamara_mock_session') {
+        const revokedStr = localStorage.getItem('urs_gamara_revoked_users');
+        if (revokedStr) {
+          const list: string[] = JSON.parse(revokedStr);
+          if (
+            (user.id && list.includes(user.id)) ||
+            (user.email && list.includes(user.email.toLowerCase()))
+          ) {
+            alert(
+              'Tu cuenta ha sido eliminada del equipo por la administración. Tu acceso a la plataforma ha sido revocado.'
+            );
+            try {
+              await authService.logout();
+            } catch (err) {
+              console.warn('Forced logout error:', err);
+            }
+            setUser(null);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      if (unsubscribeFirestore) unsubscribeFirestore();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [user]);
 
   const refreshUser = async () => {
     try {

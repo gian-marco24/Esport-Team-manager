@@ -26,7 +26,7 @@ export interface ITeamPort {
     newNick: string,
     newGameTag?: string
   ): Promise<void>;
-  removeMemberFromTeam(memberId: string): Promise<void>;
+  removeMemberFromTeam(memberId: string, email?: string): Promise<void>;
 
   getRosters(teamId: string): Promise<Roster[]>;
   createRoster(teamId: string, input: CreateRosterInput): Promise<Roster>;

@@ -71,9 +71,14 @@ export const TeamPage: React.FC = () => {
   };
 
   const handleRemoveMember = async (memberId: string, nick: string) => {
-    if (confirm(`¿Estás seguro de eliminar a ${nick} de la plantilla del equipo?`)) {
+    const targetMember = members.find((m) => m.id === memberId);
+    if (
+      confirm(
+        `¿Estás seguro de eliminar a ${nick} del equipo?\n\nEsta acción borrará todos sus datos registrados (perfil, notas personales, objetivos, rutinas) y revocará de forma inmediata y definitiva su acceso a la plataforma.`
+      )
+    ) {
       try {
-        await teamService.removeMemberFromTeam(memberId);
+        await teamService.removeMemberFromTeam(memberId, targetMember?.email);
         await fetchData();
       } catch (err) {
         alert((err as Error).message || 'Error al eliminar integrante.');

@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   setDoc,
   updateDoc,
@@ -9,6 +10,8 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
+import axios from 'axios';
+import { backendApi } from '../../../utils/config';
 import type { ITeamPort } from './teamPort';
 import type {
   TeamMember,
@@ -363,18 +366,217 @@ export class FirebaseTeamAdapter implements ITeamPort {
     }
   }
 
-  async removeMemberFromTeam(memberId: string): Promise<void> {
-    if (db) {
+  async removeMemberFromTeam(memberId: string, email?: string): Promise<void> {
+    const members = this.getLocalMembers();
+    const localMember = members.find(
+      (m) => m.id === memberId || (email && m.email.toLowerCase() === email.toLowerCase())
+    );
+    let targetEmail = (email || localMember?.email || '').trim().toLowerCase();
+
+    // If targetEmail wasn't in local, try to fetch from Firestore before deletion
+    if (!targetEmail && db) {
       try {
-        await deleteDoc(doc(db, 'users', memberId));
-      } catch (err) {
-        console.warn('Firestore delete user error:', err);
+        const snap = await getDoc(doc(db, 'users', memberId));
+        if (snap.exists()) {
+          targetEmail = (snap.data().email || '').trim().toLowerCase();
+        }
+      } catch {
+        // ignore
       }
     }
 
-    const members = this.getLocalMembers();
-    const filtered = members.filter((m) => m.id !== memberId);
+    // Safety: Prevent deleting CEO
+    if (targetEmail === 'gianm2405@gmail.com' || localMember?.teamRole === 'CEO') {
+      throw new Error('No es posible eliminar la cuenta del CEO / Propietario.');
+    }
+
+    // 0. Request backend to delete the user from Firebase Authentication via Admin SDK
+    try {
+      const backendUrl = backendApi || import.meta.env.VITE_BACKEND_API || 'http://localhost:3000';
+      const cleanUrl = backendUrl.replace(/\/+$/, '');
+      await axios.post(`${cleanUrl}/api/auth/delete-user`, {
+        uid: memberId,
+        email: targetEmail,
+      });
+      console.log(`Backend confirmed deletion request for user ${memberId} (${targetEmail}) in Firebase Auth`);
+    } catch (backendErr) {
+      console.warn('Backend call to delete user from Firebase Auth skipped or failed (will be enforced via client/revocation):', backendErr);
+    }
+
+    // 1. Mark as revoked in Firestore 'revoked_users' collection and localStorage
+    const revokedRecord = {
+      uid: memberId,
+      email: targetEmail,
+      displayName: localMember?.displayName || 'Ex-integrante',
+      revokedAt: new Date().toISOString(),
+      reason: 'Deleted by CEO',
+    };
+
+    try {
+      const revokedKey = 'urs_gamara_revoked_users';
+      const storedRevoked = localStorage.getItem(revokedKey);
+      const revokedList: string[] = storedRevoked ? JSON.parse(storedRevoked) : [];
+      if (memberId && !revokedList.includes(memberId)) revokedList.push(memberId);
+      if (targetEmail && !revokedList.includes(targetEmail)) revokedList.push(targetEmail);
+      localStorage.setItem(revokedKey, JSON.stringify(revokedList));
+    } catch {
+      // ignore
+    }
+
+    if (db) {
+      try {
+        if (memberId) {
+          await setDoc(doc(db, 'revoked_users', memberId), revokedRecord);
+        }
+        if (targetEmail) {
+          await setDoc(doc(db, 'revoked_users', targetEmail), revokedRecord);
+        }
+      } catch (err) {
+        console.warn('Firestore set revoked_users error:', err);
+      }
+
+      // 2. Collect all document IDs for this user in 'users'
+      const userDocIdsToDelete = new Set<string>();
+      if (memberId) userDocIdsToDelete.add(memberId);
+
+      if (targetEmail) {
+        try {
+          const q = query(collection(db, 'users'), where('email', '==', targetEmail));
+          const snap = await getDocs(q);
+          snap.forEach((d) => userDocIdsToDelete.add(d.id));
+        } catch (e) {
+          console.warn('Firestore query users by email error:', e);
+        }
+      }
+
+      // 3. For each user doc, remove subcollections (personal_notes, weekly_objectives) then the doc itself
+      for (const uid of userDocIdsToDelete) {
+        try {
+          const notesSnap = await getDocs(collection(db, 'users', uid, 'personal_notes'));
+          for (const nDoc of notesSnap.docs) {
+            try {
+              await deleteDoc(nDoc.ref);
+            } catch (err) {
+              console.warn('Delete note doc error:', err);
+            }
+          }
+        } catch (err) {
+          console.warn('Fetch user personal_notes error:', err);
+        }
+
+        try {
+          const objSnap = await getDocs(collection(db, 'users', uid, 'weekly_objectives'));
+          for (const oDoc of objSnap.docs) {
+            try {
+              await deleteDoc(oDoc.ref);
+            } catch (err) {
+              console.warn('Delete objective doc error:', err);
+            }
+          }
+        } catch (err) {
+          console.warn('Fetch user weekly_objectives error:', err);
+        }
+
+        try {
+          await deleteDoc(doc(db, 'users', uid));
+        } catch (err) {
+          console.warn('Firestore delete user error:', err);
+        }
+      }
+
+      // 4. Delete assigned routines
+      const routineUserIds = [memberId, targetEmail].filter(Boolean);
+      for (const rId of routineUserIds) {
+        try {
+          await deleteDoc(doc(db, 'user_assigned_routines', rId));
+        } catch (err) {
+          console.warn('Delete user_assigned_routines error:', err);
+        }
+      }
+      try {
+        const qRoutines = query(collection(db, 'user_assigned_routines'), where('userId', 'in', routineUserIds));
+        const rSnap = await getDocs(qRoutines);
+        for (const rDoc of rSnap.docs) {
+          try {
+            await deleteDoc(rDoc.ref);
+          } catch (err) {
+            console.warn('Delete routine doc error:', err);
+          }
+        }
+      } catch (err) {
+        console.warn('Query user_assigned_routines error:', err);
+      }
+
+      // 5. Delete routine checkins
+      try {
+        const qCheckins = query(collection(db, 'routine_checkins'), where('userId', 'in', routineUserIds));
+        const cSnap = await getDocs(qCheckins);
+        for (const cDoc of cSnap.docs) {
+          try {
+            await deleteDoc(cDoc.ref);
+          } catch (err) {
+            console.warn('Delete routine_checkins doc error:', err);
+          }
+        }
+      } catch (err) {
+        console.warn('Query routine_checkins error:', err);
+      }
+    }
+
+    // 6. Clean up local storage
+    const filtered = members.filter(
+      (m) => m.id !== memberId && (!targetEmail || m.email.toLowerCase() !== targetEmail)
+    );
     this.saveLocalMembers(filtered);
+
+    try {
+      // Clean mock users
+      const mockUsersStr = localStorage.getItem('urs_gamara_mock_users');
+      if (mockUsersStr) {
+        const mockUsers = JSON.parse(mockUsersStr);
+        for (const k of Object.keys(mockUsers)) {
+          if (
+            mockUsers[k].id === memberId ||
+            (targetEmail && mockUsers[k].email?.toLowerCase() === targetEmail) ||
+            (targetEmail && k.toLowerCase() === targetEmail)
+          ) {
+            delete mockUsers[k];
+          }
+        }
+        localStorage.setItem('urs_gamara_mock_users', JSON.stringify(mockUsers));
+      }
+
+      // Clean mock session if matching deleted user
+      const sessionStr = localStorage.getItem('urs_gamara_mock_session');
+      if (sessionStr) {
+        const sessionUser = JSON.parse(sessionStr);
+        if (
+          sessionUser.id === memberId ||
+          (targetEmail && sessionUser.email?.toLowerCase() === targetEmail)
+        ) {
+          localStorage.removeItem('urs_gamara_mock_session');
+        }
+      }
+
+      // Clean local notes and objectives
+      localStorage.removeItem(`urs_gamara_personal_notes_${memberId}`);
+      localStorage.removeItem(`urs_gamara_weekly_objectives_${memberId}`);
+      if (targetEmail) {
+        localStorage.removeItem(`urs_gamara_personal_notes_${targetEmail}`);
+        localStorage.removeItem(`urs_gamara_weekly_objectives_${targetEmail}`);
+      }
+
+      // Clean local assigned routines
+      const assignedRoutinesStr = localStorage.getItem('urs_gamara_assigned_routines');
+      if (assignedRoutinesStr) {
+        const map = JSON.parse(assignedRoutinesStr);
+        delete map[memberId];
+        if (targetEmail) delete map[targetEmail];
+        localStorage.setItem('urs_gamara_assigned_routines', JSON.stringify(map));
+      }
+    } catch {
+      // ignore
+    }
   }
 
   // --- Rosters Implementation ---

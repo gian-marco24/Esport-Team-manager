@@ -43,6 +43,19 @@ export class MockAuthAdapter implements IAuthPort {
       const data = localStorage.getItem(MOCK_SESSION_KEY);
       if (!data) return null;
       const user: User = JSON.parse(data);
+
+      const revokedStr = localStorage.getItem('urs_gamara_revoked_users');
+      if (revokedStr) {
+        const revokedList: string[] = JSON.parse(revokedStr);
+        if (
+          (user.id && revokedList.includes(user.id)) ||
+          (user.email && revokedList.includes(user.email.toLowerCase()))
+        ) {
+          localStorage.removeItem(MOCK_SESSION_KEY);
+          return null;
+        }
+      }
+
       return user;
     } catch {
       return null;
@@ -65,31 +78,44 @@ export class MockAuthAdapter implements IAuthPort {
   async login(credentials: LoginFormData): Promise<User> {
     await new Promise((res) => setTimeout(res, 500));
     const emailLower = credentials.email.toLowerCase();
-    const users = this.getStoredUsers();
-    let user = users[emailLower];
-
     const isCeo = emailLower === 'gianm2405@gmail.com';
 
+    // Check if revoked
+    const revokedStr = localStorage.getItem('urs_gamara_revoked_users');
+    if (revokedStr) {
+      const revokedList: string[] = JSON.parse(revokedStr);
+      if (!isCeo && revokedList.includes(emailLower)) {
+        throw new Error('Esta cuenta ha sido eliminada del equipo y ya no tiene acceso a la plataforma.');
+      }
+    }
+
+    const users = this.getStoredUsers();
+    const user = users[emailLower];
+
     if (!user) {
-      const newUser: User = {
-        id: `mock-${Date.now()}`,
-        email: credentials.email,
-        displayName: isCeo ? 'Zeyn' : credentials.email.split('@')[0],
-        gameTag: undefined,
-        role: isCeo ? 'ceo' : 'player',
-        teamRole: isCeo ? 'CEO' : 'Player',
-        birthDate: isCeo ? '2007-05-24' : undefined,
-        country: isCeo ? 'Venezuela' : undefined,
-        teamId: URS_GAMARA_TEAM.id,
-        teamName: URS_GAMARA_TEAM.name,
-        position: isCeo ? 'CEO / Propietario' : 'Player del equipo',
-        stats: defaultStats,
-        createdAt: new Date().toISOString(),
-      };
-      users[emailLower] = newUser;
-      this.saveUsers(users);
-      this.setStoredSession(newUser);
-      return newUser;
+      if (isCeo) {
+        const newUser: User = {
+          id: `mock-${Date.now()}`,
+          email: credentials.email,
+          displayName: 'Zeyn',
+          gameTag: undefined,
+          role: 'ceo',
+          teamRole: 'CEO',
+          birthDate: '2007-05-24',
+          country: 'Venezuela',
+          teamId: URS_GAMARA_TEAM.id,
+          teamName: URS_GAMARA_TEAM.name,
+          position: 'CEO / Propietario',
+          stats: defaultStats,
+          createdAt: new Date().toISOString(),
+        };
+        users[emailLower] = newUser;
+        this.saveUsers(users);
+        this.setStoredSession(newUser);
+        return newUser;
+      }
+
+      throw new Error('Correo electrónico o contraseña incorrectos, o la cuenta ha sido eliminada.');
     }
 
     this.setStoredSession(user);
@@ -177,6 +203,19 @@ export class MockAuthAdapter implements IAuthPort {
       const membersList: TeamMember[] = storedMembersData ? JSON.parse(storedMembersData) : [];
       membersList.push(newMember);
       localStorage.setItem(MEMBERS_KEY, JSON.stringify(membersList));
+    } catch {
+      // ignore
+    }
+
+    try {
+      const revokedKey = 'urs_gamara_revoked_users';
+      const storedRevoked = localStorage.getItem(revokedKey);
+      if (storedRevoked) {
+        const list: string[] = JSON.parse(storedRevoked).filter(
+          (x: string) => x !== userId && x !== data.email.toLowerCase()
+        );
+        localStorage.setItem(revokedKey, JSON.stringify(list));
+      }
     } catch {
       // ignore
     }
