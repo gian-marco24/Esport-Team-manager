@@ -40,6 +40,7 @@ export interface MatchMapResult {
 export interface MatchVod {
   id: string;
   url: string;
+  title?: string;
   mapName?: string;
   isFullMatch: boolean;
 }
@@ -120,6 +121,7 @@ export const createMatchSchema = z
         z.object({
           id: z.string(),
           url: z.string().url('Ingresa una URL válida de VOD'),
+          title: z.string().optional(),
           mapName: z.string().optional(),
           isFullMatch: z.boolean(),
         })

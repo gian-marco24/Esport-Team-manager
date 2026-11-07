@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { VodItem, VodAnnotation } from '../types';
+import type { VodItem, VodAnnotation, VodSubItem } from '../types';
 import { vodService } from '../services/vodService';
 import { useAuthContext } from '../../../app/providers/AuthProvider';
 
@@ -8,6 +8,8 @@ export const useVodPlayer = (vodId?: string) => {
   const playerRef = useRef<any>(null);
 
   const [vod, setVod] = useState<VodItem | null>(null);
+  const [activeSubVod, setActiveSubVod] = useState<VodSubItem | null>(null);
+  const [activeSubVodId, setActiveSubVodId] = useState<string | null>(null);
   const [annotations, setAnnotations] = useState<VodAnnotation[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +33,26 @@ export const useVodPlayer = (vodId?: string) => {
         }
         setVod(vodData);
 
-        const anns = await vodService.getAnnotations(vodId);
+        let initialSub: VodSubItem;
+        if (vodData.vods && vodData.vods.length > 0) {
+          // If the URL id was pointing to a specific sub-vod, pick that one; otherwise pick the first
+          const foundSub = vodData.vods.find((s) => s.id === vodId);
+          initialSub = foundSub || vodData.vods[0];
+        } else {
+          initialSub = {
+            id: vodData.id,
+            url: vodData.videoUrl,
+            title: vodData.title,
+            mapName: vodData.mapName,
+            provider: vodData.provider,
+            isFullMatch: true,
+          };
+        }
+
+        setActiveSubVod(initialSub);
+        setActiveSubVodId(initialSub.id);
+
+        const anns = await vodService.getAnnotations(initialSub.id);
         setAnnotations(anns);
       } catch (err: any) {
         setError(err.message || 'Error al cargar los datos del reproductor VOD.');
@@ -42,6 +63,31 @@ export const useVodPlayer = (vodId?: string) => {
 
     loadData();
   }, [vodId]);
+
+  const switchSubVod = async (newSubId: string) => {
+    if (!vod) return;
+    const targetSub = vod.vods?.find((s) => s.id === newSubId);
+    if (!targetSub || targetSub.id === activeSubVodId) return;
+
+    // Reset playback immediately
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    if (playerRef.current?.seekTo) {
+      playerRef.current.seekTo(0);
+    }
+
+    setActiveSubVod(targetSub);
+    setActiveSubVodId(targetSub.id);
+
+    try {
+      const anns = await vodService.getAnnotations(targetSub.id);
+      setAnnotations(anns);
+    } catch (err: any) {
+      console.warn('Error fetching annotations on sub-vod switch:', err);
+      setAnnotations([]);
+    }
+  };
 
   const seekToTimestamp = (seconds: number) => {
     if (playerRef.current) {
@@ -56,9 +102,10 @@ export const useVodPlayer = (vodId?: string) => {
     title: string,
     type: 'annotation' | 'marker' = 'annotation'
   ) => {
-    if (!vodId || !user) return;
+    const targetId = activeSubVodId || vodId;
+    if (!targetId || !user) return;
     try {
-      const created = await vodService.createAnnotation(vodId, timestampSeconds, title, user, type);
+      const created = await vodService.createAnnotation(targetId, timestampSeconds, title, user, type);
       setAnnotations((prev) =>
         [...prev, created].sort((a, b) => a.timestampSeconds - b.timestampSeconds)
       );
@@ -78,6 +125,9 @@ export const useVodPlayer = (vodId?: string) => {
 
   return {
     vod,
+    activeSubVod,
+    activeSubVodId,
+    switchSubVod,
     annotations,
     isLoading,
     error,

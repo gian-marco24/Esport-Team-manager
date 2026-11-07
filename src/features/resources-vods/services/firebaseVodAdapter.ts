@@ -86,10 +86,31 @@ export class FirebaseVodAdapter implements IVodPort {
       await Promise.all(
         paginated.map(async (v) => {
           try {
-            const countSnap = await getCountFromServer(
-              collection(database, 'vods', v.id, 'annotations')
-            );
-            countsByVod[v.id] = countSnap.data().count;
+            if (v.vods && v.vods.length > 0) {
+              let total = 0;
+              await Promise.all(
+                v.vods.map(async (sub) => {
+                  try {
+                    const countSnap = await getCountFromServer(
+                      collection(database, 'vods', sub.id, 'annotations')
+                    );
+                    total += countSnap.data().count;
+                  } catch {}
+                })
+              );
+              try {
+                const countSnap = await getCountFromServer(
+                  collection(database, 'vods', v.id, 'annotations')
+                );
+                total += countSnap.data().count;
+              } catch {}
+              countsByVod[v.id] = total;
+            } else {
+              const countSnap = await getCountFromServer(
+                collection(database, 'vods', v.id, 'annotations')
+              );
+              countsByVod[v.id] = countSnap.data().count;
+            }
           } catch {}
         })
       );
@@ -109,7 +130,7 @@ export class FirebaseVodAdapter implements IVodPort {
   async getVodById(id: string): Promise<VodItem | null> {
     if (!db) {
       const res = await this.getVods(50);
-      return res.vods.find((v) => v.id === id) || null;
+      return res.vods.find((v) => v.id === id || v.sourceMatchId === id || v.vods?.some((sub) => sub.id === id)) || null;
     }
 
     const database = db;
@@ -131,19 +152,35 @@ export class FirebaseVodAdapter implements IVodPort {
         }
       }
 
-      // 2. Match VOD lookup
+      // 2. Match VOD lookup (by grouped ID, sub-vod ID, or match ID)
       const matches = await matchService.getMatches();
       const matchVods = extractVodsFromMatches(matches);
-      const target = matchVods.find((v) => v.id === id);
+      const target = matchVods.find(
+        (v) => v.id === id || v.sourceMatchId === id || v.vods?.some((sub) => sub.id === id)
+      );
+
       if (target) {
-        try {
-          const countSnap = await getCountFromServer(
-            collection(database, 'vods', target.id, 'annotations')
+        let total = 0;
+        if (target.vods && target.vods.length > 0) {
+          await Promise.all(
+            target.vods.map(async (sub) => {
+              try {
+                const countSnap = await getCountFromServer(
+                  collection(database, 'vods', sub.id, 'annotations')
+                );
+                total += countSnap.data().count;
+              } catch {}
+            })
           );
-          return { ...target, annotationsCount: countSnap.data().count };
-        } catch {
-          return target;
+        } else {
+          try {
+            const countSnap = await getCountFromServer(
+              collection(database, 'vods', target.id, 'annotations')
+            );
+            total = countSnap.data().count;
+          } catch {}
         }
+        return { ...target, annotationsCount: total };
       }
 
       // 3. Fallback standalone lookup

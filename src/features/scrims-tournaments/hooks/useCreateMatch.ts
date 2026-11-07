@@ -38,6 +38,7 @@ export const useCreateMatch = (matchId?: string) => {
   // VODs State
   const [addedVods, setAddedVods] = useState<MatchVod[]>([]);
   const [newVodUrl, setNewVodUrl] = useState<string>('');
+  const [newVodTitle, setNewVodTitle] = useState<string>('');
   const [newVodIsFullMatch, setNewVodIsFullMatch] = useState<boolean>(true);
   const [newVodMapName, setNewVodMapName] = useState<string>(VALORANT_MAP_ROTATION[0]);
 
@@ -220,17 +221,17 @@ export const useCreateMatch = (matchId?: string) => {
       return;
     }
 
-    const isSingleMap = matchType === 'scrim' || matchType === 'tryout';
-
     const vod: MatchVod = {
       id: `vod-${Date.now()}`,
       url: newVodUrl.trim(),
-      isFullMatch: isSingleMap ? true : newVodIsFullMatch,
-      mapName: isSingleMap ? undefined : newVodIsFullMatch ? undefined : newVodMapName,
+      title: newVodTitle.trim() || undefined,
+      isFullMatch: newVodIsFullMatch,
+      mapName: newVodIsFullMatch ? undefined : newVodMapName,
     };
 
     setAddedVods((prev) => [...prev, vod]);
     setNewVodUrl('');
+    setNewVodTitle('');
     setFormError(null);
   };
 
@@ -491,6 +492,8 @@ export const useCreateMatch = (matchId?: string) => {
     addedVods,
     newVodUrl,
     setNewVodUrl,
+    newVodTitle,
+    setNewVodTitle,
     newVodIsFullMatch,
     setNewVodIsFullMatch,
     newVodMapName,

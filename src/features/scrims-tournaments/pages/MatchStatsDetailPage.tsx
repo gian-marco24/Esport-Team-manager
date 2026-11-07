@@ -622,7 +622,7 @@ export const MatchStatsDetailPage: React.FC = () => {
                   className="flex items-center justify-between p-3.5 2xl:p-4 bg-[#180d29] hover:bg-[#26143E] border border-[#522B80]/40 rounded-xl text-xs 2xl:text-sm text-[#E2B86E] transition-all group font-bold shadow-sm"
                 >
                   <span className="group-hover:text-white transition-colors">
-                    {v.isFullMatch ? 'VOD: Partido Completo' : `VOD: ${v.mapName || 'Mapa'}`}
+                    {v.title ? `VOD: ${v.title}` : v.isFullMatch ? 'VOD: Partido Completo' : `VOD: ${v.mapName || 'Mapa'}`}
                   </span>
                   <ExternalLink className="w-4 h-4 shrink-0 ml-2 group-hover:translate-x-0.5 transition-transform" />
                 </a>

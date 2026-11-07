@@ -62,6 +62,8 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
     addedVods,
     newVodUrl,
     setNewVodUrl,
+    newVodTitle,
+    setNewVodTitle,
     newVodIsFullMatch,
     setNewVodIsFullMatch,
     newVodMapName,
@@ -457,7 +459,7 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
         <div className="space-y-3 p-4 bg-[#140b21] border border-[#26143E] rounded-xl">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#E2B86E] flex items-center gap-1.5">
             <Video className="w-4 h-4 text-[#8B44F7]" />
-            <span>Enlaces de VOD (Opcional)</span>
+            <span>Enlaces de VOD (Opcional - Múltiples mapas, POVs o Partido Completo)</span>
           </h4>
 
           {/* Lista de VODs agregadas */}
@@ -466,12 +468,17 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
               {addedVods.map((v) => (
                 <div
                   key={v.id}
-                  className="flex items-center justify-between p-2 bg-[#26143E]/50 border border-[#522B80]/40 rounded-lg text-xs"
+                  className="flex items-center justify-between p-2.5 bg-[#26143E]/50 border border-[#522B80]/40 rounded-lg text-xs"
                 >
                   <div className="flex items-center space-x-2 truncate">
                     <span className="px-2 py-0.5 bg-[#522B80] text-white text-[10px] font-bold rounded shrink-0">
-                      {v.isFullMatch ? 'Partido Completo' : v.mapName || 'Mapa'}
+                      {v.isFullMatch ? 'Partido Completo' : v.mapName ? `Mapa: ${v.mapName}` : 'VOD'}
                     </span>
+                    {v.title && (
+                      <span className="px-2 py-0.5 bg-[#8B44F7]/30 text-[#E2B86E] border border-[#8B44F7]/40 text-[10px] font-semibold rounded shrink-0">
+                        {v.title}
+                      </span>
+                    )}
                     <a
                       href={v.url}
                       target="_blank"
@@ -484,7 +491,8 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
                   <button
                     type="button"
                     onClick={() => handleRemoveVod(v.id)}
-                    className="p-1 text-gray-400 hover:text-red-400 shrink-0"
+                    className="p-1 text-gray-400 hover:text-red-400 shrink-0 transition-colors"
+                    title="Eliminar VOD"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -493,88 +501,72 @@ export const MatchResultForm: React.FC<{ matchId?: string }> = ({ matchId }) => 
             </div>
           )}
 
-          {/* Si es Scrim o Tryout: VOD simplificada */}
-          {matchType !== 'tournament' ? (
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
+          {/* Formulario para agregar VOD */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+              <div className="sm:col-span-6">
                 <Input
-                  label="Enlace de VOD (YouTube, Twitch, Drive)"
+                  label="Enlace de VOD (YouTube, YouTube Live, Twitch, Drive)"
                   type="url"
-                  placeholder="https://youtube.com/watch?v=..."
+                  placeholder="https://youtube.com/watch?v=... o https://youtube.com/live/..."
                   value={newVodUrl}
                   onChange={(e) => setNewVodUrl(e.target.value)}
                 />
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-10 shrink-0"
-                onClick={handleAddVod}
-                leftIcon={<Plus className="w-4 h-4" />}
-              >
-                Agregar VOD
-              </Button>
-            </div>
-          ) : (
-            /* Si es Torneo: VOD con opción de mapa */
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                <div className="sm:col-span-7">
-                  <Input
-                    label="Enlace de VOD (YouTube, Twitch, Drive)"
-                    type="url"
-                    placeholder="https://youtube.com/watch?v=..."
-                    value={newVodUrl}
-                    onChange={(e) => setNewVodUrl(e.target.value)}
-                  />
-                </div>
 
-                {!newVodIsFullMatch && (
-                  <div className="sm:col-span-3">
-                    <Select
-                      label="Mapa VOD"
-                      value={newVodMapName}
-                      onChange={(e) => setNewVodMapName(e.target.value)}
-                    >
-                      {availableMaps.map((m) => (
-                        <option key={m} value={m} className="bg-[#140b21] text-white">
-                          {m}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                )}
+              <div className="sm:col-span-3">
+                <Input
+                  label="Nombre / POV (Opcional)"
+                  placeholder="Ej: POV Kaiser, Duelista..."
+                  value={newVodTitle}
+                  onChange={(e) => setNewVodTitle(e.target.value)}
+                />
+              </div>
 
-                <div className={newVodIsFullMatch ? 'sm:col-span-5' : 'sm:col-span-2'}>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full h-10"
-                    onClick={handleAddVod}
-                    leftIcon={<Plus className="w-4 h-4" />}
+              {!newVodIsFullMatch && (
+                <div className="sm:col-span-3">
+                  <Select
+                    label="Mapa VOD"
+                    value={newVodMapName}
+                    onChange={(e) => setNewVodMapName(e.target.value)}
                   >
-                    Agregar VOD
-                  </Button>
+                    {availableMaps.map((m) => (
+                      <option key={m} value={m} className="bg-[#140b21] text-white">
+                        {m}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
-              </div>
+              )}
 
-              <div className="pt-1">
-                <label
-                  onClick={() => setNewVodIsFullMatch(!newVodIsFullMatch)}
-                  className="inline-flex items-center space-x-2 text-xs text-gray-300 cursor-pointer select-none"
+              <div className={newVodIsFullMatch ? 'sm:col-span-3' : 'sm:col-span-12'}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-10"
+                  onClick={handleAddVod}
+                  leftIcon={<Plus className="w-4 h-4" />}
                 >
-                  {newVodIsFullMatch ? (
-                    <CheckSquare className="w-4 h-4 text-[#8B44F7]" />
-                  ) : (
-                    <Square className="w-4 h-4 text-gray-500" />
-                  )}
-                  <span>Esta VOD corresponde a todo el partido (todos los mapas juntos)</span>
-                </label>
+                  Agregar VOD
+                </Button>
               </div>
             </div>
-          )}
+
+            <div className="pt-1">
+              <label
+                onClick={() => setNewVodIsFullMatch(!newVodIsFullMatch)}
+                className="inline-flex items-center space-x-2 text-xs text-gray-300 cursor-pointer select-none"
+              >
+                {newVodIsFullMatch ? (
+                  <CheckSquare className="w-4 h-4 text-[#8B44F7]" />
+                ) : (
+                  <Square className="w-4 h-4 text-gray-500" />
+                )}
+                <span>Esta VOD corresponde a todo el partido (todos los mapas juntos)</span>
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* BOTONES DE ACCIÓN FINAL */}

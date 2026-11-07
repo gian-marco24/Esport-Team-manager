@@ -3,6 +3,16 @@ import { z } from 'zod';
 export type VodProvider = 'youtube' | 'twitch' | 'drive' | 'custom';
 export type VodType = 'scrim' | 'tournament' | 'tryout' | 'analysis';
 
+export interface VodSubItem {
+  id: string;
+  originalVodId?: string;
+  url: string;
+  title: string;
+  mapName?: string;
+  isFullMatch?: boolean;
+  provider: VodProvider;
+}
+
 export interface VodItem {
   id: string;
   title: string;
@@ -21,6 +31,7 @@ export interface VodItem {
   overallScore?: string;
   mapScore?: string;
   sourceMatchId?: string;
+  vods?: VodSubItem[];
 }
 
 export interface VodAnnotation {

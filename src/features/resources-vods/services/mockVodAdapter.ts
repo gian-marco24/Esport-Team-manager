@@ -186,10 +186,19 @@ export class MockVodAdapter implements IVodPort {
       const existingUrls = new Set(standaloneVods.map((v) => v.videoUrl));
       const filteredMatchVods = matchVods.filter((v) => !existingUrls.has(v.videoUrl));
       const storedAnnotations = this.getStoredAnnotations();
-      all = [...standaloneVods, ...filteredMatchVods].map((v) => ({
-        ...v,
-        annotationsCount: storedAnnotations[v.id]?.length ?? v.annotationsCount ?? 0,
-      }));
+      all = [...standaloneVods, ...filteredMatchVods].map((v) => {
+        let count = 0;
+        if (v.vods && v.vods.length > 0) {
+          count = v.vods.reduce((acc, sub) => acc + (storedAnnotations[sub.id]?.length || 0), 0);
+          count += (storedAnnotations[v.id]?.length || 0);
+        } else {
+          count = storedAnnotations[v.id]?.length ?? v.annotationsCount ?? 0;
+        }
+        return {
+          ...v,
+          annotationsCount: count,
+        };
+      });
     } catch {
       const storedAnnotations = this.getStoredAnnotations();
       all = standaloneVods.map((v) => ({
@@ -206,7 +215,27 @@ export class MockVodAdapter implements IVodPort {
 
   async getVodById(id: string): Promise<VodItem | null> {
     const res = await this.getVods(500);
-    return res.vods.find((v) => v.id === id) || null;
+    const found = res.vods.find((v) => v.id === id || v.sourceMatchId === id || v.vods?.some((sub) => sub.id === id));
+    if (found) return found;
+
+    try {
+      const matches = await matchService.getMatches(100);
+      const matchVods = extractVodsFromMatches(matches);
+      const matchTarget = matchVods.find(
+        (v) => v.id === id || v.sourceMatchId === id || v.vods?.some((sub) => sub.id === id)
+      );
+      if (matchTarget) {
+        const storedAnnotations = this.getStoredAnnotations();
+        let total = 0;
+        if (matchTarget.vods && matchTarget.vods.length > 0) {
+          total = matchTarget.vods.reduce((acc, sub) => acc + (storedAnnotations[sub.id]?.length || 0), 0);
+        }
+        total += (storedAnnotations[matchTarget.id]?.length || 0);
+        return { ...matchTarget, annotationsCount: total };
+      }
+    } catch {}
+
+    return null;
   }
 
   async createVod(data: CreateVodFormData, _author?: User): Promise<VodItem> {

@@ -197,7 +197,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onDelete }) => {
                     rel="noreferrer"
                     className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-[#26143E] hover:bg-[#522B80] border border-[#8B44F7]/30 rounded-lg text-xs text-[#E2B86E] font-bold transition-colors"
                   >
-                    <span>{v.isFullMatch ? 'Partido Completo' : v.mapName || 'VOD'}</span>
+                    <span>{v.title || (v.isFullMatch ? 'Partido Completo' : v.mapName ? `Mapa: ${v.mapName}` : 'VOD')}</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 ))}

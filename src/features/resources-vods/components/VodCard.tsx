@@ -67,6 +67,11 @@ export const VodCard: React.FC<VodCardProps> = ({ vod, onDelete }) => {
             >
               {vod.provider}
             </span>
+            {vod.vods && vod.vods.length > 1 && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#8B44F7]/25 text-[#E2B86E] border border-[#8B44F7]/40 flex items-center gap-1">
+                <Video className="w-3.5 h-3.5 text-[#E2B86E]" /> {vod.vods.length} VODs
+              </span>
+            )}
             {vod.matchType && (
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-[#26143E] text-[#E2B86E] border border-[#8B44F7]/30 flex items-center gap-1.5">
                 {vod.matchType === 'tournament' ? (

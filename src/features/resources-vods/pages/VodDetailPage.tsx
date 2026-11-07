@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, MapPin, Film, ChevronDown } from 'lucide-react';
 import { useVodPlayer } from '../hooks/useVodPlayer';
 import type { VodAnnotation } from '../types';
 import { VideoTimeline } from '../components/VideoTimeline';
@@ -16,6 +16,9 @@ export const VodDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const {
     vod,
+    activeSubVod,
+    activeSubVodId,
+    switchSubVod,
     annotations,
     isLoading,
     error,
@@ -67,7 +70,7 @@ export const VodDetailPage: React.FC = () => {
             <h1 className="text-lg font-extrabold text-white truncate">{vod.title}</h1>
             <div className="flex items-center space-x-2 text-xs text-gray-400 mt-0.5 flex-wrap gap-1">
               <span className="uppercase text-[10px] font-bold text-[#E2B86E] px-1.5 py-0.5 bg-[#522B80]/40 rounded border border-[#E2B86E]/30">
-                {vod.provider}
+                {activeSubVod?.provider || vod.provider}
               </span>
               {vod.matchType && (
                 <Badge
@@ -92,9 +95,9 @@ export const VodDetailPage: React.FC = () => {
                 </Badge>
               )}
               {vod.opponentName && <span className="font-semibold text-gray-200">vs {vod.opponentName}</span>}
-              {vod.mapName && (
+              {(activeSubVod?.mapName || vod.mapName) && (
                 <span className="flex items-center gap-1 text-[#E2B86E] font-semibold">
-                  <MapPin className="w-3 h-3 text-[#E2B86E]" /> {vod.mapName}
+                  <MapPin className="w-3 h-3 text-[#E2B86E]" /> {activeSubVod?.mapName || vod.mapName}
                 </span>
               )}
               {vod.outcome && (
@@ -119,11 +122,67 @@ export const VodDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Left Video Player & Timeline Container (8 cols) */}
         <div className="lg:col-span-8 flex flex-col gap-4 min-w-0">
+          {/* VOD Selector (when multiple VODs or POVs belong to this match) */}
+          {vod.vods && vod.vods.length > 1 && (
+            <div className="bg-[#140b21] border border-[#522B80]/60 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+              <div className="flex items-center space-x-3 min-w-0">
+                <div className="p-2 rounded-lg bg-[#26143E] border border-[#8B44F7]/40 text-[#E2B86E] shrink-0">
+                  <Film className="w-4.5 h-4.5" />
+                </div>
+                <div className="min-w-0">
+                  <label className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                    Seleccionar VOD del Partido ({vod.vods.length} disponibles)
+                  </label>
+                  <div className="relative mt-1">
+                    <select
+                      value={activeSubVodId || ''}
+                      onChange={(e) => {
+                        setActiveAnnotation(null);
+                        switchSubVod(e.target.value);
+                      }}
+                      className="w-full sm:w-auto min-w-[260px] bg-[#0D0914] border border-[#8B44F7]/60 text-white font-bold text-xs sm:text-sm rounded-xl py-2 px-3.5 pr-8 focus:outline-none focus:border-[#E2B86E] cursor-pointer appearance-none shadow-md transition-colors"
+                    >
+                      {vod.vods.map((sub, idx) => (
+                        <option key={sub.id} value={sub.id} className="bg-[#140b21] text-white">
+                          {sub.title || (sub.isFullMatch ? 'Partido Completo' : sub.mapName ? `Mapa: ${sub.mapName}` : `VOD ${idx + 1}`)}
+                          {sub.mapName && !sub.title?.toLowerCase().includes(sub.mapName.toLowerCase()) ? ` (${sub.mapName})` : ''}
+                          {` • [${sub.provider.toUpperCase()}]`}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Current VOD details badges */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {activeSubVod?.isFullMatch && (
+                  <Badge variant="gold" className="text-xs px-2.5 py-1 font-bold">
+                    Partido Completo
+                  </Badge>
+                )}
+                {activeSubVod?.mapName && (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded bg-[#26143E] text-[#E2B86E] border border-[#8B44F7]/30 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[#E2B86E]" /> {activeSubVod.mapName}
+                  </span>
+                )}
+                <span className="text-xs font-bold px-2.5 py-1 rounded border uppercase tracking-wider bg-red-950/80 text-red-400 border-red-500/40">
+                  {activeSubVod?.provider || vod.provider}
+                </span>
+                <span className="text-xs font-semibold text-gray-300 bg-[#0D0914] px-2.5 py-1 rounded-lg border border-[#26143E]">
+                  {annotations.length} {annotations.length === 1 ? 'Anotación' : 'Anotaciones'}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Universal Video Player Box */}
           <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-[#8B44F7]/40 shadow-2xl">
             <UniversalVideoPlayer
+              key={activeSubVod?.url || vod.videoUrl}
               playerRef={playerRef}
-              url={vod.videoUrl}
+              url={activeSubVod?.url || vod.videoUrl}
               isPlaying={isPlaying}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
@@ -179,7 +238,7 @@ export const VodDetailPage: React.FC = () => {
       </div>
 
       {/* Pizarra Táctica de Análisis (Valoplant propio a todo el ancho centrado debajo) */}
-      <TacticalBoardSection vodId={vod.id} initialMapName={vod.mapName} />
+      <TacticalBoardSection vodId={activeSubVodId || vod.id} initialMapName={activeSubVod?.mapName || vod.mapName} />
 
       {/* Custom Modal for Adding Annotation Marker */}
       <AddAnnotationModal

@@ -13,15 +13,32 @@ interface UniversalVideoPlayerProps {
 // Helpers to extract embed and stream URLs
 export function getYouTubeId(url: string): string | null {
   if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  if (match && match[2] && match[2].length === 11) {
-    return match[2];
-  }
-  if (url.includes('/shorts/')) {
-    const parts = url.split('/shorts/')[1]?.split('?')[0];
-    if (parts && parts.length === 11) return parts;
-  }
+  const trimmed = url.trim();
+
+  // 1. YouTube Live URLs (e.g. /live/dQw4w9WgXcQ, live_stream?video_id=...)
+  const liveMatch = trimmed.match(/(?:youtube\.com\/(?:live\/|live_stream\?.*video_id=))([a-zA-Z0-9_-]{11})/);
+  if (liveMatch && liveMatch[1]) return liveMatch[1];
+
+  // 2. YouTube Shorts (/shorts/dQw4w9WgXcQ)
+  const shortsMatch = trimmed.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/);
+  if (shortsMatch && shortsMatch[1]) return shortsMatch[1];
+
+  // 3. youtu.be shortlinks (youtu.be/dQw4w9WgXcQ)
+  const youtuMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+  if (youtuMatch && youtuMatch[1]) return youtuMatch[1];
+
+  // 4. Standard watch URLs (?v=dQw4w9WgXcQ or &v=dQw4w9WgXcQ)
+  const watchMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  if (watchMatch && watchMatch[1]) return watchMatch[1];
+
+  // 5. Embed or /v/ URLs (/embed/dQw4w9WgXcQ, /v/dQw4w9WgXcQ)
+  const embedMatch = trimmed.match(/youtube\.com\/(?:embed|v)\/([a-zA-Z0-9_-]{11})/);
+  if (embedMatch && embedMatch[1]) return embedMatch[1];
+
+  // 6. Generic regex fallback
+  const genericMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|live\/|shorts\/))([\w-]{11})/);
+  if (genericMatch && genericMatch[1]) return genericMatch[1];
+
   return null;
 }
 
@@ -114,17 +131,25 @@ export const UniversalVideoPlayer: React.FC<UniversalVideoPlayerProps> = ({
           controls: 1,
           rel: 0,
           modestbranding: 1,
+          enablejsapi: 1,
+          origin: typeof window !== 'undefined' ? window.location.origin : undefined,
         },
         events: {
           onReady: (event: any) => {
             if (!isMounted) return;
-            const dur = event.target.getDuration();
-            if (dur && onDuration) onDuration(dur);
+            try {
+              const dur = event.target.getDuration();
+              if (typeof dur === 'number' && dur > 0 && onDuration) onDuration(dur);
+            } catch {}
           },
           onStateChange: (event: any) => {
             if (!isMounted) return;
-            if (event.data === 1 && onPlay) onPlay();
-            if (event.data === 2 && onPause) onPause();
+            try {
+              if (event.data === 1 && onPlay) onPlay();
+              if (event.data === 2 && onPause) onPause();
+              const dur = event.target.getDuration();
+              if (typeof dur === 'number' && dur > 0 && onDuration) onDuration(dur);
+            } catch {}
           },
         },
       });
@@ -145,14 +170,16 @@ export const UniversalVideoPlayer: React.FC<UniversalVideoPlayerProps> = ({
     // High frequency polling (200ms) for smooth real-time progress bar movement in YouTube
     timerRef.current = setInterval(() => {
       if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === 'function') {
-        const curr = ytPlayerRef.current.getCurrentTime();
-        const dur = ytPlayerRef.current.getDuration();
-        if (typeof curr === 'number' && onProgress) {
-          onProgress(curr);
-        }
-        if (typeof dur === 'number' && dur > 0 && onDuration) {
-          onDuration(dur);
-        }
+        try {
+          const curr = ytPlayerRef.current.getCurrentTime();
+          const dur = ytPlayerRef.current.getDuration();
+          if (typeof curr === 'number' && !isNaN(curr) && onProgress) {
+            onProgress(curr);
+          }
+          if (typeof dur === 'number' && !isNaN(dur) && dur > 0 && onDuration) {
+            onDuration(dur);
+          }
+        } catch {}
       }
     }, 200);
 
@@ -163,6 +190,7 @@ export const UniversalVideoPlayer: React.FC<UniversalVideoPlayerProps> = ({
         try {
           ytPlayerRef.current.destroy();
         } catch {}
+        ytPlayerRef.current = null;
       }
     };
   }, [ytId]);
@@ -191,7 +219,7 @@ export const UniversalVideoPlayer: React.FC<UniversalVideoPlayerProps> = ({
   if (ytId) {
     return (
       <div ref={containerRef} className="w-full h-full relative bg-black">
-        <div id={`yt-player-${ytId}`} className="w-full h-full absolute inset-0" />
+        <div key={ytId} id={`yt-player-${ytId}`} className="w-full h-full absolute inset-0" />
       </div>
     );
   }

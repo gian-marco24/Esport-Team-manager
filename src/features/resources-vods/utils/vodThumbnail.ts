@@ -1,3 +1,5 @@
+import { getYouTubeId } from '../components/UniversalVideoPlayer';
+
 const VALORANT_MAP_SPLASHES: Record<string, string> = {
   abyss: 'https://media.valorant-api.com/maps/224b0a95-48b9-f703-1bd8-67aca101a61f/splash.png',
   ascent: 'https://media.valorant-api.com/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319/splash.png',
@@ -13,10 +15,7 @@ const VALORANT_MAP_SPLASHES: Record<string, string> = {
 };
 
 export function getYouTubeVideoId(url: string): string | null {
-  if (!url) return null;
-  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-  const match = url.match(regExp);
-  return match && match[1] ? match[1] : null;
+  return getYouTubeId(url);
 }
 
 export function getMapSplash(mapName?: string): string | null {
